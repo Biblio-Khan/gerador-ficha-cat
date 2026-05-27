@@ -190,41 +190,41 @@ else:
         return entrada, corpo_autores, entrada_por_titulo
 
     def calcular_cutter(tipo_autor, autores_lista, entidade, titulo, tem_organizador, organizador_nome):
-    referencia = ""
-    if tipo_autor == "Entidade (Órgão/Instituição)" and entidade:
-        referencia = entidade.strip()
-    elif tem_organizador and not any(a.strip() for a in autores_lista) and organizador_nome:
-        referencia = organizador_nome.strip().split()[-1]
-    elif autores_lista and autores_lista[0].strip():
-        referencia = autores_lista[0].strip().split()[-1]
-    else:
-        referencia = titulo.strip() if titulo else "X"
-        
-    letra = referencia[0].upper() if referencia else "X"
-    
-    # --- CORREÇÃO DA AACR2: IGNORAR ARTIGOS NO TÍTULO ---
-    letra_titulo = "x"
-    if titulo:
-        titulo_limpo = titulo.strip().lower()
-        
-        # Lista de artigos iniciais que devem ser ignorados (seguidos de espaço)
-        artigos = [
-            "o ", "a ", "os ", "as ", 
-            "um ", "uma ", "uns ", "umas ",
-            "the ", "le ", "la ", "les "
-        ]
-        
-        # Verifica se o título começa com algum dos artigos da lista
-        for artigo in artigos:
-            if titulo_limpo.startswith(artigo):
-                # Remove o artigo do começo para pegar a próxima letra válida
-                titulo_limpo = titulo_limpo[len(artigo):].strip()
-                break # Para o loop assim que encontrar o primeiro artigo correspondente
-                
-        if titulo_limpo:
-            letra_titulo = titulo_limpo[0].lower()
+        referencia = ""
+        if tipo_autor == "Entidade (Órgão/Instituição)" and entidade:
+            referencia = entidade.strip()
+        elif tem_organizador and not any(a.strip() for a in autores_lista) and organizador_nome:
+            referencia = organizador_nome.strip().split()[-1]
+        elif autores_lista and autores_lista[0].strip():
+            referencia = autores_lista[0].strip().split()[-1]
+        else:
+            referencia = titulo.strip() if titulo else "X"
             
-    return f"{letra}123{letra_titulo}"
+        letra = referencia[0].upper() if referencia else "X"
+        
+        # --- CORREÇÃO DA AACR2: IGNORAR ARTIGOS NO TÍTULO ---
+        letra_titulo = "x"
+        if titulo:
+            titulo_limpo = titulo.strip().lower()
+            
+            # Lista de artigos iniciais que devem ser ignorados (seguidos de espaço)
+            artigos = [
+                "o ", "a ", "os ", "as ", 
+                "um ", "uma ", "uns ", "umas ",
+                "the ", "le ", "la ", "les "
+            ]
+            
+            # Verifica se o título começa com algum dos artigos da lista
+            for artigo in artigos:
+                if titulo_limpo.startswith(artigo):
+                    # Remove o artigo do começo para pegar a próxima letra válida
+                    titulo_limpo = titulo_limpo[len(artigo):].strip()
+                    break # Para o loop assim que encontrar o primeiro artigo correspondente
+                    
+            if titulo_limpo:
+                letra_titulo = titulo_limpo[0].lower()
+                
+        return f"{letra}123{letra_titulo}"
 
     st.title("⚖️ Gerador de Fichas Jurídicas — Módulo Avançado NBR/AACR2")
     st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
