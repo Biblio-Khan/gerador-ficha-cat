@@ -97,7 +97,6 @@ if not st.session_state["logado"]:
                 st.warning("⚠️ Por favor, digite o seu e-mail antes de clicar no botão.")
 
 else:
-    
 
 e------- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
     
