@@ -54,7 +54,6 @@ if "logado" not in st.session_state:
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
 # =========================================================================
 
-
 if not st.session_state["logado"]:
     # --- TELA DE LOGIN (EXIBIDA SE NÃO ESTIVER LOGADO) ---
     st.markdown("# 🔒 Área do Cliente")
@@ -91,14 +90,12 @@ if not st.session_state["logado"]:
                     st.success(f"✅ Link de redefinição enviado com sucesso para **{email_recuperar}**!")
                     st.info("💡 Verifique sua Caixa de Entrada e também a pasta de Spam/Lixo Eletrônico.")
                 except Exception as e:
-                    # Se o e-mail não existir no Firebase, ele cai aqui
                     st.error("❌ Erro: Não encontramos este e-mail na nossa base de clientes autorizados.")
             else:
                 st.warning("⚠️ Por favor, digite o seu e-mail antes de clicar no botão.")
 
 else:
-
-e------- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
+    # --- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
     
     # Barra lateral administrativa do cliente logado
     with st.sidebar:
@@ -220,7 +217,7 @@ e------- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
     def calcular_cutter(tipo_autor, autores_lista, entidade, titulo, tem_organizador, organizador_nome):
         referencia = ""
         if tipo_autor == "Entidade (Órgão/Instituição)" and entidade:
-            referencia = entity = entidade.strip()
+            referencia = entidade.strip()
         elif tem_organizador and not any(a.strip() for a in autores_lista) and organizador_nome:
             referencia = organizador_nome.strip().split()[-1]
         elif autores_lista and autores_lista[0].strip():
@@ -358,7 +355,7 @@ e------- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
         st.subheader("4. Fechamento e Visualização da Ficha")
         
         entrada_principal, responsabilidade, entrada_por_titulo = formatar_entrada_e_corpo(
-            tipo_autor, autores_lista, entidade_nome, titulo, tem_organizador, organizador_nome, tipo_org, tem_tradutor, tradutor_nome
+            tipo_autor, autores_lista, entity_name=entidade_nome, titulo=titulo, tem_organizador=tem_organizador, organizador_nome=organizador_nome, tipo_org=tipo_org, tem_tradutor=tem_tradutor, tradutor_nome=tradutor_nome
         )
         
         cutter = calcular_cutter(tipo_autor, autores_lista, entidade=entidade_nome, titulo=titulo, tem_organizador=tem_organizador, organizador_nome=organizador_nome)
@@ -421,7 +418,7 @@ e------- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
             valido = True
             if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                 valido = False
-            if tipo_autor == "Entidade (Órgão/Instituição)" and not entidade_nome.strip():
+            if tipo_autor == "Entidade (Órgão/Instituição)" and not entity_name.strip():
                 valido = False
                 
             if valido and titulo.strip():
