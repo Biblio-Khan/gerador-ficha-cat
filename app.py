@@ -9,6 +9,16 @@ import firebase_admin
 from firebase_admin import credentials, auth
 import json
 
+# Inicializa o Firebase usando a estrutura TOML limpa
+if not firebase_admin._apps:
+    try:
+        # Puxa o dicionário estruturado e inicia o SDK do Google
+        firebase_secrets = dict(st.secrets["firebase"])
+        cred = credentials.Certificate(firebase_secrets)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        st.error(f"❌ Erro crítico nas credenciais: {str(e)}")
+
 # Configuração da página (deixa o seu app com visual profissional)
 st.set_page_config(page_title="Meu WebApp Comercial", page_icon="🚀", layout="centered")
 
