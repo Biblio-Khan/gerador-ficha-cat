@@ -54,6 +54,7 @@ if "logado" not in st.session_state:
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
 # =========================================================================
 
+
 if not st.session_state["logado"]:
     # --- TELA DE LOGIN (EXIBIDA SE NÃO ESTIVER LOGADO) ---
     st.markdown("# 🔒 Área do Cliente")
@@ -72,8 +73,33 @@ if not st.session_state["logado"]:
             else:
                 st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
 
+    # --- SEÇÃO: ESQUECI A SENHA (EXPANSÍVEL PARA NÃO POLUIR A TELA) ---
+    st.markdown("---")
+    with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
+        st.markdown("Digite seu e-mail cadastrado abaixo. O sistema enviará um link oficial do Firebase para você redefinir sua senha com segurança.")
+        
+        email_recuperar = st.text_input("E-mail Cadastrado", key="email_recuperacao").strip()
+        botao_recuperar = st.button("📧 Enviar E-mail de Recuperação")
+        
+        if botao_recuperar:
+            if email_recuperar:
+                try:
+                    # O Firebase Admin gera o link oficial de redefinição de senha
+                    # e o Firebase envia o e-mail automaticamente para o usuário
+                    auth.generate_password_reset_link(email_recuperar)
+                    
+                    st.success(f"✅ Link de redefinição enviado com sucesso para **{email_recuperar}**!")
+                    st.info("💡 Verifique sua Caixa de Entrada e também a pasta de Spam/Lixo Eletrônico.")
+                except Exception as e:
+                    # Se o e-mail não existir no Firebase, ele cai aqui
+                    st.error("❌ Erro: Não encontramos este e-mail na nossa base de clientes autorizados.")
+            else:
+                st.warning("⚠️ Por favor, digite o seu e-mail antes de clicar no botão.")
+
 else:
-    # --- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
+    
+
+e------- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
     
     # Barra lateral administrativa do cliente logado
     with st.sidebar:
