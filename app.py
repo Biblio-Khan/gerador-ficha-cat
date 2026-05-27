@@ -75,7 +75,7 @@ if not st.session_state["logado"]:
     # --- SEÇÃO: ESQUECI A SENHA (EXPANSÍVEL PARA NÃO POLUIR A TELA) ---
     st.markdown("---")
     with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
-        st.markdown("Digite seu e-mail cadastrado abaixo. O sistema enviará um link oficial do Firebase para você redefinir sua senha com segurança.")
+        st.markdown("Digite seu e-mail cadastrado abaixo. O sistema enviará um link para você redefinir sua senha com segurança.")
         
         email_recuperar = st.text_input("E-mail Cadastrado", key="email_recuperacao").strip()
         botao_recuperar = st.button("📧 Enviar E-mail de Recuperação")
