@@ -1,3 +1,5 @@
 pandas
 python-docx
 requests
+streamlit
+firebase-admin
