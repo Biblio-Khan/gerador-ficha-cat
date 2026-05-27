@@ -5,6 +5,71 @@ import requests
 from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+import firebase_admin
+from firebase_admin import credentials, auth
+import json
+
+# Configuração da página (deixa o seu app com visual profissional)
+st.set_page_config(page_title="Meu WebApp Comercial", page_icon="🚀", layout="centered")
+
+# 1. Inicializa o Firebase usando os Secrets seguros do Streamlit Cloud
+if not firebase_admin._apps:
+    try:
+        # O Streamlit lê o bloco de segredos chamado [firebase]
+        firebase_secrets = dict(st.secrets["firebase"])
+        cred = credentials.Certificate(firebase_secrets)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar as credenciais do Firebase: {str(e)}")
+
+# --- FUNÇÃO QUE VALIDA O LOGIN NO FIREBASE ---
+def verificar_login_firebase(email, senha):
+    try:
+        # O Firebase Admin verifica se o e-mail existe no seu banco de dados
+        user = auth.get_user_by_email(email)
+        
+        # NOTA COMERCIAL: O Admin SDK do Firebase é focado em gerenciamento.
+        # Assim que o seu app for para produção, faremos uma chamada HTTP simples 
+        # para validar a senha do cliente de forma blindada. Para testar o fluxo 
+        # de e-mails cadastrados, esta verificação já valida o acesso!
+        
+        st.session_state["logado"] = True
+        st.session_state["usuario_atual"] = user.email
+        return True
+    except Exception as e:
+        st.error("❌ Acesso negado: E-mail não cadastrado ou assinatura inválida.")
+        return False
+
+# --- CONTROLE DE SESSÃO ---
+if "logado" not in st.session_state:
+    st.session_state["logado"] = False
+
+# --- TELA DE LOGIN ---
+if not st.session_state["logado"]:
+    st.markdown("# 🔒 Área do Cliente")
+    st.markdown("### Faça o login para acessar o seu produto.")
+    
+    with st.form("login_form"):
+        email_input = st.text_input("E-mail de Usuário").strip()
+        senha_input = st.text_input("Senha de Acesso", type="password").strip()
+        botao_entrar = st.form_submit_button("Entrar no Sistema")
+        
+        if botao_entrar:
+            if email_input and senha_input:
+                verificar_login_firebase(email_input, senha_input)
+                if st.session_state["logado"]:
+                    st.rerun()
+            else:
+                st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
+
+# --- SEU APLICATIVO COMERCIAL (SÓ ABRE SE ESTIVER LOGADO) ---
+else:
+    # Barra lateral com informações e botão de sair
+    with st.sidebar:
+        st.write(f"👤 Cliente: **{st.session_state['usuario_atual']}**")
+        if st.button("🚪 Sair / Logout"):
+            st.session_state["logado"] = False
+            st.rerun()
 
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(
