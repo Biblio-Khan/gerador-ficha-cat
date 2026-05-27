@@ -7,13 +7,15 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import firebase_admin
 from firebase_admin import credentials, auth
-import json
 
-# Inicializa o Firebase usando a estrutura TOML limpa
 if not firebase_admin._apps:
     try:
-        # Puxa o dicionário estruturado e inicia o SDK do Google
+        # Puxa os dados salvos nos Secrets
         firebase_secrets = dict(st.secrets["firebase"])
+        
+        # Correção cirúrgica: substitui as barras de texto por quebras de linha reais
+        firebase_secrets["private_key"] = firebase_secrets["private_key"].replace("\\n", "\n")
+        
         cred = credentials.Certificate(firebase_secrets)
         firebase_admin.initialize_app(cred)
     except Exception as e:
