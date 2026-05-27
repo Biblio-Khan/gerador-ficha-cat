@@ -12,18 +12,15 @@ from firebase_admin import credentials, auth
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
 # =========================================================================
 
-# Configuração da página deve ser o primeiro comando Streamlit executado
 st.set_page_config(
     page_title="Gerador de Fichas Jurídicas - VCB Senado",
     page_icon="⚖️",
     layout="wide"
 )
 
-# Inicializa o Firebase lendo a estrutura TOML corrigida dos Secrets
 if not firebase_admin._apps:
     try:
         firebase_secrets = dict(st.secrets["firebase"])
-        # Corrige dinamicamente as quebras de linha da chave criptográfica
         firebase_secrets["private_key"] = firebase_secrets["private_key"].replace("\\n", "\n")
         
         cred = credentials.Certificate(firebase_secrets)
@@ -35,7 +32,6 @@ if not firebase_admin._apps:
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
 
-# --- FUNÇÃO QUE VALIDA O LOGIN NO FIREBASE ---
 def verificar_login_firebase(email, senha):
     try:
         user = auth.get_user_by_email(email)
@@ -46,7 +42,6 @@ def verificar_login_firebase(email, senha):
         st.error("❌ Acesso negado: E-mail não cadastrado ou credenciais inválidas.")
         return False
 
-# Inicialização do controle de estado de login
 if "logado" not in st.session_state:
     st.session_state["logado"] = False
 
@@ -55,7 +50,6 @@ if "logado" not in st.session_state:
 # =========================================================================
 
 if not st.session_state["logado"]:
-    # --- TELA DE LOGIN (EXIBIDA SE NÃO ESTIVER LOGADO) ---
     st.markdown("# 🔒 Área do Cliente")
     st.markdown("### Faça o login para acessar o Gerador de Fichas Jurídicas.")
     
@@ -72,32 +66,18 @@ if not st.session_state["logado"]:
             else:
                 st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
 
-    # --- SEÇÃO: ESQUECI A SENHA (EXPANSÍVEL PARA NÃO POLUIR A TELA) ---
+    # --- SEÇÃO: ESQUECI A SENHA (VERSÃO MANUAL INSTRUTIVA) ---
     st.markdown("---")
     with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
-        st.markdown("Digite seu e-mail cadastrado abaixo. O sistema enviará um link para você redefinir sua senha com segurança.")
+        st.markdown("""
+        Como medida de segurança, a alteração de credenciais é validada diretamente pela administração.
         
-        email_recuperar = st.text_input("E-mail Cadastrado", key="email_recuperacao").strip()
-        botao_recuperar = st.button("📧 Enviar E-mail de Recuperação")
-        
-        if botao_recuperar:
-            if email_recuperar:
-                try:
-                    # O Firebase Admin gera o link oficial de redefinição de senha
-                    # e o Firebase envia o e-mail automaticamente para o usuário
-                    auth.generate_password_reset_link(email_recuperar)
-                    
-                    st.success(f"✅ Link de redefinição enviado com sucesso para **{email_recuperar}**!")
-                    st.info("💡 Verifique sua Caixa de Entrada e também a pasta de Spam/Lixo Eletrônico.")
-                except Exception as e:
-                    st.error("❌ Erro: Não encontramos este e-mail na nossa base de clientes autorizados.")
-            else:
-                st.warning("⚠️ Por favor, digite o seu e-mail antes de clicar no botão.")
+        Para redefinir sua senha, entre em contato diretamente com o suporte técnico da **Sabrina Lobeu** através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
+        """)
 
 else:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
     
-    # Barra lateral administrativa do cliente logado
     with st.sidebar:
         st.markdown("### 👤 Sessão Ativa")
         st.write(f"Cliente: **{st.session_state['usuario_atual']}**")
@@ -112,7 +92,6 @@ else:
         st.markdown("---")
         st.caption("Ecossistema livre de campos redundantes e calibrado para literatura jurídica.")
 
-    # Estilização CSS para forçar visualização monoespaçada
     st.markdown("""
         <style>
         textarea {
@@ -121,14 +100,12 @@ else:
         </style>
         """, unsafe_allow_html=True)
 
-    # Inicialização das variáveis de estado internas do WebApp
     if "lote_fichas" not in st.session_state:
         st.session_state.lote_fichas = []
 
     if "assuntos_selecionados" not in st.session_state:
         st.session_state.assuntos_selecionados = []
 
-    # --- FUNÇÃO DE CONEXÃO E TRATAMENTO DA API DO SENADO ---
     def buscar_vcb_senado(termo_busca):
         url_api = "https://adm.senado.leg.br/vcb/vocab/services.php"
         params = {
@@ -155,7 +132,6 @@ else:
             return []
         return []
 
-    # --- FUNÇÃO PARA GERAR O ARQUIVO DO WORD (.DOCX) ---
     def gerar_docx_lote(lista_fichas):
         doc = Document()
         style = doc.styles['Normal']
@@ -173,7 +149,6 @@ else:
         buffer.seek(0)
         return buffer
 
-    # --- REGRAS DE ENTRADA CATALOGRÁFICA (AACR2/RDA) ---
     def formatar_entrada_e_corpo(tipo_autor, autores_lista, entidade, titulo, tem_organizador, organizador_nome, tipo_org, tem_tradutor, tradutor_nome):
         entrada = ""
         corpo_autores = ""
@@ -229,11 +204,9 @@ else:
         letra_titulo = titulo.strip()[0].lower() if titulo else "x"
         return f"{letra}123{letra_titulo}"
 
-    # --- RENDERIZAÇÃO DA INTERFACE VISUAL DO SEU APP ---
     st.title("⚖️ Gerador de Fichas Jurídicas — Módulo Avançado NBR/AACR2")
     st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
 
-    # PAINEL DE CONTROLE DO LOTE
     st.markdown("---")
     container_lote = st.container()
     with container_lote:
@@ -354,8 +327,17 @@ else:
         st.markdown("---")
         st.subheader("4. Fechamento e Visualização da Ficha")
         
+        # --- CORREÇÃO DA CHAMADA AQUI (Mapeando os parâmetros corretamente) ---
         entrada_principal, responsabilidade, entrada_por_titulo = formatar_entrada_e_corpo(
-            tipo_autor, autores_lista, entity_name=entidade_nome, titulo=titulo, tem_organizador=tem_organizador, organizador_nome=organizador_nome, tipo_org=tipo_org, tem_tradutor=tem_tradutor, tradutor_nome=tradutor_nome
+            tipo_autor=tipo_autor, 
+            autores_lista=autores_lista, 
+            entidade=entidade_nome, 
+            titulo=titulo, 
+            tem_organizador=tem_organizador, 
+            organizador_nome=organizador_nome, 
+            tipo_org=tipo_org, 
+            tem_tradutor=tem_tradutor, 
+            tradutor_nome=tradutor_nome
         )
         
         cutter = calcular_cutter(tipo_autor, autores_lista, entidade=entidade_nome, titulo=titulo, tem_organizador=tem_organizador, organizador_nome=organizador_nome)
@@ -418,7 +400,7 @@ else:
             valido = True
             if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                 valido = False
-            if tipo_autor == "Entidade (Órgão/Instituição)" and not entity_name.strip():
+            if tipo_autor == "Entidade (Órgão/Instituição)" and not entidade_nome.strip():
                 valido = False
                 
             if valido and titulo.strip():
