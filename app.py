@@ -11,20 +11,14 @@ from firebase_admin import credentials, auth
 st.set_page_config(page_title="BiblioKhan", page_icon="💻", layout="wide")
 # --- ADICIONAR A LOGO NA BARRA LATERAL ---
 st.sidebar.image("logo_bibliokhan.png", use_container_width=True)
- with st.sidebar:
-        st.markdown("### 👤 Sessão Ativa")
-        st.write(f"Cliente: **{st.session_state['usuario_atual']}**")
-        if st.button("🚪 Sair / Terminar Acesso"):
-            st.session_state["logado"] = False
-            st.rerun()
-        st.markdown("---")
-        st.sidebar.title("### 🎓 Autoria do Sistema")
-        st.siderbar.write("Desenvolvido e idealizado por:")
-        st.sidebar.write("**BiblioKhan** — *Inteligência e automação para Bibliotecas*")
-        st.sidebar.write("✉️ [sabslobeu@gmail.com](mailto:sabslobeu@gmail.com)")
-        st.markdown("---")
-        st.caption("Ecossistema livre de campos redundantes e calibrado para literatura jurídica.")
+ # --- BARRA LATERAL (Tudo encostado na esquerda) ---
+with st.sidebar:
+    st.image("logo_bibliokhan.png", width=180)  # 4 espaços de recuo
+    st.title("BiblioKhan")                      # 4 espaços de recuo
+    st.write("Gerador de Fichas")               # 4 espaços de recuo
+    st.markdown("---")                          # 4 espaços de recuo
 
+# ... resto do seu código (sem espaços na frente se for o fluxo principal)
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
 # =========================================================================
