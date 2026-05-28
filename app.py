@@ -11,6 +11,20 @@ from firebase_admin import credentials, auth
 st.set_page_config(page_title="BiblioKhan", page_icon="💻", layout="wide")
 # --- ADICIONAR A LOGO NA BARRA LATERAL ---
 st.sidebar.image("logo_bibliokhan.png", use_container_width=True)
+ with st.sidebar:
+        st.markdown("### 👤 Sessão Ativa")
+        st.write(f"Cliente: **{st.session_state['usuario_atual']}**")
+        if st.button("🚪 Sair / Terminar Acesso"):
+            st.session_state["logado"] = False
+            st.rerun()
+        st.markdown("---")
+        st.sidebar.title("### 🎓 Autoria do Sistema")
+        st.siderbar.write("Desenvolvido e idealizado por:")
+        st.sidebar.write("**BiblioKhan** — *Inteligência e automação para Bibliotecas*")
+        st.sidebar.write("✉️ [sabslobeu@gmail.com](mailto:sabslobeu@gmail.com)")
+        st.markdown("---")
+        st.caption("Ecossistema livre de campos redundantes e calibrado para literatura jurídica.")
+
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
 # =========================================================================
@@ -81,20 +95,6 @@ if not st.session_state["logado"]:
 else:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
     
-    with st.sidebar:
-        st.markdown("### 👤 Sessão Ativa")
-        st.write(f"Cliente: **{st.session_state['usuario_atual']}**")
-        if st.button("🚪 Sair / Terminar Acesso"):
-            st.session_state["logado"] = False
-            st.rerun()
-        st.markdown("---")
-        st.sidebar.title("### 🎓 Autoria do Sistema")
-        st.siderbar.write("Desenvolvido e idealizado por:")
-        st.sidebar.write("**BiblioKhan** — *Inteligência e automação para Bibliotecas*")
-        st.sidebar.write("✉️ [sabslobeu@gmail.com](mailto:sabslobeu@gmail.com)")
-        st.markdown("---")
-        st.caption("Ecossistema livre de campos redundantes e calibrado para literatura jurídica.")
-
     st.markdown("""
         <style>
         textarea {
@@ -229,7 +229,7 @@ else:
                 
         return f"{letra}123{letra_titulo}"
 
-    st.title("⚖️ Gerador de Fichas Jurídicas — Módulo Avançado NBR/AACR2")
+    st.title("⚖️ Gerador de Fichas Jurídicas — NBR/AACR2")
     st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
 
     st.markdown("---")
