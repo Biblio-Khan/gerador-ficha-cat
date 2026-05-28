@@ -88,10 +88,10 @@ else:
             st.session_state["logado"] = False
             st.rerun()
         st.markdown("---")
-        st.markdown("### 🎓 Autoria do Sistema")
-        st.markdown("Desenvolvido e idealizado por:")
-        st.markdown("**Sabrina Lobeu** — *Bibliotecária*")
-        st.markdown("✉️ [sabslobeu@gmail.com](mailto:sabslobeu@gmail.com)")
+        st.sidebar.title("### 🎓 Autoria do Sistema")
+        st.siderbar.write("Desenvolvido e idealizado por:")
+        st.sidebar.write("**BiblioKhan** — *Inteligência e automação para Bibliotecas*")
+        st.sidebar.write("✉️ [sabslobeu@gmail.com](mailto:sabslobeu@gmail.com)")
         st.markdown("---")
         st.caption("Ecossistema livre de campos redundantes e calibrado para literatura jurídica.")
 
