@@ -1,0 +1,15 @@
+[theme]
+# Cor principal do sistema (botões, links, destaques)
+primaryColor = "#8A2BE2"
+
+# Cor de fundo da área principal (um cinza bem claro, quase branco)
+backgroundColor = "#F8F9FA"
+
+# Cor de fundo da barra lateral (onde está a sua logo)
+secondaryBackgroundColor = "#F0E6FF"
+
+# Cor do texto principal (para dar excelente leitura)
+textColor = "#2F4F4F"
+
+# Fonte do sistema
+font = "sans serif"
