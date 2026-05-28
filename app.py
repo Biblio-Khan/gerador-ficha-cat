@@ -13,8 +13,8 @@ st.set_page_config(page_title="BiblioKhan", page_icon="💻", layout="wide")
 st.sidebar.image("logo_bibliokhan.png", use_container_width=True)
  # --- BARRA LATERAL (Tudo encostado na esquerda) ---
 with st.sidebar:
-    st.title("BiblioKhan")                      # 4 espaços de recuo
-    st.write("*Criado e desenvolvido por BiblioKhan*")               # 4 espaços de recuo
+    st.title("**BiblioKhan**")                      # 4 espaços de recuo
+    st.write("*Inteligência e automação para Bibliotecas*")               # 4 espaços de recuo
     st.markdown("---")                          # 4 espaços de recuo
 
 # ... resto do seu código (sem espaços na frente se for o fluxo principal)
