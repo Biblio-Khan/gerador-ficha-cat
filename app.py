@@ -8,6 +8,9 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 import firebase_admin
 from firebase_admin import credentials, auth
 
+st.set_page_config(page_title="BiblioKhan", page_icon="💻", layout="wide")
+# --- ADICIONAR A LOGO NA BARRA LATERAL ---
+st.sidebar.image("logo_bibliokhan.png", use_container_width=True)
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
 # =========================================================================
