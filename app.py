@@ -8,7 +8,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 import firebase_admin
 from firebase_admin import credentials, auth
 
-st.set_page_config(page_title="BiblioKhan", page_icon="💻", layout="wide")
+st.set_page_config(page_title="BiblioKhan", page_icon="logo_bibliokhan.ico", layout="wide")
 # --- ADICIONAR A LOGO NA BARRA LATERAL ---
 st.sidebar.image("logo_bibliokhan.png", use_container_width=True)
  # --- BARRA LATERAL (Tudo encostado na esquerda) ---
@@ -25,7 +25,7 @@ with st.sidebar:
 
 st.set_page_config(
     page_title="Gerador de Fichas Jurídicas - VCB Senado",
-    page_icon="⚖️",
+    page_icon="logo_bibliokhan.ico",
     layout="wide"
 )
 
