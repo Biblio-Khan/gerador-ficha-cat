@@ -15,7 +15,7 @@ st.sidebar.image("logo_bibliokhan.png", use_container_width=True)
 with st.sidebar:
     st.title("**BiblioKhan**")                      # 4 espaços de recuo
     st.write("**Inteligência e Automação para Bibliotecas**")
-    st.write("email")                           # 4 espaços de recuo
+    st.write("bibliokhancontato@gmail.com")                           # 4 espaços de recuo
     st.markdown("---")                          # 4 espaços de recuo
 
 # ... resto do seu código (sem espaços na frente se for o fluxo principal)
