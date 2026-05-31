@@ -568,7 +568,7 @@ else:
                             
                             if resposta_tg.status_code == 200:
                                 st.success("✅ Comprovante enviado com sucesso!")
-                                st.info("⏳ O seu saldo será atualizado na planilha assim que a validação for concluída.")
+                                st.info("⏳ O seu saldo será atualizado assim que a validação for concluída.")
                             else:
                                 st.error(f"Erro na API de comunicação (Código {resposta_tg.status_code}).")
                         except Exception as e:
