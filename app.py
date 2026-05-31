@@ -249,20 +249,36 @@ else:
 
     def buscar_na_tabela_cutter(texto_para_busca, titulo_obra):
         if not texto_para_busca or not titulo_obra: return "X000x"
-        df = pd.read_csv("https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv", sep=';', encoding='utf-8')
         
-        # Transforma os cabeçalhos em minúsculo removendo espaços extras ocultos
+        url_csv = "https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv"
+        
+        try:
+            # Lê o CSV usando vírgula como separador oficial e tratando as aspas corretamente
+            df = pd.read_csv(url_csv, sep=',', encoding='utf-8', quotechar='"')
+        except Exception:
+            # Fallback de segurança caso o GitHub fique fora do ar
+            return f"{texto_para_busca.strip().upper()[0]}200{titulo_obra.strip().lower()[0]}"
+        
+        # Normaliza os cabeçalhos para minúsculo
         df.columns = df.columns.str.strip().str.lower()
         
-        # Mapeamento dinâmico e seguro das colunas do CSV
+        # Vincula as colunas 'name' e 'id' de forma segura
         col_nome = 'name' if 'name' in df.columns else df.columns[0]
         col_id = 'id' if 'id' in df.columns else df.columns[1]
         
+        # Limpa e padroniza a coluna de busca
         df['Name_Clean'] = df[col_nome].astype(str).str.strip().str.upper()
         sub_busca = texto_para_busca.strip().upper()
         
+        # Faz a busca na tabela Cutter (pega o último menor ou igual)
         match = df[df['Name_Clean'] <= sub_busca].sort_values(by='Name_Clean').tail(1)
-        num = match[col_id].values[0] if not match.empty else "200"
+        
+        num = "200"
+        if not match.empty:
+            # Converte para string e remove possíveis '.0' de números flutuantes
+            num = str(match[col_id].values[0]).strip().split('.')[0]
+            
+        # Retorna a primeira letra do autor + número do Cutter + primeira letra do título
         return f"{sub_busca[0]}{num}{titulo_obra.strip().lower()[0]}"
 
     def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
