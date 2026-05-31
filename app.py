@@ -249,36 +249,28 @@ else:
 
     def gerar_numero_cutter(sobrenome_autor, titulo_obra):
         URL_CUTTER_CSV = "https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv"
+    
     if not sobrenome_autor or not titulo_obra:
         return ""
-  try:
-        # Lê o CSV do GitHub. Ajuste o 'sep' para ',' se o seu arquivo usar vírgula
+        
+    try:
         df_cutter = pd.read_csv(URL_CUTTER_CSV, sep=';', encoding='utf-8')
         
-        # Limpa e padroniza os dados para evitar erros de maiúsculas/minúsculas
         sobrenome_busca = sobrenome_autor.strip().upper()
-        letra_inicial = sobrenome_busca[0] # Primeira letra do sobrenome (Maiúscula)
-        letra_titulo = titulo_obra.strip().lower()[0] # Primeira letra do título (Minúscula)
+        letra_inicial = sobrenome_busca[0]
+        letra_titulo = titulo_obra.strip().lower()[0]
         
-        # Garante que a coluna 'Name' do CSV também seja tratada como texto e maiúscula
         df_cutter['Name_Clean'] = df_cutter['Name'].astype(str).str.strip().str.upper()
         
-        # 🔍 LÓGICA DO CUTTER: Procura a linha onde o 'Name' mais se aproxima (menor ou igual) ao sobrenome buscado
-        # Exemplo: Se buscar "SILVA", ele vai achar a linha "SILV" ou "SIL" que vem logo antes na tabela
         match = df_cutter[df_cutter['Name_Clean'] <= sobrenome_busca].sort_values(by='Name_Clean').tail(1)
         
         if not match.empty:
-            # Pega o número correspondente na coluna 'ID'
             numero_cutter = match['ID'].values[0]
-            
-            # Monta a combinação clássica: LetraInicial + Número + LetraDoTítulo
             return f"{letra_inicial}{numero_cutter}{letra_titulo}"
         else:
-            # Caso não ache nenhuma aproximação (ex: sobrenomes muito raros), usa uma numeração padrão
             return f"{letra_inicial}200{letra_titulo}"
             
     except Exception as e:
-        # Se der erro ao ler o GitHub, avisa no painel mas não trava o app inteiro
         st.error(f"Erro ao calcular o Cutter: {e}")
         return "Erro Tabela"
 
