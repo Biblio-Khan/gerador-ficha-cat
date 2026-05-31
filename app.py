@@ -132,7 +132,7 @@ if not st.session_state["logado"]:
         st.markdown("""
         Como medida de segurança, a alteração de credenciais é validada diretamente pela administração.
         
-        Para redefinir sua senha, entre em contato diretamente com o suporte técnico da **Sabrina Lobeu** através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
+        Para redefinir sua senha, entre em contato diretamente com o suporte técnico através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
         """)
 
 else:
@@ -282,7 +282,7 @@ else:
     # =========================================================================
     # 🌟 IMPLEMENTAÇÃO DO SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS COM TELEGRAM)
     # =========================================================================
-    tab_gerador, tab_financeiro = st.tabs(["⚖️ Catalogação em Lote", "💳 Compra e Gestão de Créditos"])
+    tab_gerador, tab_financeiro = st.tabs(["⚖️ Gerar Ficha", "💳 Compra e Gestão de Créditos"])
 
     with tab_gerador:
         if st.session_state["creditos_ativos"] <= 0:
@@ -491,7 +491,7 @@ else:
                     st.session_state["creditos_ativos"] -= 1
                     st.session_state.assuntos_selecionados = [] 
                     st.success("Ficha guardada com sucesso no lote superior! Crédito deduzido.")
-                    st. those()
+                    st.rerun() #  O correto é st.rerun()
                 else:
                     st.error("Preencha os campos de autoria/organização e o título.")
 
@@ -514,8 +514,8 @@ else:
         with col_f2:
             st.subheader("🛒 Tabela de Preços")
             st.markdown("""
-            * **30 Fichas** — R$ 49,90 *(R$ 1,66/un)*
-            * **60 Fichas** — R$ 89,90 ⚡ *Economize R$ 9,90!*
+            * **30 Fichas** — R$ 49,90 
+            * **60 Fichas** — R$ 89,90
             * **100 Fichas** — R$ 129,00
             * **300 Fichas** — R$ 299,00
             * **500 Fichas** — R$ 499,00 🚀
@@ -526,11 +526,11 @@ else:
         st.subheader("📩 Envio de Comprovante")
         
         with st.form("pix_form_original"):
-            nome_cliente = st.text_input("Nome Completo")
             
+      
             # Puxa o e-mail do Firebase de forma padrão e oculta digitação manual
             email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=st.session_state["usuario_atual"], disabled=True)
-            
+           
             # Caixa de seleção com os pacotes informados
             pacote_escolhido = st.selectbox(
                 "Qual pacote de créditos você comprou?",
