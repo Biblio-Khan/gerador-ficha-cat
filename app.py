@@ -546,20 +546,19 @@ else:
             comprovante = st.file_uploader("Anexe a imagem ou PDF do comprovante do PIX", type=["jpg", "png", "jpeg", "pdf"])
             
             if st.form_submit_button("Enviar para Restauração de Saldo"):
-                if nome_cliente.strip() and comprovante is not None:
+                if comprovante is not None: #  Agora ele só checa se o arquivo foi anexado!
                     with st.spinner("Enviando comprovante para o suporte... Por favor, aguarde."):
                         try:
                             # Resgata de forma limpa do st.secrets
                             tg_token = st.secrets["TELEGRAM_BOT_TOKEN"]
                             tg_chat = st.secrets["TELEGRAM_CHAT_ID"]
-                            
-                            texto_notificacao = (
-                                f"🔥 *NOVO COMPROVANTE RECEBIDO!*\n\n"
-                                f"👤 *Cliente:* {nome_cliente.strip()}\n"
-                                f"📧 *E-mail:* {st.session_state['usuario_atual']}\n"
-                                f"💰 *Pacote Escolhido:* {pacote_escolhido}\n"
-                                f"📅 *Data/Hora:* {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
-                            )
+                
+                texto_notificacao = (
+                    f"🔥 *NOVO COMPROVANTE RECEBIDO!*\n\n"
+                    f"📧 *E-mail do Cliente:* {st.session_state['usuario_atual']}\n" #  Usa o email direto do login
+                    f"💰 *Pacote Escolhido:* {pacote_escolhido}\n"
+                    f"📅 *Data/Hora:* {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+                )
                             
                             url_api_telegram = f"https://api.telegram.org/bot{tg_token}/sendPhoto"
                             ficheiro_envio = {"photo": (comprovante.name, comprovante.getvalue(), comprovante.type)}
