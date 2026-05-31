@@ -247,38 +247,47 @@ else:
                 
         return entrada, corpo_autores, entrada_por_titulo
 
-    def calcular_cutter(tipo_autor, autores_lista, entidade, titulo, tem_organizador, organizador_nome):
-        referencia = ""
-        if tipo_autor == "Entidade (Órgão/Instituição)" and entidade:
-            referencia = entidade.strip()
-        elif tem_organizador and not any(a.strip() for a in autores_lista) and organizador_nome:
-            referencia = organizador_nome.strip().split()[-1]
-        elif autores_lista and autores_lista[0].strip():
-            referencia = autores_lista[0].strip().split()[-1]
-        else:
-            referencia = titulo.strip() if titulo else "X"
-            
-        letra = referencia[0].upper() if referencia else "X"
+    def gerar_numero_cutter(sobrenome_autor, titulo_obra):
+    """
+    Busca o número Cutter correto a partir do CSV no GitHub usando as colunas 'Name' e 'ID'.
+    """
+    # ⚠️ LEMBRE-SE: Troque este link pelo link "RAW" do seu arquivo no GitHub!
+    URL_CUTTER_CSV = "raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv"
+    
+    # Se o sobrenome ou título estiverem vazios, não faz a busca
+    if not sobrenome_autor or not titulo_obra:
+        return ""
         
-        letra_titulo = "x"
-        if titulo:
-            titulo_limpo = titulo.strip().lower()
+    try:
+        # Lê o CSV do GitHub. Ajuste o 'sep' para ',' se o seu arquivo usar vírgula
+        df_cutter = pd.read_csv(URL_CUTTER_CSV, sep=';', encoding='utf-8')
+        
+        # Limpa e padroniza os dados para evitar erros de maiúsculas/minúsculas
+        sobrenome_busca = sobrenome_autor.strip().upper()
+        letra_inicial = sobrenome_busca[0] # Primeira letra do sobrenome (Maiúscula)
+        letra_titulo = titulo_obra.strip().lower()[0] # Primeira letra do título (Minúscula)
+        
+        # Garante que a coluna 'Name' do CSV também seja tratada como texto e maiúscula
+        df_cutter['Name_Clean'] = df_cutter['Name'].astype(str).str.strip().str.upper()
+        
+        # 🔍 LÓGICA DO CUTTER: Procura a linha onde o 'Name' mais se aproxima (menor ou igual) ao sobrenome buscado
+        # Exemplo: Se buscar "SILVA", ele vai achar a linha "SILV" ou "SIL" que vem logo antes na tabela
+        match = df_cutter[df_cutter['Name_Clean'] <= sobrenome_busca].sort_values(by='Name_Clean').tail(1)
+        
+        if not match.empty:
+            # Pega o número correspondente na coluna 'ID'
+            numero_cutter = match['ID'].values[0]
             
-            artigos = [
-                "o ", "a ", "os ", "as ", 
-                "um ", "uma ", "uns ", "umas ",
-                "the ", "le ", "la ", "les "
-            ]
+            # Monta a combinação clássica: LetraInicial + Número + LetraDoTítulo
+            return f"{letra_inicial}{numero_cutter}{letra_titulo}"
+        else:
+            # Caso não ache nenhuma aproximação (ex: sobrenomes muito raros), usa uma numeração padrão
+            return f"{letra_inicial}200{letra_titulo}"
             
-            for artigo in artigos:
-                if titulo_limpo.startswith(artigo):
-                    titulo_limpo = titulo_limpo[len(artigo):].strip()
-                    break
-                    
-            if titulo_limpo:
-                letra_titulo = titulo_limpo[0].lower()
-                
-        return f"{letra}123{letra_titulo}"
+    except Exception as e:
+        # Se der erro ao ler o GitHub, avisa no painel mas não trava o app inteiro
+        st.error(f"Erro ao calcular o Cutter: {e}")
+        return "Erro Tabela"
 
     # =========================================================================
     # 🌟 IMPLEMENTAÇÃO DO SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS COM TELEGRAM)
