@@ -247,7 +247,7 @@ else:
                 
         return entrada, corpo_autores, entrada_por_titulo
 
-    def gerar_numero_cutter(sobrenome_autor, titulo_obra):
+    def calcular_cutter(sobrenome_autor, titulo_obra):
         if not sobrenome_autor or not titulo_obra: return ""
         df = pd.read_csv("https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv", sep=';', encoding='utf-8')
         df['Name_Clean'] = df['Name'].astype(str).str.strip().str.upper()
