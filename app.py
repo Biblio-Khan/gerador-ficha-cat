@@ -85,7 +85,7 @@ def verificar_login_firebase(email, senha):
         user = auth.get_user_by_email(email)
         st.session_state["logado"] = True
         st.session_state["usuario_atual"] = user.email
-        # Atualiza os créditos automaticamente ao logar com o e-mail cadastrado
+        # Ultiliza os créditos automaticamente ao logar com o e-mail cadastrado
         atualizar_saldo_usuario(user.email)
         return True
     except Exception as e:
@@ -250,10 +250,19 @@ else:
     def buscar_na_tabela_cutter(texto_para_busca, titulo_obra):
         if not texto_para_busca or not titulo_obra: return "X000x"
         df = pd.read_csv("https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv", sep=';', encoding='utf-8')
-        df['Name_Clean'] = df['Name'].astype(str).str.strip().str.upper()
+        
+        # Transforma os cabeçalhos em minúsculo removendo espaços extras ocultos
+        df.columns = df.columns.str.strip().str.lower()
+        
+        # Mapeamento dinâmico e seguro das colunas do CSV
+        col_nome = 'name' if 'name' in df.columns else df.columns[0]
+        col_id = 'id' if 'id' in df.columns else df.columns[1]
+        
+        df['Name_Clean'] = df[col_nome].astype(str).str.strip().str.upper()
         sub_busca = texto_para_busca.strip().upper()
+        
         match = df[df['Name_Clean'] <= sub_busca].sort_values(by='Name_Clean').tail(1)
-        num = match['ID'].values[0] if not match.empty else "200"
+        num = match[col_id].values[0] if not match.empty else "200"
         return f"{sub_busca[0]}{num}{titulo_obra.strip().lower()[0]}"
 
     def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
@@ -470,7 +479,7 @@ else:
                 valido = True
                 if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                     valido = False
-                if tipo_autor == "Entidade (Órgão/Instituição)" and not entity_nome.strip():
+                if tipo_autor == "Entidade (Órgão/Instituição)" and not entidade_nome.strip():
                     valido = False
                     
                 if valido and titulo.strip():
