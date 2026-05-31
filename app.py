@@ -553,12 +553,12 @@ else:
                             tg_token = st.secrets["TELEGRAM_BOT_TOKEN"]
                             tg_chat = st.secrets["TELEGRAM_CHAT_ID"]
                 
-                texto_notificacao = (
-                    f"🔥 *NOVO COMPROVANTE RECEBIDO!*\n\n"
-                    f"📧 *E-mail do Cliente:* {st.session_state['usuario_atual']}\n" #  Usa o email direto do login
-                    f"💰 *Pacote Escolhido:* {pacote_escolhido}\n"
-                    f"📅 *Data/Hora:* {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
-                )
+                            texto_notificacao = (
+                                f"🔥 *NOVO COMPROVANTE RECEBIDO!*\n\n"
+                                f"📧 *E-mail do Cliente:* {st.session_state['usuario_atual']}\n" #  Usa o email direto do login
+                                f"💰 *Pacote Escolhido:* {pacote_escolhido}\n"
+                                f"📅 *Data/Hora:* {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+                            )
                             
                             url_api_telegram = f"https://api.telegram.org/bot{tg_token}/sendPhoto"
                             ficheiro_envio = {"photo": (comprovante.name, comprovante.getvalue(), comprovante.type)}
