@@ -251,8 +251,7 @@ else:
         URL_CUTTER_CSV = "https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv"
     if not sobrenome_autor or not titulo_obra:
         return ""
-        
-    try:
+  try:
         # Lê o CSV do GitHub. Ajuste o 'sep' para ',' se o seu arquivo usar vírgula
         df_cutter = pd.read_csv(URL_CUTTER_CSV, sep=';', encoding='utf-8')
         
