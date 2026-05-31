@@ -248,7 +248,7 @@ else:
         return entrada, corpo_autores, entrada_por_titulo
 
     def gerar_numero_cutter(sobrenome_autor, titulo_obra):
-    return "S123c"
+        return "S123c"
 
     # =========================================================================
     # 🌟 IMPLEMENTAÇÃO DO SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS COM TELEGRAM)
