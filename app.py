@@ -248,11 +248,10 @@ else:
         return entrada, corpo_autores, entrada_por_titulo
 
     def gerar_numero_cutter(sobrenome_autor, titulo_obra):
+    """ #  Agora tem 4 espaços (ou 1 Tab) de recuo!
+    Busca o número Cutter correto a partir do CSV no GitHub.
     """
-    Busca o número Cutter correto a partir do CSV no GitHub usando as colunas 'Name' e 'ID'.
-    """
-    # ⚠️ LEMBRE-SE: Troque este link pelo link "RAW" do seu arquivo no GitHub!
-        URL_CUTTER_CSV = "raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv"
+    URL_CUTTER_CSV = "https://raw.githubusercontent.com/..."
     
     # Se o sobrenome ou título estiverem vazios, não faz a busca
     if not sobrenome_autor or not titulo_obra:
