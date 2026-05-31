@@ -217,7 +217,7 @@ else:
             entrada = ""
             corpo_autores = f"{tipo_org} por {organizador_nome.strip()}"
         elif tipo_autor == "Entidade (Órgão/Instituição)":
-            entrada = entidade.strip().upper()
+            entrada = entity = entidade.strip().upper()
             corpo_autores = ""
         else:
             autores = [a.strip() for a in autores_lista if a.strip()]
@@ -266,7 +266,7 @@ else:
         col_nome = 'name' if 'name' in df.columns else df.columns[0]
         col_id = 'id' if 'id' in df.columns else df.columns[1]
         
-        # Limpa e padroniza a coluna de busca
+        # Limpa e padroniza a coluna de busca do autor
         df['Name_Clean'] = df[col_nome].astype(str).str.strip().str.upper()
         sub_busca = texto_para_busca.strip().upper()
         
@@ -275,11 +275,22 @@ else:
         
         num = "200"
         if not match.empty:
-            # Converte para string e remove possíveis '.0' de números flutuantes
             num = str(match[col_id].values[0]).strip().split('.')[0]
             
-        # Retorna a primeira letra do autor + número do Cutter + primeira letra do título
-        return f"{sub_busca[0]}{num}{titulo_obra.strip().lower()[0]}"
+        # --- LÓGICA ATUALIZADA: IGNORAR ARTIGOS NO INÍCIO DO TÍTULO ---
+        titulo_limpo = titulo_obra.strip().upper()
+        artigos = ["O ", "A ", "OS ", "AS ", "UM ", "UMA ", "UNS ", "UMAS "]
+        
+        for artigo in artigos:
+            if titulo_limpo.startswith(artigo):
+                titulo_limpo = titulo_limpo[len(artigo):].strip()
+                break # Interrompe no primeiro artigo encontrado
+                
+        # Pega a primeira letra da primeira palavra significativa do título
+        letra_titulo = titulo_limpo[0].lower() if titulo_limpo else "t"
+            
+        # Retorna a primeira letra do autor + número do Cutter + primeira letra do título corrigido
+        return f"{sub_busca[0]}{num}{letra_titulo}"
 
     def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
         if tipo_autor == "Entidade (Órgão/Instituição)" or entidade:
