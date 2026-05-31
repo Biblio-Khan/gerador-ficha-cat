@@ -8,6 +8,7 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import firebase_admin
 from firebase_admin import credentials, auth
+from datetime import datetime, timezone, timedelta
 
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
