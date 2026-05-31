@@ -217,7 +217,7 @@ else:
             entrada = ""
             corpo_autores = f"{tipo_org} por {organizador_nome.strip()}"
         elif tipo_autor == "Entidade (Órgão/Instituição)":
-            entrada = entity = entidade.strip().upper()
+            entrada = entidade.strip().upper()
             corpo_autores = ""
         else:
             autores = [a.strip() for a in autores_lista if a.strip()]
@@ -253,52 +253,51 @@ else:
         url_csv = "https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv"
         
         try:
-            # Lê o CSV usando vírgula como separador oficial e tratando as aspas corretamente
             df = pd.read_csv(url_csv, sep=',', encoding='utf-8', quotechar='"')
         except Exception:
-            # Fallback de segurança caso o GitHub fique fora do ar
             return f"{texto_para_busca.strip().upper()[0]}200{titulo_obra.strip().lower()[0]}"
         
-        # Normaliza os cabeçalhos para minúsculo
         df.columns = df.columns.str.strip().str.lower()
         
-        # Vincula as colunas 'name' e 'id' de forma segura
         col_nome = 'name' if 'name' in df.columns else df.columns[0]
         col_id = 'id' if 'id' in df.columns else df.columns[1]
         
-        # Limpa e padroniza a coluna de busca do autor
         df['Name_Clean'] = df[col_nome].astype(str).str.strip().str.upper()
         sub_busca = texto_para_busca.strip().upper()
         
-        # Faz a busca na tabela Cutter (pega o último menor ou igual)
         match = df[df['Name_Clean'] <= sub_busca].sort_values(by='Name_Clean').tail(1)
         
         num = "200"
         if not match.empty:
             num = str(match[col_id].values[0]).strip().split('.')[0]
             
-        # --- LÓGICA ATUALIZADA: IGNORAR ARTIGOS NO INÍCIO DO TÍTULO ---
+        # --- IGNORAR ARTIGOS NO INÍCIO DO TÍTULO ---
         titulo_limpo = titulo_obra.strip().upper()
         artigos = ["O ", "A ", "OS ", "AS ", "UM ", "UMA ", "UNS ", "UMAS "]
         
         for artigo in artigos:
             if titulo_limpo.startswith(artigo):
                 titulo_limpo = titulo_limpo[len(artigo):].strip()
-                break # Interrompe no primeiro artigo encontrado
+                break
                 
-        # Pega a primeira letra da primeira palavra significativa do título
         letra_titulo = titulo_limpo[0].lower() if titulo_limpo else "t"
             
-        # Retorna a primeira letra do autor + número do Cutter + primeira letra do título corrigido
         return f"{sub_busca[0]}{num}{letra_titulo}"
 
     def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
-        if tipo_autor == "Entidade (Órgão/Instituição)" or entidade:
+        if tipo_autor == "Entidade (Órgão/Instituição)" and entidade:
             texto_base = entidade
+        elif tipo_autor == "Pessoa Física" and autores_lista and any(a.strip() for a in autores_lista):
+            # Filtra o primeiro autor preenchido
+            autor_principal = [a.strip() for a in autores_lista if a.strip()][0]
+            partes = autor_principal.split()
+            # Se houver sobrenome isolado, usa ele para o Cutter, senão usa o próprio nome
+            texto_base = partes[-1] if len(partes) > 1 else autor_principal
         elif tem_organizador or tipo_autor == "Organizador":
-            texto_base = organizador_nome
+            partes_org = organizador_nome.strip().split()
+            texto_base = partes_org[-1] if len(partes_org) > 1 else organizador_nome
         else:
-            texto_base = autores_lista[0] if autores_lista else "Autor"
+            texto_base = "Autor"
             
         return buscar_na_tabela_cutter(texto_base, titulo)
 
@@ -309,7 +308,7 @@ else:
 
     with tab_gerador:
         if st.session_state["creditos_ativos"] <= 0:
-            st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
+            st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restoration para continuar.")
 
         st.title("⚖️ Gerador de Fichas Jurídicas — NBR/AACR2")
         st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
@@ -502,7 +501,7 @@ else:
                     
             st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
             
-            if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
+            if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["griditos_ativos"] <= 0):
                 valido = True
                 if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                     valido = False
@@ -549,10 +548,8 @@ else:
         st.subheader("📩 Envio de Comprovante")
         
         with st.form("pix_form_original"):
-            # Puxa o e-mail do Firebase de forma padrão e oculta digitação manual
             email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=st.session_state["usuario_atual"], disabled=True)
            
-            # Caixa de seleção com os pacotes informados
             pacote_escolhido = st.selectbox(
                 "Qual pacote de créditos você comprou?",
                 options=[
