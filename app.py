@@ -2,23 +2,13 @@ import streamlit as st
 import pandas as pd
 import io
 import requests
+import datetime
 from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import firebase_admin
 from firebase_admin import credentials, auth
 
-st.set_page_config(page_title="BiblioKhan", page_icon="logo_bibliokhan.ico", layout="wide")
-# --- ADICIONAR A LOGO NA BARRA LATERAL ---
-st.sidebar.image("logo_bibliokhan.png", use_container_width=True)
- # --- BARRA LATERAL (Tudo encostado na esquerda) ---
-with st.sidebar:
-    st.title("**BiblioKhan**")                      # 4 espaços de recuo
-    st.write("**Inteligência e Automação para Bibliotecas**")
-    st.write("bibliokhancontato@gmail.com")                           # 4 espaços de recuo
-    st.markdown("---")                          # 4 espaços de recuo
-
-# ... resto do seu código (sem espaços na frente se for o fluxo principal)
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
 # =========================================================================
@@ -28,6 +18,16 @@ st.set_page_config(
     page_icon="logo_bibliokhan.ico",
     layout="wide"
 )
+
+# --- ADICIONAR A LOGO NA BARRA LATERAL ---
+st.sidebar.image("logo_bibliokhan.png", use_container_width=True)
+
+# --- BARRA LATERAL (Tudo encostado na esquerda) ---
+with st.sidebar:
+    st.title("**BiblioKhan**")
+    st.write("**Inteligência e Automação para Bibliotecas**")
+    st.write("bibliokhancontato@gmail.com")
+    st.markdown("---")
 
 if not firebase_admin._apps:
     try:
@@ -40,6 +40,42 @@ if not firebase_admin._apps:
         st.error(f"❌ Erro crítico nas credenciais do Firebase: {str(e)}")
 
 # =========================================================================
+# 🌟 FUNÇÃO DE SUPORTE PARA TRATAMENTO DA PLANILHA DO TELEMÓVEL
+# =========================================================================
+def carregar_creditos_planilha(url_original):
+    try:
+        if "/edit" in url_original:
+            url_base = url_original.split("/edit")[0]
+        else:
+            url_base = url_original
+        url_csv = f"{url_base}/gviz/tq?tqx=out:csv"
+        df = pd.read_csv(url_csv)
+        df.columns = df.columns.str.strip().str.lower()
+        return df
+    except Exception:
+        return None
+
+# =========================================================================
+# 🌟 ATUALIZAÇÃO RECARGA AUTOMÁTICA EM BACKEND
+# =========================================================================
+def atualizar_saldo_usuario(email_usuario):
+    try:
+        url_planilha = st.secrets["URL_PLANILHA"]
+        df = carregar_creditos_planilha(url_planilha)
+        if df is not None and 'token' in df.columns and 'creditos' in df.columns:
+            df['token'] = df['token'].astype(str).str.strip().str.upper()
+            email_chave = email_usuario.strip().upper()
+            if email_chave in df['token'].values:
+                saldo = int(df.loc[df['token'] == email_chave, 'creditos'].values[0])
+                st.session_state["creditos_ativos"] = saldo
+            else:
+                st.session_state["creditos_ativos"] = 0
+        else:
+            st.session_state["creditos_ativos"] = 0
+    except Exception:
+        st.session_state["creditos_ativos"] = 0
+
+# =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
 
@@ -48,6 +84,8 @@ def verificar_login_firebase(email, senha):
         user = auth.get_user_by_email(email)
         st.session_state["logado"] = True
         st.session_state["usuario_atual"] = user.email
+        # Atualiza os créditos automaticamente ao logar com o e-mail cadastrado
+        atualizar_saldo_usuario(user.email)
         return True
     except Exception as e:
         st.error("❌ Acesso negado: E-mail não cadastrado ou credenciais inválidas.")
@@ -55,6 +93,17 @@ def verificar_login_firebase(email, senha):
 
 if "logado" not in st.session_state:
     st.session_state["logado"] = False
+
+if "creditos_ativos" not in st.session_state:
+    st.session_state["creditos_ativos"] = 0
+
+# Exibe o saldo na barra lateral caso o usuário esteja logado
+if st.session_state["logado"]:
+    with st.sidebar:
+        if st.session_state["creditos_ativos"] > 0:
+            st.success(f"💳 Saldo: {st.session_state["creditos_ativos"]} fichas")
+        else:
+            st.error("💳 Sem créditos ativos")
 
 # =========================================================================
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
@@ -94,6 +143,17 @@ else:
         textarea {
             font-family: 'Courier New', Courier, monospace !important;
         }
+        .stTabs [data-baseweb="tab-list"] { gap: 24px; }
+        .stTabs [data-baseweb="tab"] { 
+            height: 50px; 
+            white-space: pre-wrap; 
+            background-color: #f0f2f6; 
+            border-radius: 5px 5px 0px 0px; 
+            gap: 1px; 
+            padding-top: 10px; 
+            padding-bottom: 10px; 
+        }
+        .stTabs [aria-selected="true"] { background-color: #B19FFB !important; color: black !important; font-weight: bold; }
         </style>
         """, unsafe_allow_html=True)
 
@@ -199,233 +259,320 @@ else:
             
         letra = referencia[0].upper() if referencia else "X"
         
-        # --- CORREÇÃO DA AACR2: IGNORAR ARTIGOS NO TÍTULO ---
         letra_titulo = "x"
         if titulo:
             titulo_limpo = titulo.strip().lower()
             
-            # Lista de artigos iniciais que devem ser ignorados (seguidos de espaço)
             artigos = [
                 "o ", "a ", "os ", "as ", 
                 "um ", "uma ", "uns ", "umas ",
                 "the ", "le ", "la ", "les "
             ]
             
-            # Verifica se o título começa com algum dos artigos da lista
             for artigo in artigos:
                 if titulo_limpo.startswith(artigo):
-                    # Remove o artigo do começo para pegar a próxima letra válida
                     titulo_limpo = titulo_limpo[len(artigo):].strip()
-                    break # Para o loop assim que encontrar o primeiro artigo correspondente
+                    break
                     
             if titulo_limpo:
                 letra_titulo = titulo_limpo[0].lower()
                 
         return f"{letra}123{letra_titulo}"
 
-    st.title("⚖️ Gerador de Fichas Jurídicas — NBR/AACR2")
-    st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
+    # =========================================================================
+    # 🌟 IMPLEMENTAÇÃO DO SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS COM TELEGRAM)
+    # =========================================================================
+    tab_gerador, tab_financeiro = st.tabs(["⚖️ Catalogação em Lote", "💳 Compra e Gestão de Créditos"])
 
-    st.markdown("---")
-    container_lote = st.container()
-    with container_lote:
-        col_lote_1, col_lote_2 = st.columns([2, 1])
-        qtd_fichas = len(st.session_state.lote_fichas)
-        col_lote_1.subheader(f"📦 Lote de Trabalho Atual: {qtd_fichas} Ficha(s) Acumulada(s)")
-        
-        if qtd_fichas > 0:
-            arquivo_word = gerar_docx_lote(st.session_state.lote_fichas)
-            col_lote_2.download_button(
-                label="📥 Baixar Lote Completo (.DOCX / Word)",
-                data=arquivo_word,
-                file_name="lote_fichas_aacr2.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
-            if col_lote_2.button("🗑️ Limpar Lote"):
-                st.session_state.lote_fichas = []
-                st.rerun()
-        else:
-            col_lote_2.info("O lote está vazio. Conclua uma ficha abaixo.")
+    with tab_gerador:
+        if st.session_state["creditos_ativos"] <= 0:
+            st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
 
-    st.markdown("---")
-    col_esquerda, col_direita = st.columns(2)
-
-    with col_esquerda:
-        st.subheader("1. Metadados & Responsabilidade")
-        
-        classificacao = st.text_input("Número de Classificação (CDD ou CDU)", value="340.1")
-        tipo_autor = st.radio("Tipo de Autoria Principal", ["Pessoa Física", "Entidade (Órgão/Instituição)"], horizontal=True)
-        
-        autores_lista = []
-        entidade_nome = ""
-        
-        if tipo_autor == "Pessoa Física":
-            qtd_autores_input = st.number_input("Quantidade de autores principais (0 se houver apenas Organizador)", min_value=0, max_value=10, value=1)
-            for i in range(int(qtd_autores_input)):
-                autores_lista.append(st.text_input(f"Autor {i+1} (Nome Sobrenome)", key=f"autor_{i}"))
-        else:
-            entidade_nome = st.text_input("Nome da Entidade (Ex: Brasil. Supremo Tribunal Federal)")
-            
-        titulo = st.text_input("Título Principal")
-        
-        st.markdown("---")
-        col_resp_1, col_resp_2 = st.columns(2)
-        
-        with col_resp_1:
-            tem_organizador = st.checkbox("Possui Organizador/Coordenador?")
-            organizador_nome = ""
-            tipo_org, abreviatura_org = "", ""
-            if tem_organizador:
-                papel = st.selectbox("Função:", ["Organizador", "Coordenador", "Compilador"])
-                organizador_nome = st.text_input("Nome do Responsável")
-                if papel == "Organizador": tipo_org, abreviatura_org = "organizado", "org."
-                elif papel == "Coordenador": tipo_org, abreviatura_org = "coordenado", "coord."
-                else: tipo_org, abreviatura_org = "compilado", "comp."
-                
-        with col_resp_2:
-            tem_tradutor = st.checkbox("A obra possui Tradutor?")
-            tradutor_nome = ""
-            if tem_tradutor:
-                tradutor_nome = st.text_input("Nome do Tradutor (Nome Sobrenome)", key="trad_nome")
+        st.title("⚖️ Gerador de Fichas Jurídicas — NBR/AACR2")
+        st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
 
         st.markdown("---")
-        st.subheader("2. Publicação & Descrição Física")
-        edicao = st.text_input("Edição (Ex: 2. ed., 3. ed. rev. e ampl.)", value="1. ed.")
-        editora = st.text_input("Editora")
-        cidade = st.text_input("Cidade de Publicação", value="Brasília")
-        ano = st.text_input("Ano de Publicação", value="2026")
-        paginas = st.text_input("Número de Páginas/Folhas", value="180")
-        
-        tem_colecao = st.checkbox("Esta obra faz parte de uma Coleção / Série?")
-        colecao_nome = ""
-        if tem_colecao:
-            colecao_nome = st.text_input("Nome da Coleção e Volume (Ex: Biblioteca jurídica, v. 12)")
+        container_lote = st.container()
+        with container_lote:
+            col_lote_1, col_lote_2 = st.columns([2, 1])
+            qtd_fichas = len(st.session_state.lote_fichas)
+            col_lote_1.subheader(f"📦 Lote de Trabalho Atual: {qtd_fichas} Ficha(s) Acumulada(s)")
             
-        isbn = st.text_input("ISBN (Ex: 978-65-0000-00-0)")
-        suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
-        url_acesso = st.text_input("URL de Acesso / DOI") if suporte == "Digital" else ""
-
-    with col_direita:
-        st.subheader("3. Indexação por Assunto")
-        
-        st.markdown("##### 🏛️ Buscar no VCB do Senado Federal")
-        termo_busca = st.text_input("Digite um termo jurídico para pesquisar:")
-        
-        if termo_busca:
-            resultados_vcb = buscar_vcb_senado(termo_busca)
-            if resultados_vcb:
-                st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
-                mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
-                lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
-                termo_selecionado = st.selectbox("Selecione o conceito oficial:", lista_opcoes)
-                
-                if st.button("➕ Vincular Assunto do Senado"):
-                    if termo_selecionado not in st.session_state.assuntos_selecionados:
-                        st.session_state.assuntos_selecionados.append(termo_selecionado)
-                        st.rerun()
+            if qtd_fichas > 0:
+                arquivo_word = gerar_docx_lote(st.session_state.lote_fichas)
+                col_lote_2.download_button(
+                    label="📥 Baixar Lote Completo (.DOCX / Word)",
+                    data=arquivo_word,
+                    file_name="lote_fichas_aacr2.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+                if col_lote_2.button("🗑️ Limpar Lote"):
+                    st.session_state.lote_fichas = []
+                    st.rerun()
             else:
-                st.warning("Nenhum termo correspondente retornado pela API do Senado.")
+                col_lote_2.info("O lote está vazio. Conclua uma ficha abaixo.")
 
-        st.markdown("##### ✍️ Adicionar Assunto Manualmente")
-        assunto_manual = st.text_input("Digite um assunto customizado:")
-        if st.button("➕ Vincular Assunto Manual"):
-            if assunto_manual.strip():
-                termo_limpo = assunto_manual.strip()
-                if termo_limpo not in st.session_state.assuntos_selecionados:
-                    st.session_state.assuntos_selecionados.append(termo_limpo)
+        st.markdown("---")
+        col_esquerda, col_direita = st.columns(2)
+
+        with col_esquerda:
+            st.subheader("1. Metadados & Responsabilidade")
+            
+            classificacao = st.text_input("Número de Classificação (CDD ou CDU)", value="340.1")
+            tipo_autor = st.radio("Tipo de Autoria Principal", ["Pessoa Física", "Entidade (Órgão/Instituição)"], horizontal=True)
+            
+            autores_lista = []
+            entidade_nome = ""
+            
+            if tipo_autor == "Pessoa Física":
+                qtd_autores_input = st.number_input("Quantidade de autores principais (0 se houver apenas Organizador)", min_value=0, max_value=10, value=1)
+                for i in range(int(qtd_autores_input)):
+                    autores_lista.append(st.text_input(f"Autor {i+1} (Nome Sobrenome)", key=f"autor_{i}"))
+            else:
+                entidade_nome = st.text_input("Nome da Entidade (Ex: Brasil. Supremo Tribunal Federal)")
+                
+            titulo = st.text_input("Título Principal")
+            
+            st.markdown("---")
+            col_resp_1, col_resp_2 = st.columns(2)
+            
+            with col_resp_1:
+                tem_organizador = st.checkbox("Possui Organizador/Coordenador?")
+                organizador_nome = ""
+                tipo_org, abreviatura_org = "", ""
+                if tem_organizador:
+                    papel = st.selectbox("Função:", ["Organizador", "Coordenador", "Compilador"])
+                    organizador_nome = st.text_input("Nome do Responsável")
+                    if papel == "Organizador": tipo_org, abreviatura_org = "organizado", "org."
+                    elif papel == "Coordenador": tipo_org, abreviatura_org = "coordenado", "coord."
+                    else: tipo_org, abreviatura_org = "compilado", "comp."
+                    
+            with col_resp_2:
+                tem_tradutor = st.checkbox("A obra possui Tradutor?")
+                tradutor_nome = ""
+                if tem_tradutor:
+                    tradutor_nome = st.text_input("Nome do Tradutor (Nome Sobrenome)", key="trad_nome")
+
+            st.markdown("---")
+            st.subheader("2. Publicação & Descrição Física")
+            edicao = st.text_input("Edição (Ex: 2. ed., 3. ed. rev. e ampl.)", value="1. ed.")
+            editora = st.text_input("Editora")
+            cidade = st.text_input("Cidade de Publicação", value="Brasília")
+            ano = st.text_input("Ano de Publicação", value="2026")
+            paginas = st.text_input("Número de Páginas/Folhas", value="180")
+            
+            tem_colecao = st.checkbox("Esta obra faz parte de uma Coleção / Série?")
+            colecao_nome = ""
+            if tem_colecao:
+                colecao_nome = st.text_input("Nome da Coleção e Volume (Ex: Biblioteca jurídica, v. 12)")
+                
+            isbn = st.text_input("ISBN (Ex: 978-65-0000-00-0)")
+            suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
+            url_acesso = st.text_input("URL de Acesso / DOI") if suporte == "Digital" else ""
+
+        with col_direita:
+            st.subheader("3. Indexação por Assunto")
+            
+            st.markdown("##### 🏛️ Buscar no VCB do Senado Federal")
+            termo_busca = st.text_input("Digite um termo jurídico para pesquisar:")
+            
+            if termo_busca:
+                resultados_vcb = buscar_vcb_senado(termo_busca)
+                if resultados_vcb:
+                    st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
+                    mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
+                    lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
+                    termo_selecionado = st.selectbox("Selecione o conceito oficial:", lista_opcoes)
+                    
+                    if st.button("➕ Vincular Assunto do Senado"):
+                        if termo_selecionado not in st.session_state.assuntos_selecionados:
+                            st.session_state.assuntos_selecionados.append(termo_selecionado)
+                            st.rerun()
+                else:
+                    st.warning("Nenhum termo correspondente retornado pela API do Senado.")
+
+            st.markdown("##### ✍️ Adicionar Assunto Manualmente")
+            assunto_manual = st.text_input("Digite um assunto customizado:")
+            if st.button("➕ Vincular Assunto Manual"):
+                if assunto_manual.strip():
+                    termo_limpo = assunto_manual.strip()
+                    if termo_limpo not in st.session_state.assuntos_selecionados:
+                        st.session_state.assuntos_selecionados.append(termo_limpo)
+                        st.rerun()
+
+            if st.session_state.assuntos_selecionados:
+                st.write("**Assuntos Vinculados à Ficha:**")
+                for idx, ass in enumerate(st.session_state.assuntos_selecionados):
+                    st.write(f"{idx+1}. {ass}")
+                if st.button("🗑️ Limpar Assuntos"):
+                    st.session_state.assuntos_selecionados = []
                     st.rerun()
 
-        if st.session_state.assuntos_selecionados:
-            st.write("**Assuntos Vinculados à Ficha:**")
-            for idx, ass in enumerate(st.session_state.assuntos_selecionados):
-                st.write(f"{idx+1}. {ass}")
-            if st.button("🗑️ Limpar Assuntos"):
-                st.session_state.assuntos_selecionados = []
-                st.rerun()
+            st.markdown("---")
+            st.subheader("4. Fechamento e Visualização da Ficha")
+            
+            entrada_principal, responsabilidade, entrada_por_titulo = formatar_entrada_e_corpo(
+                tipo_autor=tipo_autor, 
+                autores_lista=autores_lista, 
+                entidade=entidade_nome, 
+                titulo=titulo, 
+                tem_organizador=tem_organizador, 
+                organizador_nome=organizador_nome, 
+                tipo_org=tipo_org, 
+                tem_tradutor=tem_tradutor, 
+                tradutor_nome=tradutor_nome
+            )
+            
+            cutter = calcular_cutter(tipo_autor, autores_lista, entidade=entidade_nome, titulo=titulo, tem_organizador=tem_organizador, organizador_nome=organizador_nome)
+            
+            dgm = " [recurso eletrônico]" if suporte == "Digital" else ""
+            desc_fisica = f"1 recurso online ({paginas} f.) " if suporte == "Digital" else f"{paginas} f"
+            
+            bloco_colecao = ""
+            if tem_colecao and colecao_nome.strip():
+                text_colecao = colecao_nome.strip()
+                text_colecao = text_colecao[0].upper() + text_colecao[1:]
+                bloco_colecao = f" ({text_colecao})"
+                
+            nota_acesso = f"\n            Modo de acesso: {url_acesso}" if suporte == "Digital" and url_acesso else ""
+            isbn_bloco = f"\n            ISBN {isbn}" if isbn.strip() else ""
+            nota_traducao = f"\n            Traduzido de obra original." if tem_tradutor and tradutor_nome.strip() else ""
+            
+            ed_bloco = f"{edicao.strip()} – " if edicao.strip() else ""
+            pub_bloco = f"{cidade.strip()} : {editora.strip()}, {ano.strip()}."
+            
+            string_assuntos = " ".join([f"{i+1}. {ass}" for i, ass in enumerate(st.session_state.assuntos_selecionados)])
+            
+            rastreabilidade = ""
+            romanos = ["I", "II", "III", "IV", "V"]
+            r_idx = 0
+            
+            if not entrada_por_titulo:
+                rastreabilidade += f" {romanos[r_idx]}. Título."
+                r_idx += 1
+                
+            if tem_organizador and organizador_nome.strip():
+                partes_org = organizador_nome.strip().split()
+                nome_invertido_org = f"{partes_org[-1].upper()}, {' '.join(partes_org[:-1])}" if len(partes_org) > 1 else organizador_nome.strip().upper()
+                rastreabilidade += f" {romanos[r_idx]}. {nome_invertido_org}, {abreviatura_org}."
+                r_idx += 1
+                
+            if tem_tradutor and tradutor_nome.strip():
+                partes_trad = tradutor_nome.strip().split()
+                nome_invertido_trad = f"{partes_trad[-1].upper()}, {' '.join(partes_trad[:-1])}" if len(partes_trad) > 1 else tradutor_nome.strip().upper()
+                rastreabilidade += f" {romanos[r_idx]}. {nome_invertido_trad}, trad."
+                r_idx += 1
 
-        st.markdown("---")
-        st.subheader("4. Fechamento e Visualização da Ficha")
-        
-        # --- CORREÇÃO DA CHAMADA AQUI (Mapeando os parâmetros corretamente) ---
-        entrada_principal, responsabilidade, entrada_por_titulo = formatar_entrada_e_corpo(
-            tipo_autor=tipo_autor, 
-            autores_lista=autores_lista, 
-            entidade=entidade_nome, 
-            titulo=titulo, 
-            tem_organizador=tem_organizador, 
-            organizador_nome=organizador_nome, 
-            tipo_org=tipo_org, 
-            tem_tradutor=tem_tradutor, 
-            tradutor_nome=tradutor_nome
-        )
-        
-        cutter = calcular_cutter(tipo_autor, autores_lista, entidade=entidade_nome, titulo=titulo, tem_organizador=tem_organizador, organizador_nome=organizador_nome)
-        
-        dgm = " [recurso eletrônico]" if suporte == "Digital" else ""
-        desc_fisica = f"1 recurso online ({paginas} f.) " if suporte == "Digital" else f"{paginas} f"
-        
-        bloco_colecao = ""
-        if tem_colecao and colecao_nome.strip():
-            texto_colecao = colecao_nome.strip()
-            texto_colecao = texto_colecao[0].upper() + texto_colecao[1:]
-            bloco_colecao = f" ({texto_colecao})"
-            
-        nota_acesso = f"\n            Modo de acesso: {url_acesso}" if suporte == "Digital" and url_acesso else ""
-        isbn_bloco = f"\n            ISBN {isbn}" if isbn.strip() else ""
-        nota_traducao = f"\n            Traduzido de obra original." if tem_tradutor and tradutor_nome.strip() else ""
-        
-        ed_bloco = f"{edicao.strip()} – " if edicao.strip() else ""
-        pub_bloco = f"{cidade.strip()} : {editora.strip()}, {ano.strip()}."
-        
-        string_assuntos = " ".join([f"{i+1}. {ass}" for i, ass in enumerate(st.session_state.assuntos_selecionados)])
-        
-        rastreabilidade = ""
-        romanos = ["I", "II", "III", "IV", "V"]
-        r_idx = 0
-        
-        if not entrada_por_titulo:
-            rastreabilidade += f" {romanos[r_idx]}. Título."
-            r_idx += 1
-            
-        if tem_organizador and organizador_nome.strip():
-            partes_org = organizador_nome.strip().split()
-            nome_invertido_org = f"{partes_org[-1].upper()}, {' '.join(partes_org[:-1])}" if len(partes_org) > 1 else organizador_nome.strip().upper()
-            rastreabilidade += f" {romanos[r_idx]}. {nome_invertido_org}, {abreviatura_org}."
-            r_idx += 1
-            
-        if tem_tradutor and tradutor_nome.strip():
-            partes_trad = tradutor_nome.strip().split()
-            nome_invertido_trad = f"{partes_trad[-1].upper()}, {' '.join(partes_trad[:-1])}" if len(partes_trad) > 1 else tradutor_nome.strip().upper()
-            rastreabilidade += f" {romanos[r_idx]}. {nome_invertido_trad}, trad."
-            r_idx += 1
-
-        if entrada_por_titulo:
-            txt_ficha = f"""{classificacao}
+            if entrada_por_titulo:
+                txt_ficha = f"""{classificacao}
 {cutter}   {titulo.strip()}{dgm} / {responsabilidade}. – {ed_bloco}{pub_bloco}
             {desc_fisica}.{bloco_colecao}{nota_traducao}{nota_acesso}{isbn_bloco}
             
             {string_assuntos}{rastreabilidade}"""
-        else:
-            txt_ficha = f"""{classificacao}
+            else:
+                txt_ficha = f"""{classificacao}
 {cutter}   {entrada_principal}
             {titulo.strip()}{dgm} / {responsabilidade}. – {ed_bloco}{pub_bloco}
             {desc_fisica}.{bloco_colecao}{nota_traducao}{nota_acesso}{isbn_bloco}
             
             {string_assuntos}{rastreabilidade}"""
-                
-        st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
+                    
+            st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
+            
+            if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
+                valido = True
+                if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
+                    valido = False
+                if tipo_autor == "Entidade (Órgão/Instituição)" and not entidade_nome.strip():
+                    valido = False
+                    
+                if valido and titulo.strip():
+                    st.session_state.lote_fichas.append(txt_ficha)
+                    st.session_state["creditos_ativos"] -= 1
+                    st.session_state.assuntos_selecionados = [] 
+                    st.success("Ficha guardada com sucesso no lote superior! Crédito deduzido.")
+                    st. those()
+                else:
+                    st.error("Preencha os campos de autoria/organização e o título.")
+
+    # ---------------------------------------------------------
+    # ABA 2: FINANCEIRO E ENVIOS DIRETOS AO TELEGRAM
+    # ---------------------------------------------------------
+    with tab_financeiro:
+        st.header("💳 Gestão Financeira e Saldo")
+        col_f1, col_f2 = st.columns(2)
         
-        if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE"):
-            valido = True
-            if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
-                valido = False
-            if tipo_autor == "Entidade (Órgão/Instituição)" and not entidade_nome.strip():
-                valido = False
-                
-            if valido and titulo.strip():
-                st.session_state.lote_fichas.append(txt_ficha)
-                st.session_state.assuntos_selecionados = [] 
-                st.success("Ficha guardada com sucesso no lote superior!")
-                st.rerun()
-            else:
-                st.error("Preencha os campos de autoria/organização e o título.")
+        with col_f1:
+            st.subheader("🔄 Sincronização")
+            st.info(f"Seu sistema está vinculado ao e-mail: **{st.session_state['usuario_atual']}**")
+            if st.button("Atualizar meu Saldo da Planilha"):
+                with st.spinner("Puxando dados atualizados do Sheets..."):
+                    atualizar_saldo_usuario(st.session_state["usuario_atual"])
+                    st.success("Saldo checado com sucesso!")
+                    st.rerun()
+
+        with col_f2:
+            st.subheader("🛒 Tabela de Preços")
+            st.markdown("""
+            * **30 Fichas** — R$ 49,90 *(R$ 1,66/un)*
+            * **60 Fichas** — R$ 89,90 ⚡ *Economize R$ 9,90!*
+            * **100 Fichas** — R$ 129,00
+            * **300 Fichas** — R$ 299,00
+            * **500 Fichas** — R$ 499,00 🚀
+            """)
+            st.info("🔑 **PIX:** `bibliokhancontato@gmail.com`")
+
+        st.markdown("---")
+        st.subheader("📩 Envio de Comprovante")
+        
+        with st.form("pix_form_original"):
+            nome_cliente = st.text_input("Nome Completo")
+            
+            # Puxa o e-mail do Firebase de forma padrão e oculta digitação manual
+            email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=st.session_state["usuario_atual"], disabled=True)
+            
+            # Caixa de seleção com os pacotes informados
+            pacote_escolhido = st.selectbox(
+                "Qual pacote de créditos você comprou?",
+                options=[
+                    "30 Fichas (R$ 49,90)",
+                    "60 Fichas (R$ 89,90)",
+                    "100 Fichas (R$ 129,00)",
+                    "300 Fichas (R$ 299,00)",
+                    "500 Fichas (R$ 499,00)"
+                ]
+            )
+            
+            comprovante = st.file_uploader("Anexe a imagem ou PDF do comprovante do PIX", type=["jpg", "png", "jpeg", "pdf"])
+            
+            if st.form_submit_button("Enviar para Restauração de Saldo"):
+                if nome_cliente.strip() and comprovante is not None:
+                    with st.spinner("Enviando comprovante para o suporte... Por favor, aguarde."):
+                        try:
+                            # Resgata de forma limpa do st.secrets
+                            tg_token = st.secrets["TELEGRAM_BOT_TOKEN"]
+                            tg_chat = st.secrets["TELEGRAM_CHAT_ID"]
+                            
+                            texto_notificacao = (
+                                f"🔥 *NOVO COMPROVANTE RECEBIDO!*\n\n"
+                                f"👤 *Cliente:* {nome_cliente.strip()}\n"
+                                f"📧 *E-mail:* {st.session_state['usuario_atual']}\n"
+                                f"💰 *Pacote Escolhido:* {pacote_escolhido}\n"
+                                f"📅 *Data/Hora:* {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+                            )
+                            
+                            url_api_telegram = f"https://api.telegram.org/bot{tg_token}/sendPhoto"
+                            ficheiro_envio = {"photo": (comprovante.name, comprovante.getvalue(), comprovante.type)}
+                            dados_requisicao = {"chat_id": tg_chat, "caption": texto_notificacao, "parse_mode": "Markdown"}
+                            
+                            resposta_tg = requests.post(url_api_telegram, data=dados_requisicao, files=ficheiro_envio, timeout=15)
+                            
+                            if resposta_tg.status_code == 200:
+                                st.success("✅ Comprovante enviado com sucesso!")
+                                st.info("⏳ O seu saldo será atualizado na planilha assim que a validação for concluída.")
+                            else:
+                                st.error(f"Erro na API de comunicação (Código {resposta_tg.status_code}).")
+                        except Exception as e:
+                            st.error(f"Erro ao disparar arquivo de envio: {e}")
+                else:
+                    st.error("❌ Por favor, informe o seu nome completo e anexe o arquivo do comprovante.")
