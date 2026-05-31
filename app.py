@@ -247,14 +247,31 @@ else:
                 
         return entrada, corpo_autores, entrada_por_titulo
 
-    def calcular_cutter(sobrenome_autor, titulo_obra):
-        if not sobrenome_autor or not titulo_obra: return ""
+   def buscar_na_tabela_cutter(texto_para_busca, titulo_obra):
+        if not texto_para_busca or not titulo_obra: return "X000x"
         df = pd.read_csv("https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv", sep=';', encoding='utf-8')
         df['Name_Clean'] = df['Name'].astype(str).str.strip().str.upper()
-        sub_busca = sobrenome_autor.strip().upper()
+        sub_busca = texto_para_busca.strip().upper()
         match = df[df['Name_Clean'] <= sub_busca].sort_values(by='Name_Clean').tail(1)
         num = match['ID'].values[0] if not match.empty else "200"
         return f"{sub_busca[0]}{num}{titulo_obra.strip().lower()[0]}"
+
+def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
+    # 1. Se for Autor por Entidade (Instituição, Empresa, etc.)
+    if tipo_autor == "Entidade" or entidade:
+        texto_base = entidade
+    
+    # 2. Se for Organizador / Coletânea
+    elif tem_organizador or tipo_autor == "Organizador":
+        texto_base = organizador_nome
+        
+    # 3. Se for Autor Pessoa Física Tradicional
+    else:
+        # Pega o sobrenome do primeiro autor da lista
+        texto_base = autores_lista[0] if autores_lista else "Autor"
+        
+    # Envia o texto correto encontrado para buscar o código no CSV
+    return buscar_na_tabela_cutter(texto_base, titulo)
 
     # =========================================================================
     # 🌟 IMPLEMENTAÇÃO DO SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS COM TELEGRAM)
