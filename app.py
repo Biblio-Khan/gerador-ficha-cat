@@ -553,12 +553,15 @@ else:
                             # Resgata de forma limpa do st.secrets
                             tg_token = st.secrets["TELEGRAM_BOT_TOKEN"]
                             tg_chat = st.secrets["TELEGRAM_CHAT_ID"]
-                
+    
+                            fuso_brasilia = timezone(timedelta(hours=-3))
+                            data_hora_br = datetime.now(fuso_brasilia).strftime('%d/%m/%Y %H:%M:%S')
+                            
                             texto_notificacao = (
                                 f"🔥 *NOVO COMPROVANTE RECEBIDO!*\n\n"
                                 f"📧 *E-mail do Cliente:* {st.session_state['usuario_atual']}\n" #  Usa o email direto do login
                                 f"💰 *Pacote Escolhido:* {pacote_escolhido}\n"
-                                f"📅 *Data/Hora:* {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+                                f"📅 *Data/Hora:* {data_hora_br}"
                             )
                             
                             url_api_telegram = f"https://api.telegram.org/bot{tg_token}/sendPhoto"
