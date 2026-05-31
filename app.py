@@ -102,7 +102,7 @@ if "creditos_ativos" not in st.session_state:
 if st.session_state["logado"]:
     with st.sidebar:
         if st.session_state["creditos_ativos"] > 0:
-            st.success(f"💳 Saldo: {st.session_state["creditos_ativos"]} fichas")
+            st.success(f"💳 Saldo: {st.session_state['creditos_ativos']} fichas")
         else:
             st.error("💳 Sem créditos ativos")
 
@@ -247,7 +247,7 @@ else:
                 
         return entrada, corpo_autores, entrada_por_titulo
 
-   def buscar_na_tabela_cutter(texto_para_busca, titulo_obra):
+    def buscar_na_tabela_cutter(texto_para_busca, titulo_obra):
         if not texto_para_busca or not titulo_obra: return "X000x"
         df = pd.read_csv("https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv", sep=';', encoding='utf-8')
         df['Name_Clean'] = df['Name'].astype(str).str.strip().str.upper()
@@ -256,22 +256,15 @@ else:
         num = match['ID'].values[0] if not match.empty else "200"
         return f"{sub_busca[0]}{num}{titulo_obra.strip().lower()[0]}"
 
-def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
-    # 1. Se for Autor por Entidade (Instituição, Empresa, etc.)
-    if tipo_autor == "Entidade" or entidade:
-        texto_base = entidade
-    
-    # 2. Se for Organizador / Coletânea
-    elif tem_organizador or tipo_autor == "Organizador":
-        texto_base = organizador_nome
-        
-    # 3. Se for Autor Pessoa Física Tradicional
-    else:
-        # Pega o sobrenome do primeiro autor da lista
-        texto_base = autores_lista[0] if autores_lista else "Autor"
-        
-    # Envia o texto correto encontrado para buscar o código no CSV
-    return buscar_na_tabela_cutter(texto_base, titulo)
+    def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
+        if tipo_autor == "Entidade (Órgão/Instituição)" or entidade:
+            texto_base = entidade
+        elif tem_organizador or tipo_autor == "Organizador":
+            texto_base = organizador_nome
+        else:
+            texto_base = autores_lista[0] if autores_lista else "Autor"
+            
+        return buscar_na_tabela_cutter(texto_base, titulo)
 
     # =========================================================================
     # 🌟 IMPLEMENTAÇÃO DO SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS COM TELEGRAM)
@@ -477,7 +470,7 @@ def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organ
                 valido = True
                 if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                     valido = False
-                if tipo_autor == "Entidade (Órgão/Instituição)" and not entidade_nome.strip():
+                if tipo_autor == "Entidade (Órgão/Instituição)" and not entity_nome.strip():
                     valido = False
                     
                 if valido and titulo.strip():
@@ -485,7 +478,7 @@ def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organ
                     st.session_state["creditos_ativos"] -= 1
                     st.session_state.assuntos_selecionados = [] 
                     st.success("Ficha guardada com sucesso no lote superior! Crédito deduzido.")
-                    st.rerun() #  O correto é st.rerun()
+                    st.rerun()
                 else:
                     st.error("Preencha os campos de autoria/organização e o título.")
 
@@ -520,8 +513,6 @@ def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organ
         st.subheader("📩 Envio de Comprovante")
         
         with st.form("pix_form_original"):
-            
-      
             # Puxa o e-mail do Firebase de forma padrão e oculta digitação manual
             email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=st.session_state["usuario_atual"], disabled=True)
            
@@ -540,10 +531,9 @@ def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organ
             comprovante = st.file_uploader("Anexe a imagem ou PDF do comprovante do PIX", type=["jpg", "png", "jpeg", "pdf"])
             
             if st.form_submit_button("Enviar para Restauração de Saldo"):
-                if comprovante is not None: #  Agora ele só checa se o arquivo foi anexado!
+                if comprovante is not None:
                     with st.spinner("Enviando comprovante para o suporte... Por favor, aguarde."):
                         try:
-                            # Resgata de forma limpa do st.secrets
                             tg_token = st.secrets["TELEGRAM_BOT_TOKEN"]
                             tg_chat = st.secrets["TELEGRAM_CHAT_ID"]
     
@@ -552,7 +542,7 @@ def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organ
                             
                             texto_notificacao = (
                                 f"🔥 *NOVO COMPROVANTE RECEBIDO!*\n\n"
-                                f"📧 *E-mail do Cliente:* {st.session_state['usuario_atual']}\n" #  Usa o email direto do login
+                                f"📧 *E-mail do Cliente:* {st.session_state['usuario_atual']}\n"
                                 f"💰 *Pacote Escolhido:* {pacote_escolhido}\n"
                                 f"📅 *Data/Hora:* {data_hora_br}"
                             )
