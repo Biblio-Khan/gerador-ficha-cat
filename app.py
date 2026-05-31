@@ -248,31 +248,13 @@ else:
         return entrada, corpo_autores, entrada_por_titulo
 
     def gerar_numero_cutter(sobrenome_autor, titulo_obra):
-        URL_CUTTER_CSV = "https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv"
-    
-    if not sobrenome_autor or not titulo_obra:
-        return ""
-        
-    try:
-        df_cutter = pd.read_csv(URL_CUTTER_CSV, sep=';', encoding='utf-8')
-        
-        sobrenome_busca = sobrenome_autor.strip().upper()
-        letra_inicial = sobrenome_busca[0]
-        letra_titulo = titulo_obra.strip().lower()[0]
-        
-        df_cutter['Name_Clean'] = df_cutter['Name'].astype(str).str.strip().str.upper()
-        
-        match = df_cutter[df_cutter['Name_Clean'] <= sobrenome_busca].sort_values(by='Name_Clean').tail(1)
-        
-        if not match.empty:
-            numero_cutter = match['ID'].values[0]
-            return f"{letra_inicial}{numero_cutter}{letra_titulo}"
-        else:
-            return f"{letra_inicial}200{letra_titulo}"
-            
-    except Exception as e:
-        st.error(f"Erro ao calcular o Cutter: {e}")
-        return "Erro Tabela"
+        if not sobrenome_autor or not titulo_obra: return ""
+        df = pd.read_csv("https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv", sep=';', encoding='utf-8')
+        df['Name_Clean'] = df['Name'].astype(str).str.strip().str.upper()
+        sub_busca = sobrenome_autor.strip().upper()
+        match = df[df['Name_Clean'] <= sub_busca].sort_values(by='Name_Clean').tail(1)
+        num = match['ID'].values[0] if not match.empty else "200"
+        return f"{sub_busca[0]}{num}{titulo_obra.strip().lower()[0]}"
 
     # =========================================================================
     # 🌟 IMPLEMENTAÇÃO DO SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS COM TELEGRAM)
