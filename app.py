@@ -525,7 +525,7 @@ else:
         with col_f1:
             st.subheader("🔄 Sincronização")
             st.info(f"Seu sistema está vinculado ao e-mail: **{st.session_state['usuario_atual']}**")
-            if st.button("Atualizar meu Saldo da Planilha"):
+            if st.button("Atualizar meu Saldo"):
                 with st.spinner("Puxando dados atualizados do Sheets..."):
                     atualizar_saldo_usuario(st.session_state["usuario_atual"])
                     st.success("Saldo checado com sucesso!")
