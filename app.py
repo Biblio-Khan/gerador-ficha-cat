@@ -534,11 +534,11 @@ else:
         with col_f2:
             st.subheader("🛒 Tabela de Preços")
             st.markdown("""
-            * **30 Fichas** — R$ 49,90 
-            * **60 Fichas** — R$ 89,90
-            * **100 Fichas** — R$ 129,00
-            * **300 Fichas** — R$ 299,00
-            * **500 Fichas** — R$ 499,00 🚀
+            * **30 Fichas** — R$ 70,00 
+            * **60 Fichas** — R$ 130,00
+            * **100 Fichas** — R$ 190,00
+            * **300 Fichas** — R$ 499,00
+            * **500 Fichas** — R$ 699,00 🚀
             """)
             st.info("🔑 **PIX:** `bibliokhancontato@gmail.com`")
 
