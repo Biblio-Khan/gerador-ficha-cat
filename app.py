@@ -45,10 +45,15 @@ if not firebase_admin._apps:
 # =========================================================================
 def tratar_url_google_sheets(url):
     """
-    Transforma o link padrão do Google Sheets (inclusive do Android)
-    em um link de exportação direta de CSV que o Pandas consegue ler.
+    Transforma o link padrão do Google Sheets em exportação direta de CSV
+    e adiciona um parâmetro de tempo para forçar o Sheets a quebrar o cache.
     """
     url = url.strip()
+    
+    # Remove parâmetros extras do final do link se houver
+    if "?" in url and not "docs.google.com" in url:
+        url = url.split("?")[0]
+        
     if "/edit" in url:
         url = url.split("/edit")[0] + "/export?format=csv"
     elif "/pubhtml" in url:
@@ -58,6 +63,13 @@ def tratar_url_google_sheets(url):
             url = url + "export?format=csv"
         else:
             url = url + "/export?format=csv"
+            
+    # 🔥 TRUQUE DO CACHE: Adiciona a hora atual em segundos no link.
+    # Isso força o Google a gerar um CSV idêntico ao que está na tela agora.
+    import time
+    nocache_param = f"&nocache={int(time.time())}"
+    url += nocache_param
+    
     return url
 
 def carregar_creditos_planilha(url_planilha):
