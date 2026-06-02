@@ -64,7 +64,7 @@ def tratar_url_google_sheets(url):
         else:
             url = url + "/export?format=csv"
             
-    # 🔥 TRUQUE DO CACHE: Adiciona a hora atual em segundos no link.
+    # 🔥 TRUQUE DO CACHE: Adiciona a hora atual in segundos no link.
     # Isso força o Google a gerar um CSV idêntico ao que está na tela agora.
     import time
     nocache_param = f"&nocache={int(time.time())}"
@@ -124,6 +124,7 @@ def atualizar_saldo_usuario(email_usuario):
     except Exception as e:
         st.error(f"❌ Erro na sincronização de saldo: {e}")
         st.session_state["creditos_ativos"] = 0
+
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
@@ -151,7 +152,7 @@ if st.session_state["logado"]:
         if st.session_state["creditos_ativos"] > 0:
             st.success(f"💳 Saldo: {st.session_state['creditos_ativos']} fichas")
         else:
-            st.error("💳 Sem créditos ativos")
+            st.error("💳 Sem créditos activos")
 
 # =========================================================================
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
@@ -319,7 +320,7 @@ else:
 
     def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
         if tipo_autor == "Entidade (Órgão/Instituição)" and entidade:
-            texto_base = entidade
+            texto_base = entity = entidade
         elif tipo_autor == "Pessoa Física" and autores_lista and any(a.strip() for a in autores_lista):
             autor_principal = [a.strip() for a in autores_lista if a.strip()][0]
             partes = autor_principal.split()
@@ -417,7 +418,7 @@ else:
                 colecao_nome = st.text_input("Nome da Coleção e Volume (Ex: Biblioteca jurídica, v. 12)")
                 
             isbn = st.text_input("ISBN (Ex: 978-65-0000-00-0)")
-            suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
+            support = suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
             url_acesso = st.text_input("URL de Acesso / DOI") if suporte == "Digital" else ""
 
         with col_direita:
@@ -519,7 +520,7 @@ else:
                     
             st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
             
-              if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
+            if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["grid_ativos" if "grid_ativos" in st.session_state else "creditos_ativos"] <= 0):
                 valido = True
                 if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                     valido = False
@@ -535,7 +536,7 @@ else:
                             }
                             # Faz a requisição POST para rodar o script do Google
                             resposta_google = requests.post(url_script, json=payload, timeout=15)
-                            resultado_json = response_google = resposta_google.json()
+                            resultado_json = resposta_google.json()
                             
                             if resposta_google.status_code == 200 and resultado_json.get("status") == "sucesso":
                                 # 2. Se correu bem na planilha, atualiza localmente e mete no lote
@@ -552,7 +553,7 @@ else:
                 else:
                     st.error("Preencha os campos de autoria/organização e o título.")
 
-        with tab_financeiro:
+    with tab_financeiro:
         st.header("💳 Gestão Financeira e Saldo")
         col_f1, col_f2 = st.columns(2)
         
@@ -606,7 +607,7 @@ else:
                             data_hora_br = datetime.now(fuso_brasilia).strftime('%d/%m/%Y %H:%M:%S')
                             
                             texto_notificacao = (
-                                f"🔥 *NOVO COMPROVANTE RECEBIDO!*\n\n"
+                                f"🔥 *NOVO COMPROVANTE RECEBIDO!* \n\n"
                                 f"📧 *E-mail do Cliente:* {st.session_state['usuario_atual']}\n"
                                 f"💰 *Pacote Escolhido:* {pacote_escolhido}\n"
                                 f"📅 *Data/Hora:* {data_hora_br}"
