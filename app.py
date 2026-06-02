@@ -538,21 +538,38 @@ else:
                             resposta_google = requests.post(url_script, json=payload, timeout=15)
                             resultado_json = resposta_google.json()
                             
-                            if resposta_google.status_code == 200 and resultado_json.get("status") == "sucesso":
-                                # 2. Se correu bem na planilha, atualiza localmente e mete no lote
-                                st.session_state.lote_fichas.append(txt_ficha)
-                                st.session_state["creditos_ativos"] -= 1
-                                st.session_state.assuntos_selecionados = [] 
-                                st.success("✅ Ficha guardada com sucesso! Saldo deduzido diretamente na planilha.")
-                                st.rerun()
+                           try:
+                            # 1. Envia a ordem de desconto para o Google Apps Script da Planilha
+                            url_script = st.secrets["URL_SCRIPT_GOOGLE"]
+                            payload = {
+                                "email": st.session_state["usuario_atual"],
+                                "acao": "descontar"
+                            }
+                            # Faz a requisição POST para rodar o script do Google
+                            resposta_google = requests.post(url_script, json=payload, timeout=15)
+                            
+                            # Verificação de segurança: O Google respondeu sucesso HTTP?
+                            if resposta_google.status_code == 200:
+                                try:
+                                    resultado_json = resposta_google.json()
+                                    if resultado_json.get("status") == "sucesso":
+                                        # 2. Se correu bem na planilha, atualiza localmente e mete no lote
+                                        st.session_state.lote_fichas.append(txt_ficha)
+                                        st.session_state["creditos_ativos"] -= 1
+                                        st.session_state.assuntos_selecionados = [] 
+                                        st.success("✅ Ficha guardada com sucesso! Saldo deduzido diretamente na planilha.")
+                                        st.rerun()
+                                    else:
+                                        erro_msg = resultado_json.get("mensagem", "Erro desconhecido")
+                                        st.error(f"❌ Não foi possível deduzir o saldo na planilha: {erro_msg}")
+                                except Exception:
+                                    # Se falhar aqui, o Google mandou texto em vez de JSON. Vamos mostrar o que ele mandou:
+                                    st.error(f"❌ O Google Script não retornou um formato válido. Resposta recebida: {resposta_google.text[:200]}")
                             else:
-                                erro_msg = resultado_json.get("mensagem", "Erro desconhecido")
-                                st.error(f"❌ Não foi possível deduzir o saldo na planilha: {erro_msg}")
+                                st.error(f"❌ Erro de conexão com o servidor Google (Status {resposta_google.status_code})")
+                                
                         except Exception as e:
                             st.error(f"❌ Erro de comunicação com a planilha: {e}")
-                else:
-                    st.error("Preencha os campos de autoria/organização e o título.")
-
     with tab_financeiro:
         st.header("💳 Gestão Financeira e Saldo")
         col_f1, col_f2 = st.columns(2)
