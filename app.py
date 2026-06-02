@@ -59,23 +59,61 @@ def carregar_creditos_planilha(url_original):
 # =========================================================================
 # 🌟 ATUALIZAÇÃO RECARGA AUTOMÁTICA EM BACKEND
 # =========================================================================
+def tratar_url_google_sheets(url):
+    """
+    Transforma o link padrão do Google Sheets (inclusive do Android)
+    em um link de exportação direta de CSV que o Pandas consegue ler.
+    """
+    url = url.strip()
+    if "/edit" in url:
+        url = url.split("/edit")[0] + "/export?format=csv"
+    elif "/pubhtml" in url:
+        url = url.split("/pubhtml")[0] + "/pub?output=csv"
+    elif not url.endswith("/export?format=csv") and "docs.google.com" in url:
+        if url.endswith("/"):
+            url = url + "export?format=csv"
+        else:
+            url = url + "/export?format=csv"
+    return url
+
+def carregar_creditos_planilha(url_planilha):
+    """
+    Lê a planilha usando o link tratado e retorna o DataFrame.
+    """
+    try:
+        url_tratada = tratar_url_google_sheets(url_planilha)
+        # O pandas lê o CSV direto da web, funciona perfeitamente no Pydroid 3
+        df = pd.read_csv(url_tratada)
+        return df
+    except Exception as e:
+        st.error(f"Erro ao acessar os dados da planilha: {e}")
+        return None
+
 def atualizar_saldo_usuario(email_usuario):
     try:
         url_planilha = st.secrets["URL_PLANILHA"]
+        
+        # Chama a função que agora trata o link do Android
         df = carregar_creditos_planilha(url_planilha)
+        
         if df is not None and 'token' in df.columns and 'creditos' in df.columns:
+            # Força os tokens/e-mails a virarem string e remove espaços em branco
             df['token'] = df['token'].astype(str).str.strip().str.upper()
             email_chave = email_usuario.strip().upper()
+            
             if email_chave in df['token'].values:
                 saldo = int(df.loc[df['token'] == email_chave, 'creditos'].values[0])
                 st.session_state["creditos_ativos"] = saldo
             else:
                 st.session_state["creditos_ativos"] = 0
         else:
+            st.error("A planilha não possui as colunas 'token' ou 'creditos'.")
             st.session_state["creditos_ativos"] = 0
-    except Exception:
+            
+    except Exception as e:
+        # Removido o 'except Exception:' genérico silencioso para você ver o erro se acontecer
+        st.error(f"Erro na sincronização de saldo: {e}")
         st.session_state["creditos_ativos"] = 0
-
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
