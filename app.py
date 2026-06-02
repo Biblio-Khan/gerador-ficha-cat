@@ -578,7 +578,7 @@ else:
         with col_f2:
             st.subheader("🛒 Tabela de Preços")
             st.markdown("""
-            * **30 Fichas** — R$ 90,00 *(R$ 3,00/un)*
+            * **30 Fichas** — R$ 70,00 *(R$ 2,33/un)*
             * **60 Fichas** — R$ 160,00 *(R$ 2,66/un)*
             * **100 Fichas** — R$ 240,00 *(R$ 2,40/un)*
             * **200 Fichas** — R$ 420,00 *(R$ 2,10/un)*
@@ -595,7 +595,7 @@ else:
             pacote_escolhido = st.selectbox(
                 "Qual pacote de créditos você comprou?",
                 options=[
-                    "30 Fichas (R$ 90,00)",
+                    "30 Fichas (R$ 70,00)",
                     "60 Fichas (R$ 160,00)",
                     "100 Fichas (R$ 240,00)",
                     "200 Fichas (R$ 420,00)",
