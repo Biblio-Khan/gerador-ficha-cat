@@ -64,7 +64,7 @@ def tratar_url_google_sheets(url):
         else:
             url = url + "/export?format=csv"
             
-    # 🔥 TRUQUE DO CACHE: Adiciona a hora atual in segundos no link.
+    # 🔥 TRUQUE DO CACHE: Adiciona a hora atual em segundos no link.
     # Isso força o Google a gerar um CSV idêntico ao que está na tela agora.
     import time
     nocache_param = f"&nocache={int(time.time())}"
@@ -152,7 +152,7 @@ if st.session_state["logado"]:
         if st.session_state["creditos_ativos"] > 0:
             st.success(f"💳 Saldo: {st.session_state['creditos_ativos']} fichas")
         else:
-            st.error("💳 Sem créditos activos")
+            st.error("💳 Sem créditos ativos")
 
 # =========================================================================
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
@@ -320,7 +320,7 @@ else:
 
     def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
         if tipo_autor == "Entidade (Órgão/Instituição)" and entidade:
-            texto_base = entity = entidade
+            texto_base = entidade
         elif tipo_autor == "Pessoa Física" and autores_lista and any(a.strip() for a in autores_lista):
             autor_principal = [a.strip() for a in autores_lista if a.strip()][0]
             partes = autor_principal.split()
@@ -418,7 +418,7 @@ else:
                 colecao_nome = st.text_input("Nome da Coleção e Volume (Ex: Biblioteca jurídica, v. 12)")
                 
             isbn = st.text_input("ISBN (Ex: 978-65-0000-00-0)")
-            support = suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
+            suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
             url_acesso = st.text_input("URL de Acesso / DOI") if suporte == "Digital" else ""
 
         with col_direita:
@@ -520,7 +520,7 @@ else:
                     
             st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
             
-            if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["grid_ativos" if "grid_ativos" in st.session_state else "creditos_ativos"] <= 0):
+            if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
                 valido = True
                 if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                     valido = False
@@ -536,24 +536,13 @@ else:
                             }
                             # Faz a requisição POST para rodar o script do Google
                             resposta_google = requests.post(url_script, json=payload, timeout=15)
-                            resultado_json = resposta_google.json()
                             
-                           try:
-                            # 1. Envia a ordem de desconto para o Google Apps Script da Planilha
-                            url_script = st.secrets["URL_SCRIPT_GOOGLE"]
-                            payload = {
-                                "email": st.session_state["usuario_atual"],
-                                "acao": "descontar"
-                            }
-                            # Faz a requisição POST para rodar o script do Google
-                            resposta_google = requests.post(url_script, json=payload, timeout=15)
-                            
-                            # Verificação de segurança: O Google respondeu sucesso HTTP?
+                            # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
                             if resposta_google.status_code == 200:
                                 try:
                                     resultado_json = resposta_google.json()
                                     if resultado_json.get("status") == "sucesso":
-                                        # 2. Se correu bem na planilha, atualiza localmente e mete no lote
+                                        # 2. Se correu bem na planilha, atualiza localmente e insere no lote
                                         st.session_state.lote_fichas.append(txt_ficha)
                                         st.session_state["creditos_ativos"] -= 1
                                         st.session_state.assuntos_selecionados = [] 
@@ -563,13 +552,16 @@ else:
                                         erro_msg = resultado_json.get("mensagem", "Erro desconhecido")
                                         st.error(f"❌ Não foi possível deduzir o saldo na planilha: {erro_msg}")
                                 except Exception:
-                                    # Se falhar aqui, o Google mandou texto em vez de JSON. Vamos mostrar o que ele mandou:
-                                    st.error(f"❌ O Google Script não retornou um formato válido. Resposta recebida: {resposta_google.text[:200]}")
+                                    # Captura se o script do Google mandou HTML de erro ou texto bruto em vez de JSON
+                                    st.error(f"❌ O Google Script não retornou um formato JSON válido. Resposta recebida do servidor: {resposta_google.text[:250]}")
                             else:
-                                st.error(f"❌ Erro de conexão com o servidor Google (Status {resposta_google.status_code})")
+                                st.error(f"❌ Falha crítica de conexão com o servidor Google Script (Status HTTP: {resposta_google.status_code})")
                                 
                         except Exception as e:
                             st.error(f"❌ Erro de comunicação com a planilha: {e}")
+                else:
+                    st.error("Preencha os campos de autoria/organização e o título.")
+
     with tab_financeiro:
         st.header("💳 Gestão Financeira e Saldo")
         col_f1, col_f2 = st.columns(2)
@@ -624,7 +616,7 @@ else:
                             data_hora_br = datetime.now(fuso_brasilia).strftime('%d/%m/%Y %H:%M:%S')
                             
                             texto_notificacao = (
-                                f"🔥 *NOVO COMPROVANTE RECEBIDO!* \n\n"
+                                f"🔥 *NOVO COMPROVANTE RECEBIDO!*\n\n"
                                 f"📧 *E-mail do Cliente:* {st.session_state['usuario_atual']}\n"
                                 f"💰 *Pacote Escolhido:* {pacote_escolhido}\n"
                                 f"📅 *Data/Hora:* {data_hora_br}"
