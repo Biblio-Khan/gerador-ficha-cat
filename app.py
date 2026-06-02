@@ -519,7 +519,7 @@ else:
                     
             st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
             
-               if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
+              if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
                 valido = True
                 if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                     valido = False
@@ -535,7 +535,7 @@ else:
                             }
                             # Faz a requisição POST para rodar o script do Google
                             resposta_google = requests.post(url_script, json=payload, timeout=15)
-                            resultado_json = resposta_google.json()
+                            resultado_json = response_google = resposta_google.json()
                             
                             if resposta_google.status_code == 200 and resultado_json.get("status") == "sucesso":
                                 # 2. Se correu bem na planilha, atualiza localmente e mete no lote
@@ -552,7 +552,7 @@ else:
                 else:
                     st.error("Preencha os campos de autoria/organização e o título.")
 
-    with tab_financeiro:
+        with tab_financeiro:
         st.header("💳 Gestão Financeira e Saldo")
         col_f1, col_f2 = st.columns(2)
         
