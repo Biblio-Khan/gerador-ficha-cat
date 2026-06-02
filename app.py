@@ -41,23 +41,7 @@ if not firebase_admin._apps:
         st.error(f"❌ Erro crítico nas credenciais do Firebase: {str(e)}")
 
 # =========================================================================
-# 🌟 FUNÇÃO DE SUPORTE PARA TRATAMENTO DA PLANILHA DO TELEMÓVEL
-# =========================================================================
-def carregar_creditos_planilha(url_original):
-    try:
-        if "/edit" in url_original:
-            url_base = url_original.split("/edit")[0]
-        else:
-            url_base = url_original
-        url_csv = f"{url_base}/gviz/tq?tqx=out:csv"
-        df = pd.read_csv(url_csv)
-        df.columns = df.columns.str.strip().str.lower()
-        return df
-    except Exception:
-        return None
-
-# =========================================================================
-# 🌟 ATUALIZAÇÃO RECARGA AUTOMÁTICA EM BACKEND
+# 🌟 RECARGA AUTOMÁTICA EM BACKEND
 # =========================================================================
 def tratar_url_google_sheets(url):
     """
@@ -82,7 +66,6 @@ def carregar_creditos_planilha(url_planilha):
     """
     try:
         url_tratada = tratar_url_google_sheets(url_planilha)
-        # O pandas lê o CSV direto da web, funciona perfeitamente no Pydroid 3
         df = pd.read_csv(url_tratada)
         return df
     except Exception as e:
@@ -92,12 +75,9 @@ def carregar_creditos_planilha(url_planilha):
 def atualizar_saldo_usuario(email_usuario):
     try:
         url_planilha = st.secrets["URL_PLANILHA"]
-        
-        # Chama a função que agora trata o link do Android
         df = carregar_creditos_planilha(url_planilha)
         
         if df is not None and 'token' in df.columns and 'creditos' in df.columns:
-            # Força os tokens/e-mails a virarem string e remove espaços em branco
             df['token'] = df['token'].astype(str).str.strip().str.upper()
             email_chave = email_usuario.strip().upper()
             
@@ -111,9 +91,9 @@ def atualizar_saldo_usuario(email_usuario):
             st.session_state["creditos_ativos"] = 0
             
     except Exception as e:
-        # Removido o 'except Exception:' genérico silencioso para você ver o erro se acontecer
         st.error(f"Erro na sincronização de saldo: {e}")
         st.session_state["creditos_ativos"] = 0
+
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
@@ -123,7 +103,6 @@ def verificar_login_firebase(email, senha):
         user = auth.get_user_by_email(email)
         st.session_state["logado"] = True
         st.session_state["usuario_atual"] = user.email
-        # Ultiliza os créditos automaticamente ao logar com o e-mail cadastrado
         atualizar_saldo_usuario(user.email)
         return True
     except Exception as e:
@@ -165,7 +144,6 @@ if not st.session_state["logado"]:
             else:
                 st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
 
-    # --- SEÇÃO: ESQUECI A SENHA (VERSÃO MANUAL INSTRUTIVA) ---
     st.markdown("---")
     with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
         st.markdown("""
@@ -175,8 +153,7 @@ if not st.session_state["logado"]:
         """)
 
 else:
-    # --- CONTEÚDO DO APLICATIVO COMERCIAL (SÓ EXECUTA APÓS LOGIN) ---
-    
+    # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
     st.markdown("""
         <style>
         textarea {
@@ -204,11 +181,7 @@ else:
 
     def buscar_vcb_senado(termo_busca):
         url_api = "https://adm.senado.leg.br/vcb/vocab/services.php"
-        params = {
-            "task": "search",
-            "arg": termo_busca,
-            "output": "json"
-        }
+        params = {"task": "search", "arg": termo_busca, "output": "json"}
         try:
             resposta = requests.get(url_api, params=params, timeout=8, verify=False)
             if resposta.status_code == 200:
@@ -221,7 +194,7 @@ else:
                             resultados_formatados.append({
                                 "termo": item["string"].strip(),
                                 "id": f"VCB-{item.get('term_id', chave)}",
-                                "nota": "Termo oficial homologado pelo Vocabulário Controlado do Senado Federal."
+                                "note": "Termo oficial homologado pelo Vocabulário Controlado do Senado Federal."
                             })
                 return resultados_formatados
         except Exception:
@@ -287,16 +260,13 @@ else:
 
     def buscar_na_tabela_cutter(texto_para_busca, titulo_obra):
         if not texto_para_busca or not titulo_obra: return "X000x"
-        
         url_csv = "https://raw.githubusercontent.com/Biblio-Khan/gerador-ficha-cat/refs/heads/main/cutter.csv"
-        
         try:
             df = pd.read_csv(url_csv, sep=',', encoding='utf-8', quotechar='"')
         except Exception:
             return f"{texto_para_busca.strip().upper()[0]}200{titulo_obra.strip().lower()[0]}"
         
         df.columns = df.columns.str.strip().str.lower()
-        
         col_nome = 'name' if 'name' in df.columns else df.columns[0]
         col_id = 'id' if 'id' in df.columns else df.columns[1]
         
@@ -304,49 +274,41 @@ else:
         sub_busca = texto_para_busca.strip().upper()
         
         match = df[df['Name_Clean'] <= sub_busca].sort_values(by='Name_Clean').tail(1)
-        
         num = "200"
         if not match.empty:
             num = str(match[col_id].values[0]).strip().split('.')[0]
             
-        # --- IGNORAR ARTIGOS NO INÍCIO DO TÍTULO ---
         titulo_limpo = titulo_obra.strip().upper()
         artigos = ["O ", "A ", "OS ", "AS ", "UM ", "UMA ", "UNS ", "UMAS "]
-        
         for artigo in artigos:
             if titulo_limpo.startswith(artigo):
                 titulo_limpo = titulo_limpo[len(artigo):].strip()
                 break
-                
         letra_titulo = titulo_limpo[0].lower() if titulo_limpo else "t"
-            
         return f"{sub_busca[0]}{num}{letra_titulo}"
 
     def calcular_cutter(tipo_autor, autores_lista, entidade="", titulo="", tem_organizador=False, organizador_nome=""):
         if tipo_autor == "Entidade (Órgão/Instituição)" and entidade:
             texto_base = entidade
         elif tipo_autor == "Pessoa Física" and autores_lista and any(a.strip() for a in autores_lista):
-            # Filtra o primeiro autor preenchido
             autor_principal = [a.strip() for a in autores_lista if a.strip()][0]
             partes = autor_principal.split()
-            # Se houver sobrenome isolado, usa ele para o Cutter, senão usa o próprio nome
             texto_base = partes[-1] if len(partes) > 1 else autor_principal
         elif tem_organizador or tipo_autor == "Organizador":
             partes_org = organizador_nome.strip().split()
             texto_base = partes_org[-1] if len(partes_org) > 1 else organizador_nome
         else:
             texto_base = "Autor"
-            
         return buscar_na_tabela_cutter(texto_base, titulo)
 
     # =========================================================================
-    # 🌟 IMPLEMENTAÇÃO DO SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS COM TELEGRAM)
+    # SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS LIMITADOS ATÉ 300)
     # =========================================================================
     tab_gerador, tab_financeiro = st.tabs(["⚖️ Gerar Ficha", "💳 Compra e Gestão de Créditos"])
 
     with tab_gerador:
         if st.session_state["creditos_ativos"] <= 0:
-            st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restoration para continuar.")
+            st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
 
         st.title("⚖️ Gerador de Fichas Jurídicas — NBR/AACR2")
         st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
@@ -377,7 +339,6 @@ else:
 
         with col_esquerda:
             st.subheader("1. Metadados & Responsabilidade")
-            
             classificacao = st.text_input("Número de Classificação (CDD ou CDU)", value="340.1")
             tipo_autor = st.radio("Tipo de Autoria Principal", ["Pessoa Física", "Entidade (Órgão/Instituição)"], horizontal=True)
             
@@ -392,7 +353,6 @@ else:
                 entidade_nome = st.text_input("Nome da Entidade (Ex: Brasil. Supremo Tribunal Federal)")
                 
             titulo = st.text_input("Título Principal")
-            
             st.markdown("---")
             col_resp_1, col_resp_2 = st.columns(2)
             
@@ -432,7 +392,6 @@ else:
 
         with col_direita:
             st.subheader("3. Indexação por Assunto")
-            
             st.markdown("##### 🏛️ Buscar no VCB do Senado Federal")
             termo_busca = st.text_input("Digite um termo jurídico para pesquisar:")
             
@@ -472,19 +431,12 @@ else:
             st.subheader("4. Fechamento e Visualização da Ficha")
             
             entrada_principal, responsabilidade, entrada_por_titulo = formatar_entrada_e_corpo(
-                tipo_autor=tipo_autor, 
-                autores_lista=autores_lista, 
-                entidade=entidade_nome, 
-                titulo=titulo, 
-                tem_organizador=tem_organizador, 
-                organizador_nome=organizador_nome, 
-                tipo_org=tipo_org, 
-                tem_tradutor=tem_tradutor, 
-                tradutor_nome=tradutor_nome
+                tipo_autor=tipo_autor, autores_lista=autores_lista, entidade=entidade_nome, titulo=titulo, 
+                tem_organizador=tem_organizador, organizador_nome=organizador_nome, tipo_org=tipo_org, 
+                tem_tradutor=tem_tradutor, tradutor_nome=tradutor_nome
             )
             
             cutter = calcular_cutter(tipo_autor, autores_lista, entidade=entidade_nome, titulo=titulo, tem_organizador=tem_organizador, organizador_nome=organizador_nome)
-            
             dgm = " [recurso eletrônico]" if suporte == "Digital" else ""
             desc_fisica = f"1 recurso online ({paginas} f.) " if suporte == "Digital" else f"{paginas} f"
             
@@ -497,12 +449,10 @@ else:
             nota_acesso = f"\n            Modo de acesso: {url_acesso}" if suporte == "Digital" and url_acesso else ""
             isbn_bloco = f"\n            ISBN {isbn}" if isbn.strip() else ""
             nota_traducao = f"\n            Traduzido de obra original." if tem_tradutor and tradutor_nome.strip() else ""
-            
             ed_bloco = f"{edicao.strip()} – " if edicao.strip() else ""
             pub_bloco = f"{cidade.strip()} : {editora.strip()}, {ano.strip()}."
             
             string_assuntos = " ".join([f"{i+1}. {ass}" for i, ass in enumerate(st.session_state.assuntos_selecionados)])
-            
             rastreabilidade = ""
             romanos = ["I", "II", "III", "IV", "V"]
             r_idx = 0
@@ -553,9 +503,6 @@ else:
                 else:
                     st.error("Preencha os campos de autoria/organização e o título.")
 
-    # ---------------------------------------------------------
-    # ABA 2: FINANCEIRO E ENVIOS DIRETOS AO TELEGRAM
-    # ---------------------------------------------------------
     with tab_financeiro:
         st.header("💳 Gestão Financeira e Saldo")
         col_f1, col_f2 = st.columns(2)
@@ -572,11 +519,11 @@ else:
         with col_f2:
             st.subheader("🛒 Tabela de Preços")
             st.markdown("""
-            * **30 Fichas** — R$ 90,00 
-            * **60 Fichas** — R$ 160,00
-            * **100 Fichas** — R$ 240,00
-            * **200 Fichas** — R$ 420,00
-            * **300 Fichas** — R$ 570,00 🚀
+            * **30 Fichas** — R$ 90,00 *(R$ 3,00/un)*
+            * **60 Fichas** — R$ 160,00 *(R$ 2,66/un)*
+            * **100 Fichas** — R$ 240,00 *(R$ 2,40/un)*
+            * **200 Fichas** — R$ 420,00 *(R$ 2,10/un)*
+            * **300 Fichas** — R$ 570,00 *(R$ 1,90/un)*
             """)
             st.info("🔑 **PIX:** `bibliokhancontato@gmail.com`")
 
