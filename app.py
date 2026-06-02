@@ -519,17 +519,36 @@ else:
                     
             st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
             
-            if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
+           if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
                 valido = True
                 if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                     valido = False
                     
                 if valido and titulo.strip():
-                    st.session_state.lote_fichas.append(txt_ficha)
-                    st.session_state["creditos_ativos"] -= 1
-                    st.session_state.assuntos_selecionados = [] 
-                    st.success("Ficha guardada com sucesso no lote superior! Crédito deduzido.")
-                    st.rerun()
+                    with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
+                        try:
+                            # 1. Envia a ordem de desconto para o Google Apps Script da Planilha
+                            url_script = st.secrets["URL_SCRIPT_GOOGLE"]
+                            payload = {
+                                "email": st.session_state["usuario_atual"],
+                                "acao": "descontar"
+                            }
+                            # Faz a requisição POST para rodar o script do Google
+                            resposta_google = requests.post(url_script, json=payload, timeout=15)
+                            resultado_json = resposta_google.json()
+                            
+                            if resposta_google.status_code == 200 and resultado_json.get("status") == "sucesso":
+                                # 2. Se correu bem na planilha, atualiza localmente e mete no lote
+                                st.session_state.lote_fichas.append(txt_ficha)
+                                st.session_state["creditos_ativos"] -= 1
+                                st.session_state.assuntos_selecionados = [] 
+                                st.success("✅ Ficha guardada com sucesso! Saldo deduzido diretamente na planilha.")
+                                st.rerun()
+                            else:
+                                erro_msg = resultado_json.get("mensagem", "Erro desconhecido")
+                                st.error(f"❌ Não foi possível deduzir o saldo na planilha: {erro_msg}")
+                        except Exception as e:
+                            st.error(f"❌ Erro de comunicação com a planilha: {e}")
                 else:
                     st.error("Preencha os campos de autoria/organização e o título.")
 
