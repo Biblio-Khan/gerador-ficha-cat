@@ -452,9 +452,19 @@ else:
 
             if st.session_state.assuntos_selecionados:
                 st.write("**Assuntos Vinculados à Ficha:**")
+                
+                # Criamos um botão de exclusão individual para cada assunto
                 for idx, ass in enumerate(st.session_state.assuntos_selecionados):
-                    st.write(f"{idx+1}. {ass}")
-                if st.button("🗑️ Limpar Assuntos"):
+                    col_assunto, col_excluir = st.columns([9, 1])
+                    with col_assunto:
+                        st.write(f"{idx+1}. {ass}")
+                    with col_excluir:
+                        if st.button("❌", key=f"remover_assunto_{idx}", help="Remover apenas este assunto"):
+                            st.session_state.assuntos_selecionados.pop(idx)
+                            st.rerun()
+                            
+                # Mantemos o botão de limpar tudo, caso o usuário queira zerar a lista
+                if st.button("🗑️ Limpar Todos os Assuntos"):
                     st.session_state.assuntos_selecionados = []
                     st.rerun()
 
