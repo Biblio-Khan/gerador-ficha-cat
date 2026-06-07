@@ -232,67 +232,47 @@ else:
             return []
         return []
 
-    def gerar_docx_lote(lista_fichas):
-        from docx.oxml.shared import OxmlElement
-        from docx.oxml.ns import qn
-
-        def set_cell_border(cell, **kwargs):
-            """Define as bordas da célula da ficha."""
-            tc = cell._tc
-            tcPr = tc.get_or_add_tcPr()
-            for edge in ('top', 'left', 'bottom', 'right'):
-                if edge in kwargs:
-                    tag = 'w:{}'.format(edge)
-                    element = tcPr.find(qn(tag))
-                    if element is None:
-                        element = OxmlElement(tag)
-                        tcPr.append(element)
-                    element.set(qn('w:val'), 'single')
-                    element.set(qn('w:sz'), '4') # Espessura da linha
-                    element.set(qn('w:space'), '0')
-                    element.set(qn('w:color'), '000000')
-
+   def gerar_docx_lote(lista_fichas):
         doc = Document()
+        
+        # Configuração das margens
         section = doc.sections[0]
         section.left_margin = Pt(72)
         section.right_margin = Pt(72)
-        
-        style = doc.styles['Normal']
-        font = style.font
-        font.name = 'Courier New'
-        font.size = Pt(10)
 
         for idx, ficha_texto in enumerate(lista_fichas):
             if idx > 0:
                 doc.add_page_break()
             
-            # Cria tabela 1x1
+            # Adiciona a tabela com o estilo 'Table Grid' que força as bordas
             table = doc.add_table(rows=1, cols=1)
+            table.style = 'Table Grid' 
             table.autofit = False
             table.allow_autofit = False
             table.columns[0].width = Pt(400)
             
+            # Acessa a célula
             cell = table.cell(0, 0)
-            set_cell_border(cell, top=True, left=True, bottom=True, right=True)
             
-            # Formatação do texto dentro da célula
-            p = cell.paragraphs[0]
-            p.text = ficha_texto
-            p.paragraph_format.left_indent = Pt(15)
-            p.paragraph_format.space_after = Pt(0)
+            # Remove parágrafos padrão para garantir controle total
+            cell._element.clear_content()
             
-            # Aplica fonte Courier New no texto
-            for run in p.runs:
-                run.font.name = 'Courier New'
-                run.font.size = Pt(10)
-
-            doc.add_paragraph()
+            # Adiciona o texto configurando a fonte
+            p = cell.add_paragraph()
+            run = p.add_run(ficha_texto)
+            run.font.name = 'Courier New'
+            run.font.size = Pt(10)
+            
+            # Ajusta o alinhamento e recuo dentro da caixa
+            p.paragraph_format.left_indent = Pt(10)
+            p.paragraph_format.right_indent = Pt(10)
+            p.paragraph_format.space_before = Pt(10)
+            p.paragraph_format.space_after = Pt(10)
 
         buffer = io.BytesIO()
         doc.save(buffer)
         buffer.seek(0)
         return buffer
-
     def formatar_entrada_e_corpo(tipo_autor, autores_lista, entidade, titulo, tem_organizador, organizador_nome, tipo_org, tem_tradutor, tradutor_nome):
         entrada = ""
         corpo_autores = ""
