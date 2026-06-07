@@ -232,9 +232,27 @@ else:
             return []
         return []
 
-    def gerar_docx_lote(lista_fichas):
+   def gerar_docx_lote(lista_fichas):
+        from docx.oxml.shared import OxmlElement
+        from docx.oxml.ns import qn
+
+        def set_cell_border(cell, **kwargs):
+            """Define as bordas da célula da ficha."""
+            tc = cell._tc
+            tcPr = tc.get_or_add_tcPr()
+            for edge in ('top', 'left', 'bottom', 'right'):
+                if edge in kwargs:
+                    tag = 'w:{}'.format(edge)
+                    element = tcPr.find(qn(tag))
+                    if element is None:
+                        element = OxmlElement(tag)
+                        tcPr.append(element)
+                    element.set(qn('w:val'), 'single')
+                    element.set(qn('w:sz'), '4') # Espessura da linha
+                    element.set(qn('w:space'), '0')
+                    element.set(qn('w:color'), '000000')
+
         doc = Document()
-        # Configuração da página (Margens para ficha)
         section = doc.sections[0]
         section.left_margin = Pt(72)
         section.right_margin = Pt(72)
@@ -248,23 +266,26 @@ else:
             if idx > 0:
                 doc.add_page_break()
             
-            # Adiciona uma tabela de 1x1 para criar a borda da ficha
+            # Cria tabela 1x1
             table = doc.add_table(rows=1, cols=1)
             table.autofit = False
             table.allow_autofit = False
-            table.columns[0].width = Pt(400) # Largura padrão da ficha
+            table.columns[0].width = Pt(400)
             
             cell = table.cell(0, 0)
+            set_cell_border(cell, top=True, left=True, bottom=True, right=True)
             
-            # Formatação do parágrafo dentro da célula
+            # Formatação do texto dentro da célula
             p = cell.paragraphs[0]
             p.text = ficha_texto
-            p.paragraph_format.left_indent = Pt(20) # Recuo para manter o alinhamento do Cutter
+            p.paragraph_format.left_indent = Pt(15)
             p.paragraph_format.space_after = Pt(0)
-            p.style.font.name = 'Courier New'
-            p.style.font.size = Pt(10)
+            
+            # Aplica fonte Courier New no texto
+            for run in p.runs:
+                run.font.name = 'Courier New'
+                run.font.size = Pt(10)
 
-            # Adiciona um parágrafo vazio após a tabela para espaçamento
             doc.add_paragraph()
 
         buffer = io.BytesIO()
