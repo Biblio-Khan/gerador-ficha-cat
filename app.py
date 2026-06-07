@@ -232,7 +232,7 @@ else:
             return []
         return []
 
-   def gerar_docx_lote(lista_fichas):
+    def gerar_docx_lote(lista_fichas):
         from docx.oxml.shared import OxmlElement
         from docx.oxml.ns import qn
 
