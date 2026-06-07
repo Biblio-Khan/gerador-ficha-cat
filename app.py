@@ -234,16 +234,39 @@ else:
 
     def gerar_docx_lote(lista_fichas):
         doc = Document()
+        # Configuração da página (Margens para ficha)
+        section = doc.sections[0]
+        section.left_margin = Pt(72)
+        section.right_margin = Pt(72)
+        
         style = doc.styles['Normal']
         font = style.font
         font.name = 'Courier New'
         font.size = Pt(10)
+
         for idx, ficha_texto in enumerate(lista_fichas):
             if idx > 0:
                 doc.add_page_break()
-            p = doc.add_paragraph(ficha_texto)
-            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-            doc.add_paragraph("\n" + "-"*50 + "\n")
+            
+            # Adiciona uma tabela de 1x1 para criar a borda da ficha
+            table = doc.add_table(rows=1, cols=1)
+            table.autofit = False
+            table.allow_autofit = False
+            table.columns[0].width = Pt(400) # Largura padrão da ficha
+            
+            cell = table.cell(0, 0)
+            
+            # Formatação do parágrafo dentro da célula
+            p = cell.paragraphs[0]
+            p.text = ficha_texto
+            p.paragraph_format.left_indent = Pt(20) # Recuo para manter o alinhamento do Cutter
+            p.paragraph_format.space_after = Pt(0)
+            p.style.font.name = 'Courier New'
+            p.style.font.size = Pt(10)
+
+            # Adiciona um parágrafo vazio após a tabela para espaçamento
+            doc.add_paragraph()
+
         buffer = io.BytesIO()
         doc.save(buffer)
         buffer.seek(0)
