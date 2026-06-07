@@ -232,7 +232,7 @@ else:
             return []
         return []
 
-   def gerar_docx_lote(lista_fichas):
+    def gerar_docx_lote(lista_fichas):
         doc = Document()
         
         # Configuração das margens
