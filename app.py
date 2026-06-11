@@ -430,7 +430,7 @@ else:
 
             st.markdown("---")
             st.subheader("2. Publicação & Descrição Física")
-            edicao = st.text_input("Edição (Ex: 2. ed., 3. ed. rev. e ampl.)", value="1. ed.")
+            edicao = st.text_input("Edição e Volume (Ex: 2. ed., 3. ed. rev. e ampl.)", value="1. ed.")
             editora = st.text_input("Editora")
             cidade = st.text_input("Cidade de Publicação", value="Brasília")
             ano = st.text_input("Ano de Publicação", value="2026")
