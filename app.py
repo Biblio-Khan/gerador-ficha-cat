@@ -452,6 +452,7 @@ else:
             cidade = st.text_input("Cidade de Publicação", value="Brasília")
             ano = st.text_input("Ano de Publicação", value="2026")
             paginas = st.text_input("Número de Páginas/Folhas", value="180")
+            dimensoes = st.text_input("Dimensões do livro (Ex: 23 cm)", value="23 cm")
             
             tem_colecao = st.checkbox("Esta obra faz parte de uma Coleção / Série?")
             colecao_nome = ""
@@ -538,8 +539,10 @@ else:
             
             cutter = calcular_cutter(tipo_autor, autores_lista, entidade=entidade_nome, titulo=titulo, tem_organizador=tem_organizador, organizador_nome=organizador_nome)
             dgm = " [recurso eletrônico]" if suporte == "Digital" else ""
-            desc_fisica = f"1 recurso online ({paginas} f.) " if suporte == "Digital" else f"{paginas} f"
-            
+            desc_fisica = f"1 recurso online ({paginas} p.) " if suporte == "Digital" else f"{paginas} p"
+            if suporte != "Digital" and dimensoes.strip():
+                desc_fisica = f"{desc_fisica} ; {dimensoes.strip()}"
+
             bloco_colecao = ""
             if tem_colecao and colecao_nome.strip():
                 text_colecao = colecao_nome.strip()
