@@ -704,7 +704,7 @@ else:
 # ---------------------------------------------------------------------
 # Verifica dinamicamente se a aba foi criada no topo do arquivo
 if 'tab_produtividade' not in locals() and 'tab_produtividade' not in globals():
-    # Se não foi mapeada no topo, o código se auto-corrige criando um container próprio
+    # Se não foi mapeada no topo, cria uma seção em linha no container protegido
     st.markdown("---")
     tab_produtividade = st.container()
 
