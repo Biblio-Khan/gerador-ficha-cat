@@ -546,6 +546,13 @@ else:
                 text_colecao = text_colecao[0].upper() + text_colecao[1:]
                 bloco_colecao = f" ({text_colecao})"
                 
+            # === NOVO BLOCO: Gera a nota de trabalho acadêmico seguindo a ABNT ===
+            nota_trabalho_str = ""
+            if grau_academico != "Livro / Código / Obra Geral":
+                inst_str = f" – {instituicao.strip()}" if instituicao.strip() else ""
+                area_str = f" em {area_concentracao.strip()}" if area_concentracao.strip() else ""
+                nota_trabalho_str = f"\n            {grau_academico}{area_str}{inst_str}, {ano.strip()}."
+
             nota_acesso = f"\n            Modo de acesso: {url_acesso}" if suporte == "Digital" and url_acesso else ""
             isbn_bloco = f"\n            ISBN {isbn}" if isbn.strip() else ""
             nota_traducao = f"\n            Traduzido de obra original." if tem_tradutor and tradutor_nome.strip() else ""
@@ -573,17 +580,18 @@ else:
                 rastreabilidade += f" {romanos[r_idx]}. {nome_invertido_trad}, trad."
                 r_idx += 1
 
+            # === ADICIONADO {nota_trabalho_str} NAS DUAS STRINGS DA FICHA ===
             if entrada_por_titulo:
                 txt_ficha = f"""{classificacao}
 {cutter}   {titulo.strip()}{dgm} / {responsabilidade}. – {ed_bloco}{pub_bloco}
-            {desc_fisica}.{bloco_colecao}{nota_traducao}{nota_acesso}{isbn_bloco}
+            {desc_fisica}.{bloco_colecao}{nota_trabalho_str}{nota_traducao}{nota_acesso}{isbn_bloco}
             
             {string_assuntos}{rastreabilidade}"""
             else:
                 txt_ficha = f"""{classificacao}
 {cutter}   {entrada_principal}
             {titulo.strip()}{dgm} / {responsabilidade}. – {ed_bloco}{pub_bloco}
-            {desc_fisica}.{bloco_colecao}{nota_traducao}{nota_acesso}{isbn_bloco}
+            {desc_fisica}.{bloco_colecao}{nota_trabalho_str}{nota_traducao}{nota_acesso}{isbn_bloco}
             
             {string_assuntos}{rastreabilidade}"""
                     
