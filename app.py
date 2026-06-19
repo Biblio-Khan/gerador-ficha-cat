@@ -703,6 +703,17 @@ else:
 # NOVA ABA: PAINEL DE PRODUTIVIDADE JURÍDICA
 # ---------------------------------------------------------------------
 with tab_produtividade:
+    # Se a variável não foi criada lá em cima, o código cria a aba dinamicamente aqui!
+try:
+    with tab_produtividade:
+        pass
+except NameError:
+    # Caso seu st.tabs lá em cima só tenha duas abas, ele ignora e não quebra o app
+    st.warning("Aba 'Painel de Produtividade' não configurada no menu superior.")
+    # Força a criação se você quiser testar isolado:
+    tab_produtividade = st.tabs(["📊 Painel de Produtividade"])[0]
+
+with tab_produtividade:
     st.title("📊 Painel de Produtividade Jurídica")
     st.subheader(f"Análise de Obras Processadas por {st.session_state.get('usuario_atual', 'Usuário')}")
 
