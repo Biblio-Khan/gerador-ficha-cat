@@ -457,6 +457,25 @@ else:
             colecao_nome = ""
             if tem_colecao:
                 colecao_nome = st.text_input("Nome da Coleção e Volume (Ex: Biblioteca jurídica, v. 12)")
+
+            # === NOVO BLOCO: Tipo de Trabalho Acadêmico ===
+            st.markdown("---")
+            st.subheader("3. Tipo de Documento / Trabalho Acadêmico")
+            
+            grau_academico = st.selectbox(
+                "Tipo de Obra:", 
+                ["Livro / Código / Obra Geral", "Tese (Doutorado)", "Dissertação (Mestrado)", "Monografia (Especialização)", "Monografia (Graduação)"],
+                disabled=esta_bloqueado
+            )
+
+            # Inicializa as variáveis vazias por padrão
+            instituicao = ""
+            area_concentracao = ""
+
+            # Se for selecionado qualquer trabalho acadêmico, mostra os campos adicionais
+            if grau_academico != "Livro / Código / Obra Geral":
+                instituicao = st.text_input("Instituição / Universidade (Ex: Faculdade de Direito da USP):", disabled=esta_bloqueado)
+                area_concentracao = st.text_input("Área de Concentração / Curso (Ex: Direito Civil):", disabled=esta_bloqueado)
                 
             isbn = st.text_input("ISBN (Ex: 978-65-0000-00-0)")
             suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
