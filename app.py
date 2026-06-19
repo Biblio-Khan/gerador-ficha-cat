@@ -125,6 +125,19 @@ def atualizar_saldo_usuario(email_usuario):
         st.error(f"❌ Erro na sincronização de saldo: {e}")
         st.session_state["creditos_ativos"] = 0
 
+def api_obter_produtividade_juridica(email):
+    """ Busca as linhas de produção jurídica do usuário na planilha """
+    url_script = st.secrets["URL_SCRIPT_GOOGLE"]
+    payload = {"acao": "obter_produtividade", "email": email.strip().lower()}
+    try:
+        resp = requests.post(url_script, json=payload, timeout=15)
+        res_json = resp.json()
+        if res_json.get("success", False):
+            return res_json.get("data", [])
+        return []
+    except:
+        return []
+
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
