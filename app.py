@@ -564,9 +564,19 @@ else:
                         try:
                             # 1. Envia a ordem de desconto para o Google Apps Script da Planilha
                             url_script = st.secrets["URL_SCRIPT_GOOGLE"]
+                            
+                            # Transforma a lista de assuntos selecionados em uma linha de texto separada por vírgulas
+                            lista_assuntos = st.session_state.get("assuntos_selecionados", [])
+                            assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
+                            
+                            # Pega o título digitado (verifique se a chave do título na sua tela é "titulo_obra" ou "titulo")
+                            titulo_livro = st.session_state.get("titulo_obra", st.session_state.get("titulo", "Não informado"))
+
                             payload = {
                                 "email": st.session_state["usuario_atual"],
-                                "acao": "descontar"
+                                "acao": "descontar",
+                                "titulo": titulo_livro,
+                                "assunto": assuntos_texto
                             }
                             # Faz a requisição POST para rodar o script do Google
                             resposta_google = requests.post(url_script, json=payload, timeout=15)
