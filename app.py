@@ -700,105 +700,101 @@ else:
                     st.error("❌ Por favor, informe o seu nome completo e anexe o arquivo do comprovante.")
 
 # ---------------------------------------------------------------------
-# NOVA ABA: PAINEL DE PRODUTIVIDADE JURÍDICA
+# NOVA ABA: PAINEL DE PRODUTIVIDADE JURÍDICA (COM TRAVA DE LOGIN)
 # ---------------------------------------------------------------------
-# Verifica dinamicamente se a aba foi criada no topo do arquivo
-if 'tab_produtividade' not in locals() and 'tab_produtividade' not in globals():
-    # Se não foi mapeada no topo, cria uma seção em linha no container protegido
-    st.markdown("---")
-    tab_produtividade = st.container()
+# Só executa este bloco se o usuário já tiver passado pela tela de login
+if st.session_state.get("usuario_atual"):
 
-with tab_produtividade:
-    st.title("📊 Painel de Produtividade Jurídica")
-    st.subheader(f"Análise de Obras Processadas por {st.session_state.get('usuario_atual', 'Usuário')}")
-
-    with st.spinner("Carregando dados de produtividade..."):
-        # Busca os dados usando o e-mail logado no sistema jurídico
-        dados = api_obter_produtividade_juridica(st.session_state.get("usuario_atual", ""))
-
-    if not dados:
-        st.info("Você ainda não possui registros de fichas geradas neste sistema para criar o gráfico.")
-    else:
-        import pandas as pd
-
-        # 1. Converte os dados recebidos da API para um DataFrame do Pandas
-        df = pd.DataFrame(dados)
-
-        # 2. Coleta todos os assuntos, quebra pelas vírgulas e limpa os espaços
-        todos_assuntos = []
-        for linha_assunto in df['assunto']:
-            if linha_assunto: # Garante que não é nulo
-                if str(linha_assunto) != "Não informado":
-                    partes = [a.strip().title() for a in str(linha_assunto).split(",") if a.strip()]
-                    todos_assuntos.extend(partes)
-
-        # 3. Conta a frequência de cada assunto individual
-        if todos_assuntos:
-            df_contagem = pd.DataFrame(todos_assuntos, columns=["Área/Assunto"]).value_counts().reset_index(name="Quantidade")
-        else:
-            df_contagem = pd.DataFrame()
-
-        # 4. Mostra os cartões de resumo (Métricas)
-        col_card1, col_card2 = st.columns(2)
-        with col_card1:
-            st.metric("Total de Processos/Livros", len(df))
-        with col_card2:
-            st.metric("Total de Assuntos Mapeados", len(df_contagem))
-
+    # Verifica dinamicamente se a aba foi criada no topo do arquivo
+    if 'tab_produtividade' not in locals() and 'tab_produtividade' not in globals():
         st.markdown("---")
-        
-        # 5. Renderiza o Gráfico de Barras se houver assuntos mapeados
-        if not df_contagem.empty:
-            st.write("### 🔝 Temas mais Demandados nas suas Fichas")
-            st.bar_chart(
-                data=df_contagem,
-                x="Área/Assunto",
-                y="Quantidade",
-                color="#0077B6", # Tom azul clássico jurídico
+        tab_produtividade = st.container()
+
+    with tab_produtividade:
+        st.title("📊 Painel de Produtividade Jurídica")
+        st.subheader(f"Análise de Obras Processadas por {st.session_state.get('usuario_atual', 'Usuário')}")
+
+        with st.spinner("Carregando dados de produtividade..."):
+            dados = api_obter_produtividade_juridica(st.session_state.get("usuario_atual", ""))
+
+        if not dados:
+            st.info("Você ainda não possui registros de fichas geradas neste sistema para criar o gráfico.")
+        else:
+            import pandas as pd
+
+            # 1. Converte os dados recebidos da API para um DataFrame do Pandas
+            df = pd.DataFrame(dados)
+
+            # 2. Coleta todos os assuntos, quebra pelas vírgulas e limpa os espaços
+            todos_assuntos = []
+            for linha_assunto in df['assunto']:
+                if linha_assunto: 
+                    if str(linha_assunto) != "Não informado":
+                        partes = [a.strip().title() for a in str(linha_assunto).split(",") if a.strip()]
+                        todos_assuntos.extend(partes)
+
+            # 3. Conta a frequência de cada assunto individual
+            if todos_assuntos:
+                df_contagem = pd.DataFrame(todos_assuntos, columns=["Área/Assunto"]).value_counts().reset_index(name="Quantidade")
+            else:
+                df_contagem = pd.DataFrame()
+
+            # 4. Mostra os cartões de resumo (Métricas)
+            col_card1, col_card2 = st.columns(2)
+            with col_card1:
+                st.metric("Total de Processos/Livros", len(df))
+            with col_card2:
+                st.metric("Total de Assuntos Mapeados", len(df_contagem))
+
+            st.markdown("---")
+            
+            # 5. Renderiza o Gráfico de Barras se houver assuntos mapeados
+            if not df_contagem.empty:
+                st.write("### 🔝 Temas mais Demandados nas suas Fichas")
+                st.bar_chart(
+                    data=df_contagem,
+                    x="Área/Assunto",
+                    y="Quantidade",
+                    color="#0077B6", 
+                    use_container_width=True
+                )
+                st.markdown("---")
+
+            # 6. Histórico de Obras Processadas e Opção de Download
+            st.write("### 📚 Histórico de Fichas Emitidas")
+            
+            df_exibicao = df.copy()
+            
+            df_exibicao = df_exibicao.rename(columns={
+                "data": "Data/Hora",
+                "titulo": "Título da Obra",
+                "assunto": "Assuntos Indexados"
+            })
+            
+            if "Data/Hora" in df_exibicao.columns:
+                try:
+                    df_exibicao["Data/Hora"] = pd.to_datetime(df_exibicao["Data/Hora"]).dt.strftime('%d/%m/%Y %H:%M')
+                except:
+                    pass 
+
+            colunas_relatorio = ["Data/Hora", "Título da Obra", "Assuntos Indexados"]
+            df_final = df_exibicao[colunas_relatorio]
+
+            # === BOTÃO DE DOWNLOAD ===
+            csv_dados = df_final.to_csv(index=False, sep=";").encode('utf-8-sig')
+            
+            st.download_button(
+                label="📥 Baixar Relatório Jurídico em CSV (Excel)",
+                data=csv_dados,
+                file_name=f"produtividade_juridica_{st.session_state['usuario_atual'].split('@')[0]}.csv",
+                mime="text/csv",
                 use_container_width=True
             )
-            st.markdown("---")
-
-        # 6. Histórico de Obras Processadas e Opção de Download
-        st.write("### 📚 Histórico de Fichas Emitidas")
-        
-        # Criamos uma cópia limpa para formatar a exibição do usuário
-        df_exibicao = df.copy()
-        
-        # Renomeia as colunas internamente para o relatório ficar amigável
-        df_exibicao = df_exibicao.rename(columns={
-            "data": "Data/Hora",
-            "titulo": "Título da Obra",
-            "assunto": "Assuntos Indexados"
-        })
-        
-        # Ajusta a formatação da data para o padrão brasileiro (DD/MM/AAAA HH:MM)
-        if "Data/Hora" in df_exibicao.columns:
-            try:
-                df_exibicao["Data/Hora"] = pd.to_datetime(df_exibicao["Data/Hora"]).dt.strftime('%d/%m/%Y %H:%M')
-            except:
-                pass 
-
-        # Filtra e organiza apenas as colunas que interessam
-        colunas_relatorio = ["Data/Hora", "Título da Obra", "Assuntos Indexados"]
-        df_final = df_exibicao[colunas_relatorio]
-
-        # === BOTÃO DE DOWNLOAD ===
-        csv_dados = df_final.to_csv(index=False, sep=";").encode('utf-8-sig')
-        
-        st.download_button(
-            label="📥 Baixar Relatório Jurídico em CSV (Excel)",
-            data=csv_dados,
-            file_name=f"produtividade_juridica_{st.session_state['usuario_atual'].split('@')[0]}.csv",
-            mime="text/csv",
-            use_container_width=True
-        )
-        
-        st.write("") # Pequeno espaçamento visual
-        
-        # Exibe a tabela visual dinâmica do Streamlit
-        st.dataframe(
-            df_final, 
-            use_container_width=True,
-            hide_index=True
-        )
+            
+            st.write("") 
+            
+            st.dataframe(
+                df_final, 
+                use_container_width=True,
+                hide_index=True
+            )
