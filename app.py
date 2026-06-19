@@ -587,7 +587,7 @@ else:
                             assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
                             
                             # Pega o título digitado (verifique se a chave do título na sua tela é "titulo_obra" ou "titulo")
-                            titulo_livro = st.session_state.get("titulo_obra", st.session_state.get("titulo", "Não informado"))
+                            titulo_livro = titulo if titulo else "Não Informado"
 
                             payload = {
                                 "email": st.session_state["usuario_atual"],
