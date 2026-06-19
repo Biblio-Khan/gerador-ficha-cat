@@ -607,7 +607,7 @@ else:
                                         st.session_state.lote_fichas.append(txt_ficha)
                                         st.session_state["creditos_ativos"] -= 1
                                         st.session_state.assuntos_selecionados = [] 
-                                        st.success("✅ Ficha guardada com sucesso! Saldo deduzido diretamente na planilha.")
+                                        st.success("✅ Ficha guardada com sucesso! Saldo deduzido.")
                                         st.rerun()
                                     else:
                                         erro_msg = resultado_json.get("mensagem", "Erro desconhecido")
