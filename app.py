@@ -683,42 +683,42 @@ else:
                             # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
                             # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
                             # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
-                        if resposta_google.status_code == 200:
-                            try:
-                                # Força a leitura do texto bruto e limpa possíveis caracteres invisíveis
-                                conteudo = resposta_google.content.decode('utf-8-sig').strip()
+                            if resposta_google.status_code == 200:
+                                try:
+                                    # Força a leitura do texto bruto e limpa possíveis caracteres invisíveis
+                                    conteudo = resposta_google.content.decode('utf-8-sig').strip()
                                 
-                                # Se houver qualquer coisa antes da chave, localiza o início
-                                if "{" in conteudo:
-                                    conteudo = conteudo[conteudo.find("{"):]
+                                    # Se houver qualquer coisa antes da chave, localiza o início
+                                    if "{" in conteudo:
+                                        conteudo = conteudo[conteudo.find("{"):]
                                 
-                                import json
-                                resultado_json = json.loads(conteudo)
+                                    import json
+                                    resultado_json = json.loads(conteudo)
                                 
-                                # Verificação do status
-                                if resultado_json.get("status") == "sucesso":
-                                    ficha_completa = {
-                                        "texto_ficha": txt_ficha,
-                                        "dados_marc": {
-                                            "entrada": entrada_principal,
-                                            "titulo": titulo,
-                                            "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                            "tipo": grau_academico,
-                                            "instituicao": instituicao.strip(),
-                                            "area": area_concentracao.strip(),
-                                            "assuntos": st.session_state.assuntos_selecionados,
-                                            "ano": ano.strip(),
-                                            "paginas": paginas_input,
-                                            "dimensoes": dimensoes_input
+                                    # Verificação do status
+                                    if resultado_json.get("status") == "sucesso":
+                                        ficha_completa = {
+                                            "texto_ficha": txt_ficha,
+                                            "dados_marc": {
+                                                "entrada": entrada_principal,
+                                                "titulo": titulo,
+                                                "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                                "tipo": grau_academico,
+                                                "instituicao": instituicao.strip(),
+                                                "area": area_concentracao.strip(),
+                                                "assuntos": st.session_state.assuntos_selecionados,
+                                                "ano": ano.strip(),
+                                                "paginas": paginas_input,
+                                                "dimensoes": dimensoes_input
+                                            }
                                         }
-                                    }
-                                    st.session_state.lote_fichas.append(ficha_completa)
-                                    st.session_state["creditos_ativos"] -= 1
-                                    st.session_state.assuntos_selecionados = [] 
-                                    st.success("✅ Ficha guardada com sucesso!")
-                                    st.rerun()
-                                else:
-                                    st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
+                                        st.session_state.lote_fichas.append(ficha_completa)
+                                        st.session_state["creditos_ativos"] -= 1
+                                        st.session_state.assuntos_selecionados = [] 
+                                        st.success("✅ Ficha guardada com sucesso!")
+                                        st.rerun()
+                                    else:
+                                        st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
                             
                             except Exception as e:
                                 st.error(f"❌ Falha ao processar resposta: {e}")
