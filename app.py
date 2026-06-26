@@ -689,8 +689,8 @@ else:
                                             inicio = raw_text.find("{")
                                             fim = raw_text.rfind("}") + 1
                                             raw_text = raw_text[inicio:fim]
-                                        import json
-                                        resultado_json = json.loads(raw_text)
+                                    import json
+                                    resultado_json = json.loads(raw_text)
                                     if resultado_json.get("status") == "sucesso":
                                         # Montamos um dicionário com os dados da ficha
                                         ficha_completa = {
