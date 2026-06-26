@@ -653,8 +653,8 @@ else:
                     
             st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
             
-        if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
-            valido = True
+    if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
+        valido = True
         if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
             valido = False
     
