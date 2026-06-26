@@ -724,7 +724,7 @@ else:
                                 except Exception as e:
                                     st.error(f"❌ Falha ao processar resposta: {e}")
 
-    with tab_financeiro:
+with tab_financeiro:
         st.header("💳 Gestão Financeira e Saldo")
         col_f1, col_f2 = st.columns(2)
         
