@@ -369,6 +369,39 @@ else:
             texto_base = "Autor"
         return buscar_na_tabela_cutter(texto_base, titulo)
 
+    def gerar_marc21_completo(dados_ficha):
+        """
+        Gera o registro em formato MARC21 Lineado.
+        'dados_ficha' é um dicionário contendo todos os metadados da obra.
+        """
+        # Linhas base (Tag 000, 100, 245, 260)
+        marc_lines = [
+        "000 00000nam a2200000 i 4500",
+        f"100 1#$a{dados_ficha.get('entrada', '')}",
+        f"245 10$a{dados_ficha.get('titulo', '')}",
+        f"260 ##$a{dados_ficha.get('local_editora', 'Brasília : s.n.')}"
+    ]
+    
+        # Tag 502: Nota de Tese ou Dissertação
+        # Só adiciona se for um tipo acadêmico, ignorando livros/códigos
+        tipo = dados_ficha.get('tipo', '')
+        if "Tese" in tipo or "Dissertação" in tipo or "Monografia" in tipo:
+            inst = dados_ficha.get('instituicao', 'Instituição não informada')
+            ano = dados_ficha.get('ano', '0000')
+            marc_lines.append(f"502 ##$a{tipo} - {inst}, {ano}.")
+    
+        # Tag 650: Assuntos vinculados (VCB Senado ou Manuais)
+        for assunto in dados_ficha.get('assuntos', []):
+            marc_lines.append(f"650 #4$a{assunto}")
+        
+        # Tag 650 extra: Área de concentração (se houver)
+        if dados_ficha.get('area'):
+            marc_lines.append(f"650 #4$a{dados_ficha.get('area')}")
+
+        return "\n".join(marc_lines)
+
+   
+
     # =========================================================================
     # SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS LIMITADOS ATÉ 300)
     # =========================================================================
@@ -388,24 +421,40 @@ else:
         st.markdown("---")
         container_lote = st.container()
         with container_lote:
-            col_lote_1, col_lote_2 = st.columns([2, 1])
+            # Adicionei uma terceira coluna (col_lote_3) para o botão MARC
+            col_lote_1, col_lote_2, col_lote_3 = st.columns([2, 1, 1])
             qtd_fichas = len(st.session_state.lote_fichas)
-            col_lote_1.subheader(f"📦 Lote de Trabalho Atual: {qtd_fichas} Ficha(s) Acumulada(s)")
+            col_lote_1.subheader(f"📦 Lote: {qtd_fichas} Ficha(s)")
             
             if qtd_fichas > 0:
-                arquivo_word = gerar_docx_lote(st.session_state.lote_fichas)
+                # 1. Botão Word (Mantido)
+                arquivo_word = gerar_docx_lote([f["texto_ficha"] for f in st.session_state.lote_fichas])
                 col_lote_2.download_button(
-                    label="📥 Baixar Lote Completo (.DOCX / Word)",
+                    label="📥 Word",
                     data=arquivo_word,
-                    file_name="lote_fichas_aacr2.docx",
+                    file_name="lote_fichas.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
-                if col_lote_2.button("🗑️ Limpar Lote"):
+                
+                # 2. Botão MARC 21 (Novo)
+                # Como a ficha atual é apenas texto, passamos o texto para a função
+                # (A função tratará de criar um registro básico a partir do texto)
+                conteudo_marc = "\n\n".join([gerar_marc21_completo({'titulo': f}) for f in st.session_state.lote_fichas])
+                
+                col_lote_3.download_button(
+                    label="📥 MARC 21",
+                    data=conteudo_marc,
+                    file_name="lote_juridico.mrc",
+                    mime="text/plain"
+                )
+                
+                # 3. Botão Limpar (Mantido)
+                if col_lote_2.button("🗑️ Limpar"):
                     st.session_state.lote_fichas = []
                     st.rerun()
             else:
-                col_lote_2.info("O lote está vazio. Conclua uma ficha abaixo.")
-
+                col_lote_2.info("O lote está vazio.")
+        
         st.markdown("---")
         col_esquerda, col_direita = st.columns(2)
 
@@ -632,11 +681,26 @@ else:
                                 try:
                                     resultado_json = resposta_google.json()
                                     if resultado_json.get("status") == "sucesso":
-                                        # 2. Se correu bem na planilha, atualiza localmente e insere no lote
-                                        st.session_state.lote_fichas.append(txt_ficha)
+                                        # Montamos um dicionário com os dados da ficha
+                                        ficha_completa = {
+                                            "texto_ficha": txt_ficha,
+                                            "dados_marc": {
+                                                "entrada": entrada_principal,
+                                                "titulo": titulo,
+                                                "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                                "tipo": grau_academico,
+                                                "instituicao": instituicao.strip(),
+                                                "area": area_concentracao.strip(),
+                                                "assuntos": st.session_state.assuntos_selecionados,
+                                                "ano": ano.strip()
+                                            }
+                                        }
+                                        # Agora salvamos o dicionário no lote
+                                        st.session_state.lote_fichas.append(ficha_completa)
+                                        
                                         st.session_state["creditos_ativos"] -= 1
                                         st.session_state.assuntos_selecionados = [] 
-                                        st.success("✅ Ficha guardada com sucesso! Saldo deduzido.")
+                                        st.success("✅ Ficha guardada com sucesso!")
                                         st.rerun()
                                     else:
                                         erro_msg = resultado_json.get("mensagem", "Erro desconhecido")
