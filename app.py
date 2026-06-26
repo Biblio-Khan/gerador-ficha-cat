@@ -685,7 +685,7 @@ else:
                                 try:
                                     # 1. Limpa espaços e quebras de linha
                                     raw_text = resposta_google.text.strip()
-                                        if not raw_text.startswith("{"):
+                                    if not raw_text.startswith("{"):
                                             inicio = raw_text.find("{")
                                             fim = raw_text.rfind("}") + 1
                                             raw_text = raw_text[inicio:fim]
