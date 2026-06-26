@@ -658,30 +658,30 @@ else:
         if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
             valido = False
     
-    if valido and titulo.strip():
-        with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
-            try:
-                # 1. Preparação
-                url_script = st.secrets["URL_SCRIPT_GOOGLE"]
-                lista_assuntos = st.session_state.get("assuntos_selecionados", [])
-                assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
-                titulo_livro = titulo if titulo else "Não Informado"
+        if valido and titulo.strip():
+            with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
+                try:
+                    # 1. Preparação
+                    url_script = st.secrets["URL_SCRIPT_GOOGLE"]
+                    lista_assuntos = st.session_state.get("assuntos_selecionados", [])
+                    assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
+                    titulo_livro = titulo if titulo else "Não Informado"
                 
-                payload = {
-                    "email": st.session_state["usuario_atual"],
-                    "acao": "descontar",
-                    "titulo": titulo_livro,
-                    "assunto": assuntos_texto
-                }
+                    payload = {
+                        "email": st.session_state["usuario_atual"],
+                        "acao": "descontar",
+                        "titulo": titulo_livro,
+                        "assunto": assuntos_texto
+                    }
                 
                 # 2. Requisição
-                resposta_google = requests.post(url_script, json=payload, timeout=15)
+                    resposta_google = requests.post(url_script, json=payload, timeout=15)
                 
-                if resposta_google.status_code == 200:
-                    try:
-                        conteudo = resposta_google.content.decode('utf-8-sig').strip()
-                        if "{" in conteudo:
-                            conteudo = conteudo[conteudo.find("{"):]
+                    if resposta_google.status_code == 200:
+                        try:
+                            conteudo = resposta_google.content.decode('utf-8-sig').strip()
+                            if "{" in conteudo:
+                                conteudo = conteudo[conteudo.find("{"):]
                         
                         import json
                         resultado_json = json.loads(conteudo)
