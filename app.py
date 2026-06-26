@@ -592,7 +592,7 @@ else:
             
             cutter = calcular_cutter(tipo_autor, autores_lista, entidade=entidade_nome, titulo=titulo, tem_organizador=tem_organizador, organizador_nome=organizador_nome)
             dgm = " [recurso eletrônico]" if suporte == "Digital" else ""
-            desc_fisica = f"1 recurso online ({paginas} p.) " if suporte == "Digital" else f"{paginas} p"
+            desc_fisica = f"1 recurso online ({paginas_input} p.) " if suporte == "Digital" else f"{paginas_input} p"
             if suporte != "Digital" and dimensoes.strip():
                 desc_fisica = f"{desc_fisica} ; {dimensoes.strip()}"
 
