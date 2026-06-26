@@ -370,31 +370,35 @@ else:
         return buscar_na_tabela_cutter(texto_base, titulo)
 
     def gerar_marc21_completo(dados):
-        """
-        Gera o registro MARC21. 'dados' é o dicionário 'dados_marc'.
-        """
-        # Usamos os dados extraídos
         marc_lines = [
             "000 00000nam a2200000 i 4500",
             f"100 1#$a{dados.get('entrada', '')}",
-            f"245 10$a{dados.get('titulo', '')}",
-            f"260 ##$a{dados.get('local_editora', 'Brasília : s.n.')}", # Vírgula aqui!
-            f"300 ##$a{dados.get('paginas', 'p.')} ; {dados.get('dimensoes', 'cm.')}" # Sem parêntese extra!
+            f"245 10$a{dados.get('titulo', '')}"
         ]
     
-        # Nota de Tese/Dissertação (Tag 502)
+        # Tag 260: Só adiciona se houver pelo menos a cidade ou a editora
+        local = dados.get('local_editora', '')
+        if local and local != " : ": # Verifica se não está vazio
+            marc_lines.append(f"260 ##$a{local}")
+    
+        # Tag 300: Só adiciona se houver páginas OU dimensões
+        paginas = dados.get('paginas', '')
+        dimensoes = dados.get('dimensoes', '')
+        if paginas or dimensoes:
+            marc_lines.append(f"300 ##$a{paginas} p. ; {dimensoes} cm.")
+    
+        # Tag 502
         tipo = dados.get('tipo', '')
         if tipo and "Livro" not in tipo:
             inst = dados.get('instituicao', '')
             ano = dados.get('ano', '')
             marc_lines.append(f"502 ##$a{tipo} - {inst}, {ano}.")
     
-        # Assuntos (Tags 650)
+        # Tags 650
         for assunto in dados.get('assuntos', []):
             if assunto:
                 marc_lines.append(f"650 #4$a{assunto}")
-        
-        # Área de concentração
+    
         if dados.get('area'):
             marc_lines.append(f"650 #4$a{dados.get('area')}")
 
@@ -685,15 +689,17 @@ else:
                                         ficha_completa = {
                                             "texto_ficha": txt_ficha,
                                             "dados_marc": {
-                                                "entrada": entrada_principal,
-                                                "titulo": titulo,
-                                                "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                                "tipo": grau_academico,
-                                                "instituicao": instituicao.strip(),
-                                                "area": area_concentracao.strip(),
-                                                "assuntos": st.session_state.assuntos_selecionados,
-                                                "ano": ano.strip()
-                                            }
+                                            "entrada": entrada_principal,
+                                            "titulo": titulo,
+                                            "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                            "tipo": grau_academico,
+                                            "instituicao": instituicao.strip(),
+                                            "area": area_concentracao.strip(),
+                                            "assuntos": st.session_state.assuntos_selecionados,
+                                            "ano": ano.strip(),
+                                            "paginas": paginas_input,   # <--- Nome da variável que você usa no input
+                                            "dimensoes": dimensoes_input # <--- Nome da variável que você usa no input
+                                        }
                                         }
                                         # Agora salvamos o dicionário no lote
                                         st.session_state.lote_fichas.append(ficha_completa)
