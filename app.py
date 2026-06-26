@@ -369,34 +369,33 @@ else:
             texto_base = "Autor"
         return buscar_na_tabela_cutter(texto_base, titulo)
 
-    def gerar_marc21_completo(dados_ficha):
+    def gerar_marc21_completo(dados):
         """
-        Gera o registro em formato MARC21 Lineado.
-        'dados_ficha' é um dicionário contendo todos os metadados da obra.
+        Gera o registro MARC21. 'dados' é o dicionário 'dados_marc'.
         """
-        # Linhas base (Tag 000, 100, 245, 260)
+        # Usamos os dados extraídos
         marc_lines = [
-        "000 00000nam a2200000 i 4500",
-        f"100 1#$a{dados_ficha.get('entrada', '')}",
-        f"245 10$a{dados_ficha.get('titulo', '')}",
-        f"260 ##$a{dados_ficha.get('local_editora', 'Brasília : s.n.')}"
-    ]
+            "000 00000nam a2200000 i 4500",
+            f"100 1#$a{dados.get('entrada', '')}",
+            f"245 10$a{dados.get('titulo', '')}",
+            f"260 ##$a{dados.get('local_editora', 'Brasília : s.n.')}"
+        ]
     
-        # Tag 502: Nota de Tese ou Dissertação
-        # Só adiciona se for um tipo acadêmico, ignorando livros/códigos
-        tipo = dados_ficha.get('tipo', '')
-        if "Tese" in tipo or "Dissertação" in tipo or "Monografia" in tipo:
-            inst = dados_ficha.get('instituicao', 'Instituição não informada')
-            ano = dados_ficha.get('ano', '0000')
+        # Nota de Tese/Dissertação (Tag 502)
+        tipo = dados.get('tipo', '')
+        if tipo and "Livro" not in tipo:
+            inst = dados.get('instituicao', '')
+            ano = dados.get('ano', '')
             marc_lines.append(f"502 ##$a{tipo} - {inst}, {ano}.")
     
-        # Tag 650: Assuntos vinculados (VCB Senado ou Manuais)
-        for assunto in dados_ficha.get('assuntos', []):
-            marc_lines.append(f"650 #4$a{assunto}")
+        # Assuntos (Tags 650)
+        for assunto in dados.get('assuntos', []):
+            if assunto:
+                marc_lines.append(f"650 #4$a{assunto}")
         
-        # Tag 650 extra: Área de concentração (se houver)
-        if dados_ficha.get('area'):
-            marc_lines.append(f"650 #4$a{dados_ficha.get('area')}")
+        # Área de concentração
+        if dados.get('area'):
+            marc_lines.append(f"650 #4$a{dados.get('area')}")
 
         return "\n".join(marc_lines)
 
@@ -439,7 +438,7 @@ else:
                 # 2. Botão MARC 21 (Novo)
                 # Como a ficha atual é apenas texto, passamos o texto para a função
                 # (A função tratará de criar um registro básico a partir do texto)
-                conteudo_marc = "\n\n".join([gerar_marc21_completo({'titulo': f}) for f in st.session_state.lote_fichas])
+                conteudo_marc = "\n\n".join([gerar_marc21_completo(f["dados_marc"]) for f in st.session_state.lote_fichas])
                 
                 col_lote_3.download_button(
                     label="📥 MARC 21",
