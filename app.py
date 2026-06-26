@@ -378,8 +378,8 @@ else:
             "000 00000nam a2200000 i 4500",
             f"100 1#$a{dados.get('entrada', '')}",
             f"245 10$a{dados.get('titulo', '')}",
-            f"260 ##$a{dados.get('local_editora', 'Brasília : s.n.')}"
-            f"300 ##$a{dados.get('paginas', 'p.')} ; {dados.get('dimensoes', 'cm.')}")
+            f"260 ##$a{dados.get('local_editora', 'Brasília : s.n.')}", # Vírgula aqui!
+            f"300 ##$a{dados.get('paginas', 'p.')} ; {dados.get('dimensoes', 'cm.')}" # Sem parêntese extra!
         ]
     
         # Nota de Tese/Dissertação (Tag 502)
