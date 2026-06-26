@@ -683,23 +683,30 @@ else:
                             # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
                             if resposta_google.status_code == 200:
                                 try:
-                                    resultado_json = resposta_google.json()
+                                    # 1. Limpa espaços e quebras de linha
+                                    raw_text = resposta_google.text.strip()
+                                        if not raw_text.startswith("{"):
+                                            inicio = raw_text.find("{")
+                                            fim = raw_text.rfind("}") + 1
+                                            raw_text = raw_text[inicio:fim]
+                                        import json
+                                        resultado_json = json.loads(raw_text)
                                     if resultado_json.get("status") == "sucesso":
                                         # Montamos um dicionário com os dados da ficha
                                         ficha_completa = {
                                             "texto_ficha": txt_ficha,
                                             "dados_marc": {
-                                            "entrada": entrada_principal,
-                                            "titulo": titulo,
-                                            "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                            "tipo": grau_academico,
-                                            "instituicao": instituicao.strip(),
-                                            "area": area_concentracao.strip(),
-                                            "assuntos": st.session_state.assuntos_selecionados,
-                                            "ano": ano.strip(),
-                                            "paginas": paginas_input,   # <--- Nome da variável que você usa no input
-                                            "dimensoes": dimensoes_input # <--- Nome da variável que você usa no input
-                                        }
+                                                "entrada": entrada_principal,
+                                                "titulo": titulo,
+                                                "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                                "tipo": grau_academico,
+                                                "instituicao": instituicao.strip(),
+                                                "area": area_concentracao.strip(),
+                                                "assuntos": st.session_state.assuntos_selecionados,
+                                                "ano": ano.strip(),
+                                                "paginas": paginas_input,   # <--- Nome da variável que você usa no input
+                                                "dimensoes": dimensoes_input # <--- Nome da variável que você usa no input
+                                            }
                                         }
                                         # Agora salvamos o dicionário no lote
                                         st.session_state.lote_fichas.append(ficha_completa)
