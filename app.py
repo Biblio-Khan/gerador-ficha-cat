@@ -683,32 +683,32 @@ else:
                             if "{" in conteudo:
                                 conteudo = conteudo[conteudo.find("{"):]
                         
-                        import json
-                        resultado_json = json.loads(conteudo)
+                            import json
+                            resultado_json = json.loads(conteudo)
                         
-                        if resultado_json.get("status") == "sucesso":
-                            ficha_completa = {
-                                "texto_ficha": txt_ficha,
-                                "dados_marc": {
-                                    "entrada": entrada_principal,
-                                    "titulo": titulo,
-                                    "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                    "tipo": grau_academico,
-                                    "instituicao": instituicao.strip(),
-                                    "area": area_concentracao.strip(),
-                                    "assuntos": st.session_state.assuntos_selecionados,
-                                    "ano": ano.strip(),
-                                    "paginas": paginas_input,
-                                    "dimensoes": dimensoes_input
+                            if resultado_json.get("status") == "sucesso":
+                                ficha_completa = {
+                                    "texto_ficha": txt_ficha,
+                                    "dados_marc": {
+                                        "entrada": entrada_principal,
+                                        "titulo": titulo,
+                                        "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                        "tipo": grau_academico,
+                                        "instituicao": instituicao.strip(),
+                                        "area": area_concentracao.strip(),
+                                        "assuntos": st.session_state.assuntos_selecionados,
+                                        "ano": ano.strip(),
+                                        "paginas": paginas_input,
+                                        "dimensoes": dimensoes_input
+                                    }
                                 }
-                            }
-                            st.session_state.lote_fichas.append(ficha_completa)
-                            st.session_state["creditos_ativos"] -= 1
-                            st.session_state.assuntos_selecionados = [] 
-                            st.success("✅ Ficha guardada com sucesso!")
-                            st.rerun()
-                        else:
-                            st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
+                                st.session_state.lote_fichas.append(ficha_completa)
+                                st.session_state["creditos_ativos"] -= 1
+                                st.session_state.assuntos_selecionados = [] 
+                                st.success("✅ Ficha guardada com sucesso!")
+                                st.rerun()
+                            else:
+                                st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
                             
                     except Exception as e:
                         st.error(f"❌ Falha ao processar resposta: {e}")
