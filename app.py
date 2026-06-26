@@ -504,8 +504,8 @@ else:
             editora = st.text_input("Editora")
             cidade = st.text_input("Cidade de Publicação", value="Brasília")
             ano = st.text_input("Ano de Publicação", value="2026")
-            paginas = st.text_input("Número de Páginas/Folhas", value="180")
-            dimensoes = st.text_input("Dimensões do livro (Ex: 23 cm)", value="23 cm")
+            paginas_input = st.text_input("Número de Páginas/Folhas", value="180")
+            dimensoes_input = st.text_input("Dimensões", value="30 cm")
             
             tem_colecao = st.checkbox("Esta obra faz parte de uma Coleção / Série?")
             colecao_nome = ""
