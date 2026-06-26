@@ -660,74 +660,64 @@ else:
                     
                 if valido and titulo.strip():
                     with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
-                        try:
-                            # 1. Envia a ordem de desconto para o Google Apps Script da Planilha
-                            url_script = st.secrets["URL_SCRIPT_GOOGLE"]
-                            
-                            # Transforma a lista de assuntos selecionados em uma linha de texto separada por vírgulas
-                            lista_assuntos = st.session_state.get("assuntos_selecionados", [])
-                            assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
-                            
-                            # Pega o título digitado (verifique se a chave do título na sua tela é "titulo_obra" ou "titulo")
-                            titulo_livro = titulo if titulo else "Não Informado"
+                    try:
+                        # 1. Preparação dos dados
+                        url_script = st.secrets["URL_SCRIPT_GOOGLE"]
+                        lista_assuntos = st.session_state.get("assuntos_selecionados", [])
+                        assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
+                        titulo_livro = titulo if titulo else "Não Informado"
 
-                            payload = {
-                                "email": st.session_state["usuario_atual"],
-                                "acao": "descontar",
-                                "titulo": titulo_livro,
-                                "assunto": assuntos_texto
-                            }
-                            # Faz a requisição POST para rodar o script do Google
-                            resposta_google = requests.post(url_script, json=payload, timeout=15)
+                        payload = {
+                            "email": st.session_state["usuario_atual"],
+                            "acao": "descontar",
+                            "titulo": titulo_livro,
+                            "assunto": assuntos_texto
+                        }
+
+                        # 2. Requisição
+                        resposta_google = requests.post(url_script, json=payload, timeout=15)
+                        
+                        if resposta_google.status_code == 200:
+                            conteudo = resposta_google.content.decode('utf-8-sig').strip()
+                            if "{" in conteudo:
+                                conteudo = conteudo[conteudo.find("{"):]
                             
-                            # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
-                            # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
-                            # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
-                            if resposta_google.status_code == 200:
-                                try:
-                                    # Força a leitura do texto bruto e limpa possíveis caracteres invisíveis
-                                    conteudo = resposta_google.content.decode('utf-8-sig').strip()
-                                
-                                    # Se houver qualquer coisa antes da chave, localiza o início
-                                    if "{" in conteudo:
-                                        conteudo = conteudo[conteudo.find("{"):]
-                                
-                                    import json
-                                    resultado_json = json.loads(conteudo)
-                                
-                                    # Verificação do status
-                                    if resultado_json.get("status") == "sucesso":
-                                        ficha_completa = {
-                                            "texto_ficha": txt_ficha,
-                                            "dados_marc": {
-                                                "entrada": entrada_principal,
-                                                "titulo": titulo,
-                                                "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                                "tipo": grau_academico,
-                                                "instituicao": instituicao.strip(),
-                                                "area": area_concentracao.strip(),
-                                                "assuntos": st.session_state.assuntos_selecionados,
-                                                "ano": ano.strip(),
-                                                "paginas": paginas_input,
-                                                "dimensoes": dimensoes_input
-                                            }
-                                        }
-                                        st.session_state.lote_fichas.append(ficha_completa)
-                                        st.session_state["creditos_ativos"] -= 1
-                                        st.session_state.assuntos_selecionados = [] 
-                                        st.success("✅ Ficha guardada com sucesso!")
-                                        st.rerun()
-                                    else:
-                                        st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
+                            import json
+                            resultado_json = json.loads(conteudo)
                             
-                            except Exception as e:
-                                st.error(f"❌ Falha ao processar resposta: {e}")
+                            if resultado_json.get("status") == "sucesso":
+                                ficha_completa = {
+                                    "texto_ficha": txt_ficha,
+                                    "dados_marc": {
+                                        "entrada": entrada_principal,
+                                        "titulo": titulo,
+                                        "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                        "tipo": grau_academico,
+                                        "instituicao": instituicao.strip(),
+                                        "area": area_concentracao.strip(),
+                                        "assuntos": st.session_state.assuntos_selecionados,
+                                        "ano": ano.strip(),
+                                        "paginas": paginas_input,
+                                        "dimensoes": dimensoes_input
+                                    }
+                                }
+                                st.session_state.lote_fichas.append(ficha_completa)
+                                st.session_state["creditos_ativos"] -= 1
+                                st.session_state.assuntos_selecionados = [] 
+                                st.success("✅ Ficha guardada com sucesso!")
+                                st.rerun()
+                            else:
+                                st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
                         else:
                             st.error(f"❌ Falha de conexão. Status: {resposta_google.status_code}")
+                            
+                    except Exception as e:
+                        st.error(f"❌ Erro ao processar requisição: {e}")
 
-# --- ESTA PARTE DEVE FICAR ALINHADA À ESQUERDA, FORA DO BLOCO DO BOTÃO ---
+# Abaixo, fora de qualquer bloco 'if' ou 'try', começa o tab_financeiro
 with tab_financeiro:
     st.header("💳 Gestão Financeira e Saldo")
+    # ... resto do seu código da aba
     col_f1, col_f2 = st.columns(2)
     
     with col_f1:
