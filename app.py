@@ -682,60 +682,62 @@ else:
                             
                             # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
                             # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
-                            if resposta_google.status_code == 200:
-                                try:
-                                    # Força a leitura do texto bruto
-                                    conteudo = resposta_google.text
-                                    
-                                    # Se houver qualquer coisa antes da chave, localiza o início
-                                    if "{" in conteudo:
-                                        conteudo = conteudo[conteudo.find("{"):]
-                                    
-                                    # Converte para dicionário de forma manual e segura
-                                    import json
-                                    resultado_json = json.loads(conteudo)
-                                    
-                                    # Verificação do status
-                                    if resultado_json.get("status") == "sucesso":
-                                        # Montamos o dicionário (mantendo sua estrutura)
-                                        ficha_completa = {
-                                            "texto_ficha": txt_ficha,
-                                            "dados_marc": {
-                                                "entrada": entrada_principal,
-                                                "titulo": titulo,
-                                                "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                                "tipo": grau_academico,
-                                                "instituicao": instituicao.strip(),
-                                                "area": area_concentracao.strip(),
-                                                "assuntos": st.session_state.assuntos_selecionados,
-                                                "ano": ano.strip(),
-                                                "paginas": paginas_input,
-                                                "dimensoes": dimensoes_input
-                                            }
-                                        }
-                                        st.session_state.lote_fichas.append(ficha_completa)
-                                        st.session_state["creditos_ativos"] -= 1
-                                        st.session_state.assuntos_selecionados = [] 
-                                        st.success("✅ Ficha guardada com sucesso!")
-                                        st.rerun()
-                                    else:
-                                        st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
+                            # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
+                        if resposta_google.status_code == 200:
+                            try:
+                                # Força a leitura do texto bruto e limpa possíveis caracteres invisíveis
+                                conteudo = resposta_google.content.decode('utf-8-sig').strip()
                                 
-                                except Exception as e:
-                                    st.error(f"❌ Falha ao processar resposta: {e}")
+                                # Se houver qualquer coisa antes da chave, localiza o início
+                                if "{" in conteudo:
+                                    conteudo = conteudo[conteudo.find("{"):]
+                                
+                                import json
+                                resultado_json = json.loads(conteudo)
+                                
+                                # Verificação do status
+                                if resultado_json.get("status") == "sucesso":
+                                    ficha_completa = {
+                                        "texto_ficha": txt_ficha,
+                                        "dados_marc": {
+                                            "entrada": entrada_principal,
+                                            "titulo": titulo,
+                                            "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                            "tipo": grau_academico,
+                                            "instituicao": instituicao.strip(),
+                                            "area": area_concentracao.strip(),
+                                            "assuntos": st.session_state.assuntos_selecionados,
+                                            "ano": ano.strip(),
+                                            "paginas": paginas_input,
+                                            "dimensoes": dimensoes_input
+                                        }
+                                    }
+                                    st.session_state.lote_fichas.append(ficha_completa)
+                                    st.session_state["creditos_ativos"] -= 1
+                                    st.session_state.assuntos_selecionados = [] 
+                                    st.success("✅ Ficha guardada com sucesso!")
+                                    st.rerun()
+                                else:
+                                    st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
+                            
+                            except Exception as e:
+                                st.error(f"❌ Falha ao processar resposta: {e}")
+                        else:
+                            st.error(f"❌ Falha de conexão. Status: {resposta_google.status_code}")
 
-        with tab_financeiro:
-                st.header("💳 Gestão Financeira e Saldo")
-                col_f1, col_f2 = st.columns(2)
-        
-        with col_f1:
-            st.subheader("🔄 Sincronização")
-            st.info(f"Seu sistema está vinculado ao e-mail: **{st.session_state['usuario_atual']}**")
-            if st.button("Atualizar meu Saldo"):
-                with st.spinner("Puxando dados atualizados do Sheets..."):
-                    atualizar_saldo_usuario(st.session_state["usuario_atual"])
-                    st.success("Saldo checado com sucesso!")
-                    st.rerun()
+# --- ESTA PARTE DEVE FICAR ALINHADA À ESQUERDA, FORA DO BLOCO DO BOTÃO ---
+with tab_financeiro:
+    st.header("💳 Gestão Financeira e Saldo")
+    col_f1, col_f2 = st.columns(2)
+    
+    with col_f1:
+        st.subheader("🔄 Sincronização")
+        st.info(f"Seu sistema está vinculado ao e-mail: **{st.session_state['usuario_atual']}**")
+        if st.button("Atualizar meu Saldo"):
+            with st.spinner("Puxando dados atualizados do Sheets..."):
+                atualizar_saldo_usuario(st.session_state["usuario_atual"])
+                st.success("Saldo checado com sucesso!")
+                st.rerun()
 
         with col_f2:
             st.subheader("🛒 Tabela de Preços")
