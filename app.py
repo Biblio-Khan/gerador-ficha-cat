@@ -681,18 +681,23 @@ else:
                             resposta_google = requests.post(url_script, json=payload, timeout=15)
                             
                             # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
+                            # Verificação de segurança: O Google respondeu com sucesso HTTP (200)?
                             if resposta_google.status_code == 200:
                                 try:
-                                    # 1. Limpa espaços e quebras de linha
-                                    raw_text = resposta_google.text.strip()
-                                    if not raw_text.startswith("{"):
-                                            inicio = raw_text.find("{")
-                                            fim = raw_text.rfind("}") + 1
-                                            raw_text = raw_text[inicio:fim]
+                                    # Força a leitura do texto bruto
+                                    conteudo = resposta_google.text
+                                    
+                                    # Se houver qualquer coisa antes da chave, localiza o início
+                                    if "{" in conteudo:
+                                        conteudo = conteudo[conteudo.find("{"):]
+                                    
+                                    # Converte para dicionário de forma manual e segura
                                     import json
-                                    resultado_json = json.loads(raw_text)
+                                    resultado_json = json.loads(conteudo)
+                                    
+                                    # Verificação do status
                                     if resultado_json.get("status") == "sucesso":
-                                        # Montamos um dicionário com os dados da ficha
+                                        # Montamos o dicionário (mantendo sua estrutura)
                                         ficha_completa = {
                                             "texto_ficha": txt_ficha,
                                             "dados_marc": {
@@ -704,30 +709,20 @@ else:
                                                 "area": area_concentracao.strip(),
                                                 "assuntos": st.session_state.assuntos_selecionados,
                                                 "ano": ano.strip(),
-                                                "paginas": paginas_input,   # <--- Nome da variável que você usa no input
-                                                "dimensoes": dimensoes_input # <--- Nome da variável que você usa no input
+                                                "paginas": paginas_input,
+                                                "dimensoes": dimensoes_input
                                             }
                                         }
-                                        # Agora salvamos o dicionário no lote
                                         st.session_state.lote_fichas.append(ficha_completa)
-                                        
                                         st.session_state["creditos_ativos"] -= 1
                                         st.session_state.assuntos_selecionados = [] 
                                         st.success("✅ Ficha guardada com sucesso!")
                                         st.rerun()
                                     else:
-                                        erro_msg = resultado_json.get("mensagem", "Erro desconhecido")
-                                        st.error(f"❌ Não foi possível deduzir o saldo na planilha: {erro_msg}")
-                                except Exception:
-                                    # Captura se o script do Google mandou HTML de erro ou texto bruto em vez de JSON
-                                    st.error(f"❌ O Google Script não retornou um formato JSON válido. Resposta recebida do servidor: {resposta_google.text[:250]}")
-                            else:
-                                st.error(f"❌ Falha crítica de conexão com o servidor Google Script (Status HTTP: {resposta_google.status_code})")
+                                        st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
                                 
-                        except Exception as e:
-                            st.error(f"❌ Erro de comunicação com a planilha: {e}")
-                else:
-                    st.error("Preencha os campos de autoria/organização e o título.")
+                                except Exception as e:
+                                    st.error(f"❌ Falha ao processar resposta: {e}")
 
     with tab_financeiro:
         st.header("💳 Gestão Financeira e Saldo")
