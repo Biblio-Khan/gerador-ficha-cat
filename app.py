@@ -582,10 +582,8 @@ else:
                     st.rerun()
 
             st.markdown("---")
-            col_full = st.columns([1])
-            with col_full[0]:
-                st.subheader("4. Fechamento e Visualização da Ficha")
-                st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
+            st.subheader("4. Fechamento e Visualização da Ficha")
+                
             
             entrada_principal, responsabilidade, entrada_por_titulo = formatar_entrada_e_corpo(
                 tipo_autor=tipo_autor, autores_lista=autores_lista, entidade=entidade_nome, titulo=titulo, 
