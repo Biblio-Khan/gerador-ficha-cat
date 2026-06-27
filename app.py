@@ -653,7 +653,7 @@ else:
             {string_assuntos}{rastreabilidade}"""
 
         
-              st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
+            st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
     
  
         if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
