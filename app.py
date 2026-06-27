@@ -656,53 +656,53 @@ else:
             st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
     
  
-        if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
-            valido = True
-        if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
-            valido = False
+            if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
+                valido = True
+            if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
+                valido = False
     
-        if valido and titulo.strip():
-            with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
-                try:
-                    # 1. Preparação
-                    url_script = st.secrets["URL_SCRIPT_GOOGLE"]
-                    lista_assuntos = st.session_state.get("assuntos_selecionados", [])
-                    assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
-                    titulo_livro = titulo if titulo else "Não Informado"
+            if valido and titulo.strip():
+                with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
+                    try:
+                        # 1. Preparação
+                        url_script = st.secrets["URL_SCRIPT_GOOGLE"]
+                        lista_assuntos = st.session_state.get("assuntos_selecionados", [])
+                        assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
+                        titulo_livro = titulo if titulo else "Não Informado"
                 
-                    payload = {
-                        "email": st.session_state["usuario_atual"],
-                        "acao": "descontar",
-                        "titulo": titulo_livro,
-                        "assunto": assuntos_texto
-                    }
+                        payload = {
+                            "email": st.session_state["usuario_atual"],
+                            "acao": "descontar",
+                            "titulo": titulo_livro,
+                            "assunto": assuntos_texto
+                        }
                 
-                # 2. Requisição
-                    resposta_google = requests.post(url_script, json=payload, timeout=15)
+                        # 2. Requisição
+                        resposta_google = requests.post(url_script, json=payload, timeout=15)
                 
-                    if resposta_google.status_code == 200:
-                        try:
-                            conteudo = resposta_google.content.decode('utf-8-sig').strip()
-                            if "{" in conteudo:
-                                conteudo = conteudo[conteudo.find("{"):]
+                        if resposta_google.status_code == 200:
+                            try:
+                                conteudo = resposta_google.content.decode('utf-8-sig').strip()
+                                if "{" in conteudo:
+                                    conteudo = conteudo[conteudo.find("{"):]
                         
-                            import json
-                            resultado_json = json.loads(conteudo)
+                                import json
+                                resultado_json = json.loads(conteudo)
                         
-                            if resultado_json.get("status") == "sucesso":
-                                ficha_completa = {
-                                    "texto_ficha": txt_ficha,
-                                    "dados_marc": {
-                                        "entrada": entrada_principal,
-                                        "titulo": titulo,
-                                        "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                        "tipo": grau_academico,
-                                        "instituicao": instituicao.strip(),
-                                        "area": area_concentracao.strip(),
-                                        "assuntos": st.session_state.assuntos_selecionados,
-                                        "ano": ano.strip(),
-                                        "paginas": paginas_input,
-                                        "dimensoes": dimensoes_input
+                                if resultado_json.get("status") == "sucesso":
+                                    ficha_completa = {
+                                        "texto_ficha": txt_ficha,
+                                        "dados_marc": {
+                                            "entrada": entrada_principal,
+                                            "titulo": titulo,
+                                            "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                            "tipo": grau_academico,
+                                            "instituicao": instituicao.strip(),
+                                            "area": area_concentracao.strip(),
+                                            "assuntos": st.session_state.assuntos_selecionados,
+                                            "ano": ano.strip(),
+                                            "paginas": paginas_input,
+                                            "dimensoes": dimensoes_input
                                     }
                                 }
                                 st.session_state.lote_fichas.append(ficha_completa)
