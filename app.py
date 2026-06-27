@@ -652,8 +652,7 @@ else:
             
             {string_assuntos}{rastreabilidade}"""
 
-        bloco_ficha = st.container()
-        with bloco_ficha:
+        
               st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
     
  
