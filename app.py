@@ -703,23 +703,23 @@ else:
                                             "ano": ano.strip(),
                                             "paginas": paginas_input,
                                             "dimensoes": dimensoes_input
+                                        }
                                     }
-                                }
-                                st.session_state.lote_fichas.append(ficha_completa)
-                                st.session_state["creditos_ativos"] -= 1
-                                st.session_state.assuntos_selecionados = [] 
-                                st.success("✅ Ficha guardada com sucesso!")
-                                st.rerun()
-                            else:
-                                st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
+                                    st.session_state.lote_fichas.append(ficha_completa)
+                                    st.session_state["creditos_ativos"] -= 1
+                                    st.session_state.assuntos_selecionados = [] 
+                                    st.success("✅ Ficha guardada com sucesso!")
+                                    st.rerun()
+                                else:
+                                    st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
                             
-                        except Exception as e:
-                            st.error(f"❌ Falha ao processar resposta: {e}")
-                    else:
-                        st.error(f"❌ Falha de conexão. Status: {resposta_google.status_code}")
+                            except Exception as e:
+                                st.error(f"❌ Falha ao processar resposta: {e}")
+                        else:
+                            st.error(f"❌ Falha de conexão. Status: {resposta_google.status_code}")
                     
-                except Exception as e:
-                    st.error(f"❌ Erro ao processar requisição: {e}")    
+                    except Exception as e:
+                        st.error(f"❌ Erro ao processar requisição: {e}")    
                 
 # Abaixo, fora de qualquer bloco 'if' ou 'try', começa o tab_financeiro
     with tab_financeiro:
