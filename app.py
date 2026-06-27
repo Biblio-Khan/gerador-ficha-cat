@@ -651,11 +651,14 @@ else:
             {desc_fisica}.{bloco_colecao}{nota_trabalho_str}{nota_traducao}{nota_acesso}{isbn_bloco}
             
             {string_assuntos}{rastreabilidade}"""
-              
-            st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
-            
-    if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
-        valido = True
+
+        bloco_ficha = st.container()
+        with bloco_ficha:
+              st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
+    
+ 
+        if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
+            valido = True
         if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
             valido = False
     
