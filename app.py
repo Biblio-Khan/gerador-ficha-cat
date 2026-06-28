@@ -444,12 +444,21 @@ else:
                 # Como a ficha atual é apenas texto, passamos o texto para a função
                 # (A função tratará de criar um registro básico a partir do texto)
                 conteudo_marc = "\n\n".join([gerar_marc21_completo(f["dados_marc"]) for f in st.session_state.lote_fichas])
-                
+
+                # Primeiro botão (MARC 21 original)
                 col_lote_3.download_button(
-                    label="📥 MARC 21",
-                    data=conteudo_marc,
-                    file_name="lote_juridico.mrc",
-                    mime="text/plain"
+                label="📥 MARC 21 (.mrc)",
+                data=conteudo_marc,
+                file_name="lote_juridico.mrc",
+                mime="text/plain"
+                )
+
+                # Segundo botão (TXT para copiar/colar)
+                col_lote_3.download_button(
+                label="📋 MARC 21 (.txt)",
+                data=conteudo_marc,
+                file_name="lote_juridico.txt",
+                mime="text/plain"
                 )
                 
                 # 3. Botão Limpar (Mantido)
