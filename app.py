@@ -193,7 +193,7 @@ if not st.session_state["logado"]:
                 if novo_email and nova_senha:
                     try:
                         # Chama o Firebase para criar o usuário
-                        auth.create_user_with_email_and_password(novo_email, nova_senha)
+                        auth.create_user(email=novo_email, password=nova_senha)
                         st.success("✅ Conta criada com sucesso! Faça o login agora.")
                     except Exception as e:
                         st.error(f"❌ Erro ao criar conta: {e}")
