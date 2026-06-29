@@ -7,7 +7,7 @@ from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import firebase_admin
-from firebase_admin import credentials, auth
+from firebase_admin import auth
 from datetime import datetime, timezone, timedelta
 
 # =========================================================================
@@ -180,6 +180,25 @@ if not st.session_state["logado"]:
         
         Para redefinir sua senha, entre em contato diretamente com o suporte técnico através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
         """)
+
+# --- TELA DE CADASTRO (Abaixo do Login) ---
+if not st.session_state["logado"]:
+    with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
+        with st.form("cadastro_form"):
+            novo_email = st.text_input("Novo E-mail").strip()
+            nova_senha = st.text_input("Escolha uma senha", type="password")
+            botao_cadastrar = st.form_submit_button("Criar Conta")
+            
+            if botao_cadastrar:
+                if novo_email and nova_senha:
+                    try:
+                        # Chama o Firebase para criar o usuário
+                        auth.create_user_with_email_and_password(novo_email, nova_senha)
+                        st.success("✅ Conta criada com sucesso! Faça o login agora.")
+                    except Exception as e:
+                        st.error(f"❌ Erro ao criar conta: {e}")
+                else:
+                    st.warning("⚠️ Preencha e-mail e senha.")
 
 else:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
