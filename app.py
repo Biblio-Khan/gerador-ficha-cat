@@ -85,45 +85,30 @@ def carregar_creditos_planilha(url_planilha):
         return None
 
 def atualizar_saldo_usuario(email_usuario):
+    # Usando a chave que você já tem configurada nos seus secrets
+    url_script = st.secrets["URL_PLANILHA"]
+    
     try:
-        url_planilha = st.secrets["URL_PLANILHA"]
-        df = carregar_creditos_planilha(url_planilha)
+        # A lógica agora é via API (Apps Script)
+        payload = {
+            "email": email_usuario,
+            "acao": "verificar" 
+        }
         
-        if df is not None:
-            # --- DIAGNÓSTICO 1: Mostrar o que o Pandas leu ---
-            st.warning(f"🔍 Colunas encontradas na planilha: {list(df.columns)}")
-            
-            # Normalizar os nomes das colunas para evitar erros de maiúsculas/minúsculas
-            df.columns = df.columns.str.strip().str.lower()
-            
-            if 'token' in df.columns and 'creditos' in df.columns:
-                # Limpar espaços e converter para maiúsculas para comparar com segurança
-                df['token'] = df['token'].astype(str).str.strip().str.upper()
-                email_chave = email_usuario.strip().upper()
-                
-                # --- DIAGNÓSTICO 2: Mostrar lista de e-mails cadastrados ---
-                lista_emails_planilha = df['token'].tolist()
-                st.write(f"📧 Tentando procurar por: `{email_chave}`")
-                st.write(f"📋 Lista de e-mails lidos na planilha: {lista_emails_planilha}")
-                
-                if email_chave in df['token'].values:
-                    # Captura o saldo garantindo que é um número inteiro
-                    saldo = int(df.loc[df['token'] == email_chave, 'creditos'].values[0])
-                    st.session_state["creditos_ativos"] = saldo
-                    st.success(f"✅ Utilizador encontrado! Saldo atualizado para: {saldo}")
-                else:
-                    st.error("❌ O e-mail de login NÃO foi encontrado na coluna 'token' da planilha.")
-                    st.session_state["creditos_ativos"] = 0
-            else:
-                st.error("❌ Erro crítico: A planilha precisa de ter as colunas com os nomes exatos: 'token' e 'creditos'.")
-                st.session_state["creditos_ativos"] = 0
+        response = requests.post(url_script, json=payload)
+        resultado = response.json()
+        
+        if resultado.get("status") == "sucesso":
+            st.session_state["creditos_ativos"] = resultado.get("novo_saldo")
+            st.success(f"✅ Sincronizado: {resultado.get('novo_saldo')} créditos")
         else:
-            st.error("❌ Erro crítico: O Pandas não conseguiu ler nenhum dado da URL fornecida.")
+            # Se der erro (ex: usuário não encontrado), define saldo como 0
             st.session_state["creditos_ativos"] = 0
+            st.error(f"❌ {resultado.get('mensagem', 'Erro ao sincronizar')}")
             
     except Exception as e:
-        st.error(f"❌ Erro na sincronização de saldo: {e}")
         st.session_state["creditos_ativos"] = 0
+        st.error(f"❌ Erro de conexão com a API: {e}")
 
 def api_obter_produtividade_juridica(email):
     """ Busca as linhas de produção jurídica do usuário na planilha """
