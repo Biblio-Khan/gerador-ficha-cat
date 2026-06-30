@@ -8,6 +8,7 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import firebase_admin
 from firebase_admin import auth
+from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
 
 # =========================================================================
