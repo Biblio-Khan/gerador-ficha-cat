@@ -11,7 +11,27 @@ from firebase_admin import auth
 from firebase_admin import credentials
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
+import os
+import streamlit as st
+import json
 
+# Caminho onde o Streamlit busca o arquivo
+os.makedirs("/app/.streamlit", exist_ok=True)
+
+# Cria o arquivo secrets.toml de forma que o Streamlit consiga ler
+if not os.path.exists("/app/.streamlit/secrets.toml"):
+    raw_json = os.environ.get("FIREBASE_JSON_CONTENT")
+    if raw_json:
+        data = json.loads(raw_json)
+        with open("/app/.streamlit/secrets.toml", "w") as f:
+            f.write("[FIREBASE]\n")
+            for key, value in data.items():
+                # Escreve cada linha sem usar f-strings problemáticas
+                line = f"{key} = \"{value}\"\n"
+                f.write(line)
+
+# Agora o seu código original continuará funcionando
+# st.secrets["FIREBASE"] será encontrado porque o arquivo existe!
 
 
 
