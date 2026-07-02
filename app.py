@@ -75,15 +75,23 @@ def tratar_url_google_sheets(url):
     return url
 
 def carregar_creditos_planilha(url_planilha):
-    """
-    Lê a planilha usando o link tratado e retorna o DataFrame.
-    """
     try:
+        # Debug: Vamos ver o que está acontecendo com a URL
+        st.write(f"URL recebida: {url_planilha}")
+        
         url_tratada = tratar_url_google_sheets(url_planilha)
+        
+        st.write(f"URL tratada: {url_tratada}")
+        
         df = pd.read_csv(url_tratada)
+        
+        # Debug: Verificar se o DF veio vazio
+        if df.empty:
+            st.warning("O DataFrame está vazio!")
+            
         return df
     except Exception as e:
-        st.error(f"Erro ao acessar os dados da planilha: {e}")
+        st.error(f"Erro detalhado ao acessar a planilha: {e}")
         return None
 
 def atualizar_saldo_usuario(email_usuario):
