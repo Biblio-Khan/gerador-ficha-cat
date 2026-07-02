@@ -126,9 +126,6 @@ def atualizar_saldo_usuario(token_usuario):
     except Exception as e:
         st.error(f"Erro ao ler a planilha: {e}")
 
-# Chame a função para testar
-atualizar_saldo_usuario_direto()
-
 def api_obter_produtividade_juridica(email):
     """ Busca as linhas de produção jurídica do usuário na planilha """
     url_script = st.secrets["URL_SCRIPT_GOOGLE"]
