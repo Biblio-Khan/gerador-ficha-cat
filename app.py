@@ -67,22 +67,23 @@ def tratar_url_google_sheets(url):
     return url_export
 def carregar_creditos_planilha(url_planilha):
     try:
-        # Debug: Vamos ver o que está acontecendo com a URL
-        st.write(f"URL recebida: {url_planilha}")
-        
         url_tratada = tratar_url_google_sheets(url_planilha)
         
-        st.write(f"URL tratada: {url_tratada}")
-        
+        # Lemos o CSV garantindo que ele entenda o cabeçalho
         df = pd.read_csv(url_tratada)
         
-        # Debug: Verificar se o DF veio vazio
-        if df.empty:
-            st.warning("O DataFrame está vazio!")
+        # Debug: veja quais colunas o pandas enxergou
+        # st.write("Colunas encontradas:", df.columns.tolist())
+        
+        # Limpeza forçada: converte a coluna de créditos para número
+        # Substitua 'CREDITOS' pelo nome exato da sua coluna de saldo
+        coluna_saldo = 'CREDITOS' 
+        if coluna_saldo in df.columns:
+            df[coluna_saldo] = pd.to_numeric(df[coluna_saldo], errors='coerce').fillna(0)
             
         return df
     except Exception as e:
-        st.error(f"Erro detalhado ao acessar a planilha: {e}")
+        st.error(f"Erro ao processar o CSV: {e}")
         return None
 
 def atualizar_saldo_usuario(email_usuario):
