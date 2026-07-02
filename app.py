@@ -64,11 +64,11 @@ def carregar_e_filtrar_saldo(url_planilha, token_usuario):
     
     if not usuario.empty:
         # Pega o valor da coluna créditos
-        valor = usuario['creditos'].iloc[0]
-        return float(valor)
+        valor = float(usuario['creditos'].iloc[0]
+        return int(valor)
     else:
         st.warning(f"Token '{token_usuario}' não encontrado!")
-        return 0.0
+        return 0
         
 def carregar_creditos_planilha(url_planilha):
     try:
