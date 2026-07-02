@@ -95,28 +95,38 @@ def carregar_creditos_planilha(url_planilha):
 import pandas as pd
 import streamlit as st
 
-def diagnostico_final():
+def atualizar_saldo_usuario(token_usuario):
     url_direta = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=0"
     
     try:
-        # Lendo sem restrições
-        df = pd.read_csv(url_direta, header=None)
+        # header=0 diz ao pandas: "a primeira linha é o cabeçalho (títulos)"
+        df = pd.read_csv(url_direta, header=0)
         
-        st.write("### O que o código está lendo da planilha:")
-        st.dataframe(df) # Isso vai mostrar uma tabela interativa na tela
+        # Agora vamos renomear as colunas para garantir que o Python ache elas
+        # (ajuste os nomes abaixo se a sua planilha tiver nomes diferentes na primeira linha)
+        df.columns = ['token', 'creditos']
         
-        # Vamos mostrar o valor da célula (0, 1) - primeira linha, segunda coluna
-        valor_célula = df.iloc[0, 1]
-        st.write(f"Valor na primeira linha, segunda coluna: {valor_célula}")
+        # Remove espaços em branco dos nomes das colunas por segurança
+        df.columns = df.columns.str.strip()
         
-        # Tentativa de atualizar o estado com o que for lido na primeira linha
-        st.session_state["creditos_ativos"] = float(valor_célula)
-        st.success(f"Valor definido: {st.session_state['creditos_ativos']}")
+        # Filtra o token
+        token_buscado = str(token_usuario).strip()
+        df['token'] = df['token'].astype(str).str.strip()
         
+        usuario = df[df['token'] == token_buscado]
+        
+        if not usuario.empty:
+            # Pega o valor e converte para float (o erro de string sumiu porque pulamos a linha de títulos)
+            saldo = float(usuario['creditos'].iloc[0])
+            st.session_state["creditos_ativos"] = saldo
+            st.success(f"✅ Sincronizado: {saldo} créditos")
+        else:
+            st.session_state["creditos_ativos"] = 0
+            st.error("❌ Token não encontrado na planilha.")
+            
     except Exception as e:
-        st.error(f"Erro no diagnóstico: {e}")
-
-diagnostico_final()
+        st.error(f"Erro ao processar os dados: {e}")
+        
 def api_obter_produtividade_juridica(email):
     """ Busca as linhas de produção jurídica do usuário na planilha """
     url_script = st.secrets["URL_SCRIPT_GOOGLE"]
