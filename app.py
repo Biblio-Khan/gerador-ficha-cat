@@ -11,23 +11,7 @@ from firebase_admin import auth
 from firebase_admin import credentials
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
-import streamlit as st
-import json
-import os
 
-# O Streamlit já carrega automaticamente variáveis que começam com STREAMLIT_
-# Você pode acessar diretamente assim:
-if "FIREBASE" in st.secrets:
-    config = st.secrets["FIREBASE"]
-    # Agora você usa o objeto 'config' para conectar no Firebase
-else:
-    # Se ainda não encontrar, leia via variável de ambiente como backup
-    config = json.loads(os.environ.get("STREAMLIT_FIREBASE"))
-
-# Agora inicialize o Firebase com 'config'
-# (seu código de inicialização aqui...)
-# Chama a função
-garantir_secrets_no_railway()
 
 
 
