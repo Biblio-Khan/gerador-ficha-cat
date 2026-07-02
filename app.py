@@ -119,7 +119,7 @@ def atualizar_saldo_usuario(token_usuario):
             # Pega o valor e converte para float (o erro de string sumiu porque pulamos a linha de títulos)
             saldo = float(usuario['creditos'].iloc[0])
             st.session_state["creditos_ativos"] = saldo
-            st.success(f"✅ Sincronizado: {saldo} créditos")
+            st.success(f"✅ Sincronizado: {saldo:.0f} créditos")
         else:
             st.session_state["creditos_ativos"] = 0
             st.error("❌ Token não encontrado na planilha.")
