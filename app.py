@@ -95,38 +95,37 @@ import pandas as pd
 import streamlit as st
 
 def atualizar_saldo_usuario(token_usuario):
-    """
-    Busca o saldo na planilha diretamente via CSV e atualiza o session_state.
-    """
-    # 1. Pega a URL da planilha (ajuste para sua variável real)
     url_planilha = st.secrets["URL_PLANILHA"]
-    
     try:
-        # 2. Obtém a URL de exportação CSV
         url_tratada = tratar_url_google_sheets(url_planilha)
-        
-        # 3. Lê o CSV (header=None pois só temos dados)
+        # Lemos sem cabeçalho para ver tudo
         df = pd.read_csv(url_tratada, header=None)
+        
+        # DEBUG: O que o Streamlit mostra aqui é a verdade sobre sua planilha
+        st.write("--- DEBUG: Tabela lida ---")
+        st.write(df)
+        
+        # Ajustamos as colunas
         df.columns = ['token', 'creditos']
         
-        # 4. Limpeza e busca
+        # Filtramos
+        token_buscado = str(token_usuario).strip()
         df['token'] = df['token'].astype(str).str.strip()
-        usuario = df[df['token'] == token_usuario.strip()]
+        
+        usuario = df[df['token'] == token_buscado]
+        
+        st.write(f"Token buscado: '{token_buscado}'")
+        st.write(f"Linhas encontradas: {len(usuario)}")
         
         if not usuario.empty:
-            # Encontrou o token, pega o saldo
             saldo = float(usuario['creditos'].iloc[0])
             st.session_state["creditos_ativos"] = saldo
             st.success(f"✅ Sincronizado: {saldo} créditos")
         else:
-            # Token não encontrado
-            st.session_state["creditos_ativos"] = 0
-            st.error(f"❌ Token '{token_usuario}' não encontrado na planilha.")
+            st.error("❌ Token não encontrado nas linhas da planilha.")
             
     except Exception as e:
-        # Erro de conexão ou formato
-        st.session_state["creditos_ativos"] = 0
-        st.error(f"❌ Erro ao sincronizar com a planilha: {e}")
+        st.error(f"❌ Erro: {e}")
 
 def api_obter_produtividade_juridica(email):
     """ Busca as linhas de produção jurídica do usuário na planilha """
