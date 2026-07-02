@@ -47,24 +47,29 @@ if not firebase_admin._apps:
 # =========================================================================
 import re
 
-def tratar_url_google_sheets(url):
-    """
-    Transforma o link padrão de edição no link de exportação CSV.
-    """
-    # Extrai o ID da planilha (o código longo entre /d/ e /edit)
-    match = re.search(r'/d/([a-zA-Z0-9-_]+)', url)
-    if not match:
-        return url # Retorna original se não encontrar o ID
+def carregar_e_filtrar_saldo(url_planilha, token_usuario):
+    url_tratada = tratar_url_google_sheets(url_planilha)
     
-    planilha_id = match.group(1)
+    # header=None: tratamos a primeira linha como dado, não como título
+    df = pd.read_csv(url_tratada, header=None)
     
-    # Extrai o gid (o ID da aba)
-    gid_match = re.search(r'gid=([0-9]+)', url)
-    gid = gid_match.group(1) if gid_match else '0'
+    # Agora só temos duas colunas: 0 (token) e 1 (creditos)
+    df.columns = ['token', 'creditos']
     
-    # Monta a URL de exportação direta em CSV
-    url_export = f"https://docs.google.com/spreadsheets/d/{planilha_id}/export?format=csv&gid={gid}"
-    return url_export
+    # Remove espaços em branco por segurança
+    df['token'] = df['token'].astype(str).str.strip()
+    
+    # Filtra o usuário pelo token
+    usuario = df[df['token'] == token_usuario.strip()]
+    
+    if not usuario.empty:
+        # Pega o valor da coluna créditos
+        valor = usuario['creditos'].iloc[0]
+        return float(valor)
+    else:
+        st.warning(f"Token '{token_usuario}' não encontrado!")
+        return 0.0
+        
 def carregar_creditos_planilha(url_planilha):
     try:
         url_tratada = tratar_url_google_sheets(url_planilha)
@@ -86,31 +91,42 @@ def carregar_creditos_planilha(url_planilha):
         st.error(f"Erro ao processar o CSV: {e}")
         return None
 
-def atualizar_saldo_usuario(email_usuario):
-    # Usando a chave que você já tem configurada nos seus secrets
-    url_script = st.secrets["URL_PLANILHA"]
+import pandas as pd
+import streamlit as st
+
+def atualizar_saldo_usuario(token_usuario):
+    """
+    Busca o saldo na planilha diretamente via CSV e atualiza o session_state.
+    """
+    # 1. Pega a URL da planilha (ajuste para sua variável real)
+    url_planilha = st.secrets["URL_PLANILHA"]
     
     try:
-        # A lógica agora é via API (Apps Script)
-        payload = {
-            "email": email_usuario,
-            "acao": "verificar" 
-        }
+        # 2. Obtém a URL de exportação CSV
+        url_tratada = tratar_url_google_sheets(url_planilha)
         
-        response = requests.post(url_script, json=payload)
-        resultado = response.json()
+        # 3. Lê o CSV (header=None pois só temos dados)
+        df = pd.read_csv(url_tratada, header=None)
+        df.columns = ['token', 'creditos']
         
-        if resultado.get("status") == "sucesso":
-            st.session_state["creditos_ativos"] = resultado.get("novo_saldo")
-            st.success(f"✅ Sincronizado: {resultado.get('novo_saldo')} créditos")
+        # 4. Limpeza e busca
+        df['token'] = df['token'].astype(str).str.strip()
+        usuario = df[df['token'] == token_usuario.strip()]
+        
+        if not usuario.empty:
+            # Encontrou o token, pega o saldo
+            saldo = float(usuario['creditos'].iloc[0])
+            st.session_state["creditos_ativos"] = saldo
+            st.success(f"✅ Sincronizado: {saldo} créditos")
         else:
-            # Se der erro (ex: usuário não encontrado), define saldo como 0
+            # Token não encontrado
             st.session_state["creditos_ativos"] = 0
-            st.error(f"❌ {resultado.get('mensagem', 'Erro ao sincronizar')}")
+            st.error(f"❌ Token '{token_usuario}' não encontrado na planilha.")
             
     except Exception as e:
+        # Erro de conexão ou formato
         st.session_state["creditos_ativos"] = 0
-        st.error(f"❌ Erro de conexão com a API: {e}")
+        st.error(f"❌ Erro ao sincronizar com a planilha: {e}")
 
 def api_obter_produtividade_juridica(email):
     """ Busca as linhas de produção jurídica do usuário na planilha """
