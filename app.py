@@ -45,35 +45,26 @@ if not firebase_admin._apps:
 # =========================================================================
 # 🌟 RECARGA AUTOMÁTICA EM BACKEND
 # =========================================================================
+import re
+
 def tratar_url_google_sheets(url):
     """
-    Transforma o link padrão do Google Sheets em exportação direta de CSV
-    e adiciona um parâmetro de tempo para forçar o Sheets a quebrar o cache.
+    Transforma o link padrão de edição no link de exportação CSV.
     """
-    url = url.strip()
+    # Extrai o ID da planilha (o código longo entre /d/ e /edit)
+    match = re.search(r'/d/([a-zA-Z0-9-_]+)', url)
+    if not match:
+        return url # Retorna original se não encontrar o ID
     
-    # Remove parâmetros extras do final do link se houver
-    if "?" in url and not "docs.google.com" in url:
-        url = url.split("?")[0]
-        
-    if "/edit" in url:
-        url = url.split("/edit")[0] + "/export?format=csv"
-    elif "/pubhtml" in url:
-        url = url.split("/pubhtml")[0] + "/pub?output=csv"
-    elif not url.endswith("/export?format=csv") and "docs.google.com" in url:
-        if url.endswith("/"):
-            url = url + "export?format=csv"
-        else:
-            url = url + "/export?format=csv"
-            
-    # 🔥 TRUQUE DO CACHE: Adiciona a hora atual em segundos no link.
-    # Isso força o Google a gerar um CSV idêntico ao que está na tela agora.
-    import time
-    nocache_param = f"&nocache={int(time.time())}"
-    url += nocache_param
+    planilha_id = match.group(1)
     
-    return url
-
+    # Extrai o gid (o ID da aba)
+    gid_match = re.search(r'gid=([0-9]+)', url)
+    gid = gid_match.group(1) if gid_match else '0'
+    
+    # Monta a URL de exportação direta em CSV
+    url_export = f"https://docs.google.com/spreadsheets/d/{planilha_id}/export?format=csv&gid={gid}"
+    return url_export
 def carregar_creditos_planilha(url_planilha):
     try:
         # Debug: Vamos ver o que está acontecendo com a URL
