@@ -11,6 +11,25 @@ from firebase_admin import auth
 from firebase_admin import credentials
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
+import os
+import json
+
+# Verifica se estamos rodando no Railway (se a variável de ambiente existir)
+if os.environ.get("FIREBASE_PROJECT_ID"): 
+    # Cria o diretório .streamlit manualmente
+    if not os.path.exists(".streamlit"):
+        os.makedirs(".streamlit")
+    
+    # Cria o arquivo secrets.toml em tempo de execução usando suas variáveis do Railway
+    with open(".streamlit/secrets.toml", "w") as f:
+        f.write("[firebase]\n")
+        f.write(f'project_id = "{os.environ.get("project_id")}"\n')
+        f.write(f'client_email = "{os.environ.get("client_email")}"\n')
+        f.write(f'private_key = "{os.environ.get("private_key").replace("\\n", "n")}"\n')
+        f.write(f'client_id = "{os.environ.get("client_id")}"\n')
+        f.write(f'auth_uri = "{os.environ.get("auth_uri")}"\n')
+        f.write(f'private_key_id = "{os.environ.get("private_key_id")}"\n')
+        f.write(f'client_x509_cert_url = "{os.environ.get("client_x509_cert_url")}"\n')
 
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
