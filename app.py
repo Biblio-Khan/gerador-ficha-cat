@@ -77,7 +77,7 @@ def carregar_creditos_planilha(url_planilha):
         
         # Limpeza forçada: converte a coluna de créditos para número
         # Substitua 'CREDITOS' pelo nome exato da sua coluna de saldo
-        coluna_saldo = 'CREDITOS' 
+        coluna_saldo = 'creditos' 
         if coluna_saldo in df.columns:
             df[coluna_saldo] = pd.to_numeric(df[coluna_saldo], errors='coerce').fillna(0)
             
