@@ -11,25 +11,22 @@ from firebase_admin import auth
 from firebase_admin import credentials
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
+import json
 import os
 import streamlit as st
-import json
 
-# Verifica se estamos no Railway
+# Verifica se estamos no Railway (usando uma das variáveis que você configurou)
 if os.environ.get("project_id"): 
-    if not os.path.exists(".streamlit"):
-        os.makedirs(".streamlit")
+    # Cria o diretório .streamlit necessário para o Streamlit não reclamar
+    os.makedirs(".streamlit", exist_ok=True)
     
-    # Preparamos a chave privada separadamente para evitar o erro da f-string
-    raw_key = os.environ.get("private_key", "")
-    # Corrigimos o \n que pode ter sido interpretado literalmente
-    clean_key = raw_key.replace("\\n", "\n") 
-    
+    # Criamos o arquivo secrets.toml em tempo de execução
+    # Usando variáveis de ambiente do Railway (ajuste os nomes se necessário)
     with open(".streamlit/secrets.toml", "w") as f:
         f.write("[firebase]\n")
         f.write(f'project_id = "{os.environ.get("project_id")}"\n')
         f.write(f'client_email = "{os.environ.get("client_email")}"\n')
-        f.write(f'private_key = """{clean_key}"""\n') # Usamos aspas triplas para chaves complexas
+        f.write(f'private_key = """{os.environ.get("private_key").replace("\\n", "\n")}"""\n')
         f.write(f'client_id = "{os.environ.get("client_id")}"\n')
         f.write(f'auth_uri = "{os.environ.get("auth_uri")}"\n')
         f.write(f'private_key_id = "{os.environ.get("private_key_id")}"\n')
