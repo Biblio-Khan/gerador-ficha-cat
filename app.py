@@ -11,34 +11,21 @@ from firebase_admin import auth
 from firebase_admin import credentials
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
-import os
+import streamlit as st
 import json
+import os
 
-def garantir_secrets_no_railway():
-    # Caminho do arquivo virtual
-    path = ".streamlit/secrets.toml"
-    
-    # Verifica se já existe, se não, cria usando o JSON da variável de ambiente
-    if not os.path.exists(path):
-        os.makedirs(".streamlit", exist_ok=True)
-        
-        # Pega o JSON inteiro do Railway
-        json_str = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-        if json_str:
-            data = json.loads(json_str)
-            
-            # Escreve o arquivo no formato que o Streamlit espera
-            with open(path, "w") as f:
-                f.write("[firebase]\n")
-                for key, value in data.items():
-                    # Formata corretamente cada linha
-                    if isinstance(value, str):
-                        # Se for a private_key, tratamos com aspas triplas
-                        if key == "private_key":
-                            f.write(f'{key} = """{value}"""\n')
-                        else:
-                            f.write(f'{key} = "{value}"\n')
+# O Streamlit já carrega automaticamente variáveis que começam com STREAMLIT_
+# Você pode acessar diretamente assim:
+if "FIREBASE" in st.secrets:
+    config = st.secrets["FIREBASE"]
+    # Agora você usa o objeto 'config' para conectar no Firebase
+else:
+    # Se ainda não encontrar, leia via variável de ambiente como backup
+    config = json.loads(os.environ.get("STREAMLIT_FIREBASE"))
 
+# Agora inicialize o Firebase com 'config'
+# (seu código de inicialização aqui...)
 # Chama a função
 garantir_secrets_no_railway()
 
