@@ -12,28 +12,29 @@ from firebase_admin import credentials
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
 import os
-import streamlit as st
 
-# Verifica se estamos no Railway
-if os.environ.get("project_id"): 
-    os.makedirs(".streamlit", exist_ok=True)
-    
-    # 1. Pegamos a chave e tratamos o \n fora de qualquer f-string
-    raw_key = os.environ.get("private_key", "")
-    # O Python interpreta a string literal e troca o texto '\n' por uma quebra de linha real
-    clean_key = raw_key.replace('\\n', '\n')
-    
-    # 2. Criamos o arquivo sem usar f-strings complexas para a chave privada
-    with open(".streamlit/secrets.toml", "w") as f:
-        f.write("[firebase]\n")
-        f.write(f'project_id = "{os.environ.get("project_id")}"\n')
-        f.write(f'client_email = "{os.environ.get("client_email")}"\n')
-        # Usamos uma string normal, sem o 'f', para evitar o erro de sintaxe do backslash
-        f.write('private_key = """' + clean_key + '"""\n')
-        f.write(f'client_id = "{os.environ.get("client_id")}"\n')
-        f.write(f'auth_uri = "{os.environ.get("auth_uri")}"\n')
-        f.write(f'private_key_id = "{os.environ.get("private_key_id")}"\n')
-        f.write(f'client_x509_cert_url = "{os.environ.get("client_x509_cert_url")}"\n')
+# Esta função cria o arquivo que o Streamlit espera encontrar, 
+# usando as variáveis que você já cadastrou no Railway.
+def garantir_secrets_no_railway():
+    path = ".streamlit/secrets.toml"
+    if not os.path.exists(path):
+        os.makedirs(".streamlit", exist_ok=True)
+        with open(path, "w") as f:
+            f.write("[firebase]\n")
+            f.write(f'project_id = "{os.environ.get("project_id")}"\n')
+            f.write(f'client_email = "{os.environ.get("client_email")}"\n')
+            # Usamos o replace para corrigir a quebra de linha da chave privada
+            raw_key = os.environ.get("private_key", "").replace("\\n", "\n")
+            f.write(f'private_key = """{raw_key}"""\n')
+            f.write(f'client_id = "{os.environ.get("client_id")}"\n')
+            f.write(f'auth_uri = "{os.environ.get("auth_uri")}"\n')
+            f.write(f'private_key_id = "{os.environ.get("private_key_id")}"\n')
+            f.write(f'client_x509_cert_url = "{os.environ.get("client_x509_cert_url")}"\n')
+
+# Chama a função imediatamente ao iniciar o app
+garantir_secrets_no_railway()
+
+
 
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
