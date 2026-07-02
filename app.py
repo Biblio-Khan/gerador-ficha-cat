@@ -19,17 +19,21 @@ def garantir_secrets_no_railway():
     path = ".streamlit/secrets.toml"
     if not os.path.exists(path):
         os.makedirs(".streamlit", exist_ok=True)
+        
+        # Recupera a chave e força a estrutura correta
+        raw_key = os.environ.get("private_key", "").replace("\\n", "\n")
+        
+        # Garante que a chave comece e termine corretamente se estiver faltando
+        if "-----BEGIN PRIVATE KEY-----" not in raw_key:
+            raw_key = f"-----BEGIN PRIVATE KEY-----\n{raw_key}\n-----END PRIVATE KEY-----"
+            
         with open(path, "w") as f:
             f.write("[firebase]\n")
-            # Adicionamos o campo 'type' que o Firebase estava cobrando
             f.write('type = "service_account"\n')
             f.write(f'project_id = "{os.environ.get("project_id")}"\n')
             f.write(f'private_key_id = "{os.environ.get("private_key_id")}"\n')
-            
-            # Tratamento especial para a private_key
-            raw_key = os.environ.get("private_key", "").replace("\\n", "\n")
+            # Usamos aspas triplas para garantir que o formato PEM (que tem várias linhas) seja respeitado
             f.write(f'private_key = """{raw_key}"""\n')
-            
             f.write(f'client_email = "{os.environ.get("client_email")}"\n')
             f.write(f'client_id = "{os.environ.get("client_id")}"\n')
             f.write('auth_uri = "https://accounts.google.com/o/oauth2/auth"\n')
