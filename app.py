@@ -691,7 +691,7 @@ else:
             if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
                 valido = False
             if 'valido' not in locals():
-                valido = false
+                valido = False
     
             if valido and titulo.strip():
                 with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
