@@ -117,7 +117,7 @@ def atualizar_saldo_usuario(token_usuario):
         
         if not usuario.empty:
             # Pega o valor e converte para float (o erro de string sumiu porque pulamos a linha de títulos)
-            saldo = float(usuario['creditos'].iloc[0])
+            saldo = int(float(usuario['creditos'].iloc[0]))
             st.session_state["creditos_ativos"] = saldo
             st.success(f"✅ Sincronizado: {saldo:.0f} créditos")
         else:
