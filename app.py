@@ -95,33 +95,36 @@ def carregar_creditos_planilha(url_planilha):
 import pandas as pd
 import streamlit as st
 
-def atualizar_saldo_usuario_direto():
-    # LINK DIRETO COLADO AQUI
-    url_direta = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/edit?gid=0#gid=0"
+def atualizar_saldo_usuario(token_usuario):
+    # O link que testamos e funcionou
+    url_direta = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=0"
     
     try:
-        # Lê o CSV diretamente
-        df = pd.read_csv(url_direta, header=None)
+        # Lê o CSV tentando detectar o separador automaticamente
+        df = pd.read_csv(url_direta, header=None, sep=None, engine='python')
         
-        # Mostra o que foi lido para debug
-        st.write("DEBUG - DataFrame lido:")
-        st.write(df)
-        
-        # Ajusta colunas (Assumindo Coluna 0 = Token, Coluna 1 = Créditos)
+        # DEBUG: Vamos ver como o arquivo chegou
+        st.write(f"DEBUG: Colunas detectadas: {df.shape[1]}")
+        st.write(df.head()) 
+
+        # Pegamos apenas as duas primeiras colunas, independente de quantas existam
+        df = df.iloc[:, [0, 1]]
         df.columns = ['token', 'creditos']
         
-        # AQUI VOCÊ DEVE BUSCAR O TOKEN REAL DO USUÁRIO
-        # Se você não sabe o token agora, teste com o primeiro da lista
-        token_teste = df['token'].iloc[0]
-        saldo_teste = df['creditos'].iloc[0]
+        # Filtra pelo token
+        df['token'] = df['token'].astype(str).str.strip()
+        usuario = df[df['token'] == str(token_usuario).strip()]
         
-        st.write(f"Token encontrado: {token_teste} | Saldo: {saldo_teste}")
-        
-        # Atualiza o session_state
-        st.session_state["creditos_ativos"] = float(saldo_teste)
-        
+        if not usuario.empty:
+            saldo = float(usuario['creditos'].iloc[0])
+            st.session_state["creditos_ativos"] = saldo
+            st.success(f"✅ Sincronizado: {saldo} créditos")
+        else:
+            st.session_state["creditos_ativos"] = 0
+            st.error("❌ Token não encontrado.")
+            
     except Exception as e:
-        st.error(f"Erro ao ler link direto: {e}")
+        st.error(f"Erro ao ler a planilha: {e}")
 
 # Chame a função para testar
 atualizar_saldo_usuario_direto()
