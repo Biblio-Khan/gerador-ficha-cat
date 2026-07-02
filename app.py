@@ -91,41 +91,40 @@ def carregar_creditos_planilha(url_planilha):
         st.error(f"Erro ao processar o CSV: {e}")
         return None
 
+
 import pandas as pd
 import streamlit as st
 
-def atualizar_saldo_usuario(token_usuario):
-    url_planilha = st.secrets["URL_PLANILHA"]
+def atualizar_saldo_usuario_direto():
+    # LINK DIRETO COLADO AQUI
+    url_direta = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/edit?gid=0#gid=0"
+    
     try:
-        url_tratada = tratar_url_google_sheets(url_planilha)
-        # Lemos sem cabeçalho para ver tudo
-        df = pd.read_csv(url_tratada, header=None)
+        # Lê o CSV diretamente
+        df = pd.read_csv(url_direta, header=None)
         
-        # DEBUG: O que o Streamlit mostra aqui é a verdade sobre sua planilha
-        st.write("--- DEBUG: Tabela lida ---")
+        # Mostra o que foi lido para debug
+        st.write("DEBUG - DataFrame lido:")
         st.write(df)
         
-        # Ajustamos as colunas
+        # Ajusta colunas (Assumindo Coluna 0 = Token, Coluna 1 = Créditos)
         df.columns = ['token', 'creditos']
         
-        # Filtramos
-        token_buscado = str(token_usuario).strip()
-        df['token'] = df['token'].astype(str).str.strip()
+        # AQUI VOCÊ DEVE BUSCAR O TOKEN REAL DO USUÁRIO
+        # Se você não sabe o token agora, teste com o primeiro da lista
+        token_teste = df['token'].iloc[0]
+        saldo_teste = df['creditos'].iloc[0]
         
-        usuario = df[df['token'] == token_buscado]
+        st.write(f"Token encontrado: {token_teste} | Saldo: {saldo_teste}")
         
-        st.write(f"Token buscado: '{token_buscado}'")
-        st.write(f"Linhas encontradas: {len(usuario)}")
+        # Atualiza o session_state
+        st.session_state["creditos_ativos"] = float(saldo_teste)
         
-        if not usuario.empty:
-            saldo = float(usuario['creditos'].iloc[0])
-            st.session_state["creditos_ativos"] = saldo
-            st.success(f"✅ Sincronizado: {saldo} créditos")
-        else:
-            st.error("❌ Token não encontrado nas linhas da planilha.")
-            
     except Exception as e:
-        st.error(f"❌ Erro: {e}")
+        st.error(f"Erro ao ler link direto: {e}")
+
+# Chame a função para testar
+atualizar_saldo_usuario_direto()
 
 def api_obter_produtividade_juridica(email):
     """ Busca as linhas de produção jurídica do usuário na planilha """
