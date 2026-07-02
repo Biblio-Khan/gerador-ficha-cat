@@ -21,14 +21,20 @@ def garantir_secrets_no_railway():
         os.makedirs(".streamlit", exist_ok=True)
         with open(path, "w") as f:
             f.write("[firebase]\n")
+            # Adicionamos o campo 'type' que o Firebase estava cobrando
+            f.write('type = "service_account"\n')
             f.write(f'project_id = "{os.environ.get("project_id")}"\n')
-            f.write(f'client_email = "{os.environ.get("client_email")}"\n')
-            # Usamos o replace para corrigir a quebra de linha da chave privada
+            f.write(f'private_key_id = "{os.environ.get("private_key_id")}"\n')
+            
+            # Tratamento especial para a private_key
             raw_key = os.environ.get("private_key", "").replace("\\n", "\n")
             f.write(f'private_key = """{raw_key}"""\n')
+            
+            f.write(f'client_email = "{os.environ.get("client_email")}"\n')
             f.write(f'client_id = "{os.environ.get("client_id")}"\n')
-            f.write(f'auth_uri = "{os.environ.get("auth_uri")}"\n')
-            f.write(f'private_key_id = "{os.environ.get("private_key_id")}"\n')
+            f.write('auth_uri = "https://accounts.google.com/o/oauth2/auth"\n')
+            f.write('token_uri = "https://oauth2.googleapis.com/token"\n')
+            f.write('auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"\n')
             f.write(f'client_x509_cert_url = "{os.environ.get("client_x509_cert_url")}"\n')
 
 # Chama a função imediatamente ao iniciar o app
