@@ -128,16 +128,13 @@ def atualizar_saldo_usuario(token_usuario):
         st.error(f"Erro ao processar os dados: {e}")
         
 def api_obter_produtividade_juridica(usuario):
-    url_produtividade = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/edit?gid=54763437#gid=54763437"
+    # ATENÇÃO: O link deve ser de EXPORTAÇÃO, não o de edição.
+    # Note que trocamos 'edit' por 'export?format=csv'
+    url_produtividade = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=54763437"
+    
+    # Agora sim o pandas vai ler os dados, e não o site
     df = pd.read_csv(url_produtividade, header=0)
     
-    # 1. Lê a planilha
-    df = pd.read_csv(url_produtividade, header=0)
-    
-    # 2. DEBUG: Descubra quantas colunas o pandas realmente encontrou
-    st.write(f"DEBUG: O Pandas encontrou {len(df.columns)} colunas.")
-    st.write(f"Nomes das colunas encontradas: {df.columns.tolist()}")
-
     # 3. Ajuste o número de nomes na lista abaixo para bater com o número que apareceu no DEBUG
     # Exemplo: se o debug disse 5 colunas, adicione um nome extra na lista abaixo
     df.columns = ['data', 'email', 'titulo', 'assunto', 'outra_coluna_se_houver']
