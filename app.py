@@ -127,19 +127,18 @@ def atualizar_saldo_usuario(token_usuario):
     except Exception as e:
         st.error(f"Erro ao processar os dados: {e}")
         
-def api_obter_produtividade_juridica(email):
-    """ Busca as linhas de produção jurídica do usuário na planilha """
-    url_script = st.secrets["URL_SCRIPT_GOOGLE"]
-    payload = {"acao": "obter_produtividade", "email": email.strip().lower()}
-    try:
-        resp = requests.post(url_script, json=payload, timeout=15)
-        res_json = resp.json()
-        if res_json.get("success", False):
-            return res_json.get("data", [])
-        return []
-    except:
-        return []
-
+def api_obter_produtividade_juridica(usuario):
+    # ... seu link com o GID ...
+    df = pd.read_csv(url_produtividade, header=0)
+    
+    # FORÇA o mapeamento das colunas na ordem que você me passou:
+    df.columns = ['data', 'email', 'titulo', 'assunto']
+    
+    # Agora filtra pelo usuário
+    df['email'] = df['email'].str.strip().str.lower()
+    df = df[df['email'] == usuario.strip().lower()]
+    
+    return df
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
