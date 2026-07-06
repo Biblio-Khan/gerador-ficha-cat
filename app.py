@@ -128,7 +128,7 @@ def atualizar_saldo_usuario(token_usuario):
         st.error(f"Erro ao processar os dados: {e}")
         
 def api_obter_produtividade_juridica(usuario):
-    # ... seu link com o GID ...
+    url_produtividade = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/edit?gid=54763437#gid=54763437"
     df = pd.read_csv(url_produtividade, header=0)
     
     # FORÇA o mapeamento das colunas na ordem que você me passou:
