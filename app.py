@@ -849,10 +849,14 @@ if st.session_state.get("usuario_atual"):
         with st.spinner("Carregando dados de produtividade..."):
             dados = api_obter_produtividade_juridica(st.session_state.get("usuario_atual", ""))
 
-        if not dados:
-            st.info("Você ainda não possui registros de fichas geradas neste sistema para criar o gráfico.")
+        # Verifica se o objeto 'dados' é um DataFrame válido e não está vazio
+        import pandas as pd
+        
+        if isinstance(dados, pd.DataFrame) and not dados.empty:
+            st.write(f"Total de registros encontrados: {len(dados)}")
+            st.dataframe(dados) # Aqui os dados aparecerão
         else:
-            import pandas as pd
+            st.info("Você ainda não possui registros de fichas geradas.")
 
             # 1. Converte os dados recebidos da API para um DataFrame do Pandas
             df = pd.DataFrame(dados)
