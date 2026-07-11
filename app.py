@@ -280,21 +280,20 @@ else:
 
     def gerar_docx_lote(lista_fichas):
         doc = Document()
-        # A4 configurado
+        # Margens A4 padrão
         section = doc.sections[0]
         section.page_width, section.page_height = Cm(21.0), Cm(29.7)
     
         for idx, item in enumerate(lista_fichas):
-            # Aqui extraímos o seu dicionário exatamente como você me passou
             d = item.get("dados_marc", {})
         
             table = doc.add_table(rows=1, cols=1)
             table.style = 'Table Grid'
             table.autofit = False
             table.columns[0].width = Cm(12.5)
-        
             cell = table.cell(0, 0)
-            # Trava altura em 7.5cm
+        
+            # Travar altura em 7.5cm
             tr = cell._tc.getparent()
             trPr = tr.get_or_add_trPr()
             trHeight = trPr.get_or_add_trHeight()
@@ -303,9 +302,13 @@ else:
         
             cell._element.clear_content()
 
-            def add_p(text, align=WD_ALIGN_PARAGRAPH.LEFT, bold=False):
+            # Função de parágrafo com indentação técnica
+            def add_p(text, indent=0, bold=False):
                 p = cell.add_paragraph()
-                p.alignment = align
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                # Pendente: a segunda linha de cada parágrafo começa mais a direita
+                p.paragraph_format.left_indent = Cm(indent) 
+                p.paragraph_format.first_line_indent = Cm(-indent) if indent > 0 else 0
                 p.paragraph_format.space_after = Pt(0)
                 p.paragraph_format.space_before = Pt(0)
                 run = p.add_run(str(text))
@@ -313,30 +316,26 @@ else:
                 run.font.size = Pt(10)
                 run.bold = bold
 
-            # --- MONTAGEM DA FICHA BASEADA NO SEU DICIONÁRIO ---
+            # --- MONTAGEM SEGUINDO A IMAGEM ---
         
-            # 1. Entrada (Autor) - Centralizado
-            add_p(d.get("entrada", ""), align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
+            # 1. Autor (Sem indentação)
+            add_p(d.get("entrada", ""), bold=True)
         
-            # 2. Título - Centralizado
-            add_p(d.get("titulo", ""), align=WD_ALIGN_PARAGRAPH.CENTER)
+            # 2. Título (Indentado)
+            add_p(f"{d.get('titulo', '')} / {d.get('entrada', '')}. – {d.get('ano', '')}.", indent=0.8)
         
-            # 3. Local/Editora/Ano
-            add_p(f"{d.get('local_editora', '')}, {d.get('ano', '')}.")
+            # 3. Descrição Física
+            add_p(f"{d.get('paginas', '')} p. : il. ; {d.get('dimensoes', '')}.", indent=0.8)
         
-            # 4. Descrição Física
-            add_p(f"{d.get('paginas', '')} p. ; {d.get('dimensoes', '')}")
+            # 4. Nota Acadêmica (Orientador/Instituição)
+            add_p(f"Orientador: {d.get('tipo', '')} - {d.get('instituicao', '')}, {d.get('area', '')}.", indent=0.8)
         
-            # 5. Notas Acadêmicas
-            add_p(f"{d.get('tipo', '')} - {d.get('instituicao', '')}, {d.get('area', '')}")
-        
-            # 6. Assuntos (convertendo a lista)
+            # 5. Assuntos (Rodapé)
             assuntos = d.get("assuntos", [])
-            if assuntos:
-                assuntos_str = " ; ".join([f"{i+1}. {a}" for i, a in enumerate(assuntos)])
-                add_p(assuntos_str)
+            assuntos_str = " ".join([f"{i+1}. {a}." for i, a in enumerate(assuntos)])
+            add_p(f"{assuntos_str} I. Título.", indent=0.8)
 
-            # Lógica de 2 fichas por página
+            # Lógica de 2 por página
             doc.add_paragraph() 
             if (idx + 1) % 2 == 0 and idx < len(lista_fichas) - 1:
                 doc.add_page_break()
