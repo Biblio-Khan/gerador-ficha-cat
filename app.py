@@ -280,60 +280,40 @@ else:
 
     def gerar_docx_lote(lista_fichas):
         doc = Document()
+        
+        # Configuração das margens
         section = doc.sections[0]
-        section.page_width, section.page_height = Cm(21.0), Cm(29.7)
-    
-        for idx, ficha in enumerate(lista_fichas):
-            d = ficha.get("dados_marc", {})
-        
-            table = doc.add_table(rows=1, cols=1)
-            table.style = 'Table Grid'
-            table.autofit = False
-            table.columns[0].width = Cm(13.0)
-        
-            cell = table.cell(0, 0)
-            # Altura fixa 7.5cm
-            tr = cell._tc.getparent()
-            trPr = tr.get_or_add_trPr()
-            trHeight = trPr.get_or_add_trHeight()
-            trHeight.val = Cm(7.5)
-            trHeight.height_rule = "exactly"
-            cell._element.clear_content()
+        section.left_margin = Pt(72)
+        section.right_margin = Pt(72)
 
-            def add_p(text, align=WD_ALIGN_PARAGRAPH.LEFT, bold=False):
-                p = cell.add_paragraph()
-                p.alignment = align
-                p.paragraph_format.space_after = Pt(0)
-                p.paragraph_format.space_before = Pt(0)
-                run = p.add_run(str(text))
-                run.font.name = 'Courier New'
-                run.font.size = Pt(9)
-                run.bold = bold
-        
-            # 1. Numero de chamada e cutter (Canto esquerdo)
-            # Nota: Ajuste a chave conforme o nome real no seu dicionário
-            add_p(f"{d.get('classificacao', '000')}  {d.get('cutter', 'AAA')}", align=WD_ALIGN_PARAGRAPH.LEFT)
-
-            # 2. Nome do Autor (CENTRALIZADO)
-            add_p(d.get("entrada", ""), align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
-
-            # 3. Título / Autor . - Cidade : Editora : Ano (CENTRALIZADO)
-            linha_titulo = f"{d.get('titulo', '')} / {d.get('entrada', '')} . - {d.get('local_editora', '')} : {d.get('ano', '')}."
-            add_p(linha_titulo, align=WD_ALIGN_PARAGRAPH.CENTER)
-
-            # 4. Numero de paginas (Alinhado à esquerda)
-            add_p(f"{d.get('paginas', '')} p.", align=WD_ALIGN_PARAGRAPH.LEFT)
-
-            # 5. Assuntos (Alinhado à esquerda)
-            assuntos = d.get("assuntos", [])
-            if assuntos:
-                assuntos_str = " ; ".join([f"{i+1}. {a}" for i, a in enumerate(assuntos)])
-                add_p(assuntos_str, align=WD_ALIGN_PARAGRAPH.LEFT)
-
-            # Lógica de 2 por página
-            doc.add_paragraph() 
-            if (idx + 1) % 2 == 0 and idx < len(lista_fichas) - 1:
+        for idx, ficha_texto in enumerate(lista_fichas):
+            if idx > 0:
                 doc.add_page_break()
+            
+            # Adiciona a tabela com o estilo 'Table Grid' que força as bordas
+            table = doc.add_table(rows=1, cols=1)
+            table.style = 'Table Grid' 
+            table.autofit = False
+            table.allow_autofit = False
+            table.columns[0].width = Pt(400)
+            
+            # Acessa a célula
+            cell = table.cell(0, 0)
+            
+            # Remove parágrafos padrão para garantir controle total
+            cell._element.clear_content()
+            
+            # Adiciona o texto configurando a fonte
+            p = cell.add_paragraph()
+            run = p.add_run(ficha_texto)
+            run.font.name = 'Courier New'
+            run.font.size = Pt(10)
+            
+            # Ajusta o alinhamento e recuo dentro da caixa
+            p.paragraph_format.left_indent = Pt(10)
+            p.paragraph_format.right_indent = Pt(10)
+            p.paragraph_format.space_before = Pt(10)
+            p.paragraph_format.space_after = Pt(10)
 
         buffer = io.BytesIO()
         doc.save(buffer)
@@ -485,7 +465,7 @@ else:
             
             if qtd_fichas > 0:
                 # 1. Botão Word (Mantido)
-                arquivo_word = gerar_docx_lote(st.session_state.lote_fichas)
+                arquivo_word = gerar_docx_lote([f["texto_ficha"] for f in st.session_state.lote_fichas])
                 col_lote_2.download_button(
                     label="📥 Word",
                     data=arquivo_word,
