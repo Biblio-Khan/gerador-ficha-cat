@@ -491,7 +491,7 @@ else:
             
             if qtd_fichas > 0:
                 # 1. Botão Word (Mantido)
-                arquivo_word = gerar_docx_lote([f["texto_ficha"] for f in st.session_state.lote_fichas])
+                arquivo_word = gerar_docx_lote(st.session_state.lote_fichas)
                 col_lote_2.download_button(
                     label="📥 Word",
                     data=arquivo_word,
