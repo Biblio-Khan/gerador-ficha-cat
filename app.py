@@ -280,7 +280,6 @@ else:
 
     def gerar_docx_lote(lista_fichas):
         doc = Document()
-        # Margens A4 padrão
         section = doc.sections[0]
         section.page_width, section.page_height = Cm(21.0), Cm(29.7)
     
@@ -293,7 +292,7 @@ else:
             table.columns[0].width = Cm(12.5)
             cell = table.cell(0, 0)
         
-            # Travar altura em 7.5cm
+            # Trava altura em 7.5cm
             tr = cell._tc.getparent()
             trPr = tr.get_or_add_trPr()
             trHeight = trPr.get_or_add_trHeight()
@@ -302,13 +301,12 @@ else:
         
             cell._element.clear_content()
 
-            # Função de parágrafo com indentação técnica
             def add_p(text, indent=0, bold=False):
                 p = cell.add_paragraph()
                 p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                # Pendente: a segunda linha de cada parágrafo começa mais a direita
-                p.paragraph_format.left_indent = Cm(indent) 
-                p.paragraph_format.first_line_indent = Cm(-indent) if indent > 0 else 0
+                # Configuração da indentação pendente (norma técnica)
+                p.paragraph_format.left_indent = Cm(indent)
+                p.paragraph_format.first_line_indent = Cm(-indent)
                 p.paragraph_format.space_after = Pt(0)
                 p.paragraph_format.space_before = Pt(0)
                 run = p.add_run(str(text))
@@ -316,24 +314,24 @@ else:
                 run.font.size = Pt(10)
                 run.bold = bold
 
-            # --- MONTAGEM SEGUINDO A IMAGEM ---
-        
+            # --- ORDEM ESTRUTURADA ---
             # 1. Autor (Sem indentação)
             add_p(d.get("entrada", ""), bold=True)
         
             # 2. Título (Indentado)
             add_p(f"{d.get('titulo', '')} / {d.get('entrada', '')}. – {d.get('ano', '')}.", indent=0.8)
         
-            # 3. Descrição Física
+            # 3. Dados físicos
             add_p(f"{d.get('paginas', '')} p. : il. ; {d.get('dimensoes', '')}.", indent=0.8)
         
-            # 4. Nota Acadêmica (Orientador/Instituição)
-            add_p(f"Orientador: {d.get('tipo', '')} - {d.get('instituicao', '')}, {d.get('area', '')}.", indent=0.8)
+            # 4. Nota Acadêmica
+            add_p(f"Orientador: {d.get('tipo', '')} - {d.get('instituicao', '')}.", indent=0.8)
         
-            # 5. Assuntos (Rodapé)
+            # 5. Assuntos
             assuntos = d.get("assuntos", [])
-            assuntos_str = " ".join([f"{i+1}. {a}." for i, a in enumerate(assuntos)])
-            add_p(f"{assuntos_str} I. Título.", indent=0.8)
+            if assuntos:
+                assuntos_str = " ".join([f"{i+1}. {a}." for i, a in enumerate(assuntos)])
+                add_p(f"{assuntos_str} I. Título.", indent=0.8)
 
             # Lógica de 2 por página
             doc.add_paragraph() 
