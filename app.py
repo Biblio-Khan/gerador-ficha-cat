@@ -315,10 +315,12 @@ else:
             run = p.add_run(ficha_texto)
             run.font.name = 'Courier New'
             run.font.size = Pt(10)
+
+            doc.add_paragraph()
         
             # Adiciona quebra após a ficha, mas não na última
-            if idx < len(lista_fichas) - 1:
-                doc.add_page_break()
+            if (idx + 1) % 2 == 0 and idx < len(lista_fichas) - 1:
+            doc.add_page_break()
 
         buffer = io.BytesIO()
         doc.save(buffer)
