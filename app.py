@@ -279,51 +279,51 @@ else:
         return []
 
     def gerar_docx_lote(lista_fichas):
-    doc = Document()
+        doc = Document()
     
-    # Margens padrão para A4 (ajuste conforme a necessidade da sua impressora)
-    section = doc.sections[0]
-    section.page_width = Cm(21.0)  # Largura A4
-    section.page_height = Cm(29.7) # Altura A4
+        # Margens padrão para A4 (ajuste conforme a necessidade da sua impressora)
+        section = doc.sections[0]
+        section.page_width = Cm(21.0)  # Largura A4
+        section.page_height = Cm(29.7) # Altura A4
     
-    for idx, ficha_texto in enumerate(lista_fichas):
-        # Cria a tabela para a ficha
-        table = doc.add_table(rows=1, cols=1)
-        table.style = 'Table Grid'
-        table.autofit = False
-        table.allow_autofit = False
+        for idx, ficha_texto in enumerate(lista_fichas):
+            # Cria a tabela para a ficha
+            table = doc.add_table(rows=1, cols=1)
+            table.style = 'Table Grid'
+            table.autofit = False
+            table.allow_autofit = False
         
-        # Dimensões exatas da ficha
-        table.columns[0].width = Cm(12.5)
-        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+            # Dimensões exatas da ficha
+            table.columns[0].width = Cm(12.5)
+            table.alignment = WD_TABLE_ALIGNMENT.CENTER
         
-        cell = table.cell(0, 0)
+            cell = table.cell(0, 0)
         
-        # Força altura exata da ficha (7,5 cm)
-        tr = cell._tc.getparent()
-        trPr = tr.get_or_add_trPr()
-        trHeight = trPr.get_or_add_trHeight()
-        trHeight.val = Cm(7.5)
-        trHeight.height_rule = "exactly"
+            # Força altura exata da ficha (7,5 cm)
+            tr = cell._tc.getparent()
+            trPr = tr.get_or_add_trPr()
+            trHeight = trPr.get_or_add_trHeight()
+            trHeight.val = Cm(7.5)
+            trHeight.height_rule = "exactly"
         
-        # Configuração do texto
-        cell._element.clear_content()
-        p = cell.add_paragraph()
-        p.paragraph_format.space_after = Pt(0)
-        p.paragraph_format.space_before = Pt(0)
+            # Configuração do texto
+            cell._element.clear_content()
+            p = cell.add_paragraph()
+            p.paragraph_format.space_after = Pt(0)
+            p.paragraph_format.space_before = Pt(0)
         
-        run = p.add_run(ficha_texto)
-        run.font.name = 'Courier New'
-        run.font.size = Pt(10)
+            run = p.add_run(ficha_texto)
+            run.font.name = 'Courier New'
+            run.font.size = Pt(10)
         
-        # Adiciona quebra após a ficha, mas não na última
-        if idx < len(lista_fichas) - 1:
-            doc.add_page_break()
+            # Adiciona quebra após a ficha, mas não na última
+            if idx < len(lista_fichas) - 1:
+                doc.add_page_break()
 
-    buffer = io.BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        return buffer
     def formatar_entrada_e_corpo(tipo_autor, autores_lista, entidade, titulo, tem_organizador, organizador_nome, tipo_org, tem_tradutor, tradutor_nome):
         entrada = ""
         corpo_autores = ""
