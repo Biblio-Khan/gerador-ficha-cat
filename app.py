@@ -320,7 +320,7 @@ else:
         
             # Adiciona quebra após a ficha, mas não na última
             if (idx + 1) % 2 == 0 and idx < len(lista_fichas) - 1:
-            doc.add_page_break()
+                doc.add_page_break()
 
         buffer = io.BytesIO()
         doc.save(buffer)
