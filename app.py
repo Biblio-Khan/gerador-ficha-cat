@@ -280,59 +280,55 @@ else:
 
     def gerar_docx_lote(lista_fichas):
         doc = Document()
-        # A4 configurado
         section = doc.sections[0]
         section.page_width, section.page_height = Cm(21.0), Cm(29.7)
     
-        for idx, item in enumerate(lista_fichas):
-            d = item.get("dados_marc", {})
+        for idx, ficha in enumerate(lista_fichas):
+            d = ficha.get("dados_marc", {})
         
             table = doc.add_table(rows=1, cols=1)
             table.style = 'Table Grid'
             table.autofit = False
-            # Aumentamos a largura para evitar que o texto quebre lateralmente
-            table.columns[0].width = Cm(14.0) 
+            table.columns[0].width = Cm(13.0)
         
             cell = table.cell(0, 0)
-            # Altura exata da ficha (7,5 cm)
+            # Altura fixa 7.5cm
             tr = cell._tc.getparent()
             trPr = tr.get_or_add_trPr()
             trHeight = trPr.get_or_add_trHeight()
             trHeight.val = Cm(7.5)
             trHeight.height_rule = "exactly"
-        
             cell._element.clear_content()
 
-            def add_p(text, indent=0, bold=False):
+            def add_p(text, align=WD_ALIGN_PARAGRAPH.LEFT, bold=False):
                 p = cell.add_paragraph()
-                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                # O "pendente": primeira linha na margem, linhas seguintes com recuo
-                p.paragraph_format.left_indent = Cm(indent)
-                p.paragraph_format.first_line_indent = Cm(-indent) if indent > 0 else 0
-                p.paragraph_format.space_after = Pt(2)
+                p.alignment = align
+                p.paragraph_format.space_after = Pt(0)
+                p.paragraph_format.space_before = Pt(0)
                 run = p.add_run(str(text))
                 run.font.name = 'Courier New'
                 run.font.size = Pt(9)
                 run.bold = bold
+        
+            # 1. Numero de chamada e cutter (Canto esquerdo)
+            # Nota: Ajuste a chave conforme o nome real no seu dicionário
+            add_p(f"{d.get('classificacao', '000')}  {d.get('cutter', 'AAA')}", align=WD_ALIGN_PARAGRAPH.LEFT)
 
-            # --- MONTAGEM DA FICHA ---
-            # 1. Autor (Primeira linha)
-            add_p(d.get("entrada", ""), bold=True)
-        
-            # 2. Título e dados de publicação (Indented)
-            add_p(f"{d.get('titulo', '')} / {d.get('entrada', '')}. – {d.get('local_editora', '')}, {d.get('ano', '')}.", indent=0.8)
-        
-            # 3. Descrição Física (Indented)
-            add_p(f"{d.get('paginas', '')} p. ; {d.get('dimensoes', '')}.", indent=0.8)
-        
-            # 4. Nota Acadêmica (Indented)
-            add_p(f"{d.get('tipo', '')} – {d.get('instituicao', '')}, {d.get('area', '')}.", indent=0.8)
-        
-            # 5. Assuntos (Indented)
+            # 2. Nome do Autor (CENTRALIZADO)
+            add_p(d.get("entrada", ""), align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
+
+            # 3. Título / Autor . - Cidade : Editora : Ano (CENTRALIZADO)
+            linha_titulo = f"{d.get('titulo', '')} / {d.get('entrada', '')} . - {d.get('local_editora', '')} : {d.get('ano', '')}."
+            add_p(linha_titulo, align=WD_ALIGN_PARAGRAPH.CENTER)
+
+            # 4. Numero de paginas (Alinhado à esquerda)
+            add_p(f"{d.get('paginas', '')} p.", align=WD_ALIGN_PARAGRAPH.LEFT)
+
+            # 5. Assuntos (Alinhado à esquerda)
             assuntos = d.get("assuntos", [])
             if assuntos:
-                assuntos_str = " ".join([f"{i+1}. {a}." for i, a in enumerate(assuntos)])
-                add_p(f"{assuntos_str} I. Título.", indent=0.8)
+                assuntos_str = " ; ".join([f"{i+1}. {a}" for i, a in enumerate(assuntos)])
+                add_p(assuntos_str, align=WD_ALIGN_PARAGRAPH.LEFT)
 
             # Lógica de 2 por página
             doc.add_paragraph() 
