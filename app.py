@@ -279,72 +279,72 @@ else:
         return []
 
     def gerar_docx_lote(lista_fichas):
-    doc = Document()
-    # A4 configurado
-    section = doc.sections[0]
-    section.page_width, section.page_height = Cm(21.0), Cm(29.7)
+        doc = Document()
+        # A4 configurado
+        section = doc.sections[0]
+        section.page_width, section.page_height = Cm(21.0), Cm(29.7)
     
-    for idx, item in enumerate(lista_fichas):
-        # Aqui extraímos o seu dicionário exatamente como você me passou
-        d = item.get("dados_marc", {})
+        for idx, item in enumerate(lista_fichas):
+            # Aqui extraímos o seu dicionário exatamente como você me passou
+            d = item.get("dados_marc", {})
         
-        table = doc.add_table(rows=1, cols=1)
-        table.style = 'Table Grid'
-        table.autofit = False
-        table.columns[0].width = Cm(12.5)
+            table = doc.add_table(rows=1, cols=1)
+            table.style = 'Table Grid'
+            table.autofit = False
+            table.columns[0].width = Cm(12.5)
         
-        cell = table.cell(0, 0)
-        # Trava altura em 7.5cm
-        tr = cell._tc.getparent()
-        trPr = tr.get_or_add_trPr()
-        trHeight = trPr.get_or_add_trHeight()
-        trHeight.val = Cm(7.5)
-        trHeight.height_rule = "exactly"
+            cell = table.cell(0, 0)
+            # Trava altura em 7.5cm
+            tr = cell._tc.getparent()
+            trPr = tr.get_or_add_trPr()
+            trHeight = trPr.get_or_add_trHeight()
+            trHeight.val = Cm(7.5)
+            trHeight.height_rule = "exactly"
         
-        cell._element.clear_content()
+            cell._element.clear_content()
 
-        def add_p(text, align=WD_ALIGN_PARAGRAPH.LEFT, bold=False):
-            p = cell.add_paragraph()
-            p.alignment = align
-            p.paragraph_format.space_after = Pt(0)
-            p.paragraph_format.space_before = Pt(0)
-            run = p.add_run(str(text))
-            run.font.name = 'Courier New'
-            run.font.size = Pt(10)
-            run.bold = bold
+            def add_p(text, align=WD_ALIGN_PARAGRAPH.LEFT, bold=False):
+                p = cell.add_paragraph()
+                p.alignment = align
+                p.paragraph_format.space_after = Pt(0)
+                p.paragraph_format.space_before = Pt(0)
+                run = p.add_run(str(text))
+                run.font.name = 'Courier New'
+                run.font.size = Pt(10)
+                run.bold = bold
 
-        # --- MONTAGEM DA FICHA BASEADA NO SEU DICIONÁRIO ---
+            # --- MONTAGEM DA FICHA BASEADA NO SEU DICIONÁRIO ---
         
-        # 1. Entrada (Autor) - Centralizado
-        add_p(d.get("entrada", ""), align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
+            # 1. Entrada (Autor) - Centralizado
+            add_p(d.get("entrada", ""), align=WD_ALIGN_PARAGRAPH.CENTER, bold=True)
         
-        # 2. Título - Centralizado
-        add_p(d.get("titulo", ""), align=WD_ALIGN_PARAGRAPH.CENTER)
+            # 2. Título - Centralizado
+            add_p(d.get("titulo", ""), align=WD_ALIGN_PARAGRAPH.CENTER)
         
-        # 3. Local/Editora/Ano
-        add_p(f"{d.get('local_editora', '')}, {d.get('ano', '')}.")
+            # 3. Local/Editora/Ano
+            add_p(f"{d.get('local_editora', '')}, {d.get('ano', '')}.")
         
-        # 4. Descrição Física
-        add_p(f"{d.get('paginas', '')} p. ; {d.get('dimensoes', '')}")
+            # 4. Descrição Física
+            add_p(f"{d.get('paginas', '')} p. ; {d.get('dimensoes', '')}")
         
-        # 5. Notas Acadêmicas
-        add_p(f"{d.get('tipo', '')} - {d.get('instituicao', '')}, {d.get('area', '')}")
+            # 5. Notas Acadêmicas
+            add_p(f"{d.get('tipo', '')} - {d.get('instituicao', '')}, {d.get('area', '')}")
         
-        # 6. Assuntos (convertendo a lista)
-        assuntos = d.get("assuntos", [])
-        if assuntos:
-            assuntos_str = " ; ".join([f"{i+1}. {a}" for i, a in enumerate(assuntos)])
-            add_p(assuntos_str)
+            # 6. Assuntos (convertendo a lista)
+            assuntos = d.get("assuntos", [])
+            if assuntos:
+                assuntos_str = " ; ".join([f"{i+1}. {a}" for i, a in enumerate(assuntos)])
+                add_p(assuntos_str)
 
-        # Lógica de 2 fichas por página
-        doc.add_paragraph() 
-        if (idx + 1) % 2 == 0 and idx < len(lista_fichas) - 1:
-            doc.add_page_break()
+            # Lógica de 2 fichas por página
+            doc.add_paragraph() 
+            if (idx + 1) % 2 == 0 and idx < len(lista_fichas) - 1:
+                doc.add_page_break()
 
-    buffer = io.BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        return buffer
     def formatar_entrada_e_corpo(tipo_autor, autores_lista, entidade, titulo, tem_organizador, organizador_nome, tipo_org, tem_tradutor, tradutor_nome):
         entrada = ""
         corpo_autores = ""
