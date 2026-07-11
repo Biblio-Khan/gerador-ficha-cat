@@ -6,6 +6,8 @@ import datetime
 from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt, Cm
+from docx.enum.table import WD_TABLE_ALIGNMENT
 import firebase_admin
 from firebase_admin import auth
 from firebase_admin import credentials
@@ -277,46 +279,51 @@ else:
         return []
 
     def gerar_docx_lote(lista_fichas):
-        doc = Document()
+    doc = Document()
+    
+    # Margens padrão para A4 (ajuste conforme a necessidade da sua impressora)
+    section = doc.sections[0]
+    section.page_width = Cm(21.0)  # Largura A4
+    section.page_height = Cm(29.7) # Altura A4
+    
+    for idx, ficha_texto in enumerate(lista_fichas):
+        # Cria a tabela para a ficha
+        table = doc.add_table(rows=1, cols=1)
+        table.style = 'Table Grid'
+        table.autofit = False
+        table.allow_autofit = False
         
-        # Configuração das margens
-        section = doc.sections[0]
-        section.left_margin = Pt(72)
-        section.right_margin = Pt(72)
+        # Dimensões exatas da ficha
+        table.columns[0].width = Cm(12.5)
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        
+        cell = table.cell(0, 0)
+        
+        # Força altura exata da ficha (7,5 cm)
+        tr = cell._tc.getparent()
+        trPr = tr.get_or_add_trPr()
+        trHeight = trPr.get_or_add_trHeight()
+        trHeight.val = Cm(7.5)
+        trHeight.height_rule = "exactly"
+        
+        # Configuração do texto
+        cell._element.clear_content()
+        p = cell.add_paragraph()
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.space_before = Pt(0)
+        
+        run = p.add_run(ficha_texto)
+        run.font.name = 'Courier New'
+        run.font.size = Pt(10)
+        
+        # Adiciona quebra após a ficha, mas não na última
+        if idx < len(lista_fichas) - 1:
+            doc.add_page_break()
 
-        for idx, ficha_texto in enumerate(lista_fichas):
-            if idx > 0:
-                doc.add_page_break()
-            
-            # Adiciona a tabela com o estilo 'Table Grid' que força as bordas
-            table = doc.add_table(rows=1, cols=1)
-            table.style = 'Table Grid' 
-            table.autofit = False
-            table.allow_autofit = False
-            table.columns[0].width = Pt(400)
-            
-            # Acessa a célula
-            cell = table.cell(0, 0)
-            
-            # Remove parágrafos padrão para garantir controle total
-            cell._element.clear_content()
-            
-            # Adiciona o texto configurando a fonte
-            p = cell.add_paragraph()
-            run = p.add_run(ficha_texto)
-            run.font.name = 'Courier New'
-            run.font.size = Pt(10)
-            
-            # Ajusta o alinhamento e recuo dentro da caixa
-            p.paragraph_format.left_indent = Pt(10)
-            p.paragraph_format.right_indent = Pt(10)
-            p.paragraph_format.space_before = Pt(10)
-            p.paragraph_format.space_after = Pt(10)
-
-        buffer = io.BytesIO()
-        doc.save(buffer)
-        buffer.seek(0)
-        return buffer
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
     def formatar_entrada_e_corpo(tipo_autor, autores_lista, entidade, titulo, tem_organizador, organizador_nome, tipo_org, tem_tradutor, tradutor_nome):
         entrada = ""
         corpo_autores = ""
