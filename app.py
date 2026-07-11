@@ -280,6 +280,7 @@ else:
 
     def gerar_docx_lote(lista_fichas):
         doc = Document()
+        # A4 configurado
         section = doc.sections[0]
         section.page_width, section.page_height = Cm(21.0), Cm(29.7)
     
@@ -289,10 +290,11 @@ else:
             table = doc.add_table(rows=1, cols=1)
             table.style = 'Table Grid'
             table.autofit = False
-            table.columns[0].width = Cm(12.5)
-            cell = table.cell(0, 0)
+            # Aumentamos a largura para evitar que o texto quebre lateralmente
+            table.columns[0].width = Cm(14.0) 
         
-            # Trava altura em 7.5cm
+            cell = table.cell(0, 0)
+            # Altura exata da ficha (7,5 cm)
             tr = cell._tc.getparent()
             trPr = tr.get_or_add_trPr()
             trHeight = trPr.get_or_add_trHeight()
@@ -304,30 +306,29 @@ else:
             def add_p(text, indent=0, bold=False):
                 p = cell.add_paragraph()
                 p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                # Configuração da indentação pendente (norma técnica)
+                # O "pendente": primeira linha na margem, linhas seguintes com recuo
                 p.paragraph_format.left_indent = Cm(indent)
-                p.paragraph_format.first_line_indent = Cm(-indent)
-                p.paragraph_format.space_after = Pt(0)
-                p.paragraph_format.space_before = Pt(0)
+                p.paragraph_format.first_line_indent = Cm(-indent) if indent > 0 else 0
+                p.paragraph_format.space_after = Pt(2)
                 run = p.add_run(str(text))
                 run.font.name = 'Courier New'
-                run.font.size = Pt(10)
+                run.font.size = Pt(9)
                 run.bold = bold
 
-            # --- ORDEM ESTRUTURADA ---
-            # 1. Autor (Sem indentação)
+            # --- MONTAGEM DA FICHA ---
+            # 1. Autor (Primeira linha)
             add_p(d.get("entrada", ""), bold=True)
         
-            # 2. Título (Indentado)
-            add_p(f"{d.get('titulo', '')} / {d.get('entrada', '')}. – {d.get('ano', '')}.", indent=0.8)
+            # 2. Título e dados de publicação (Indented)
+            add_p(f"{d.get('titulo', '')} / {d.get('entrada', '')}. – {d.get('local_editora', '')}, {d.get('ano', '')}.", indent=0.8)
         
-            # 3. Dados físicos
-            add_p(f"{d.get('paginas', '')} p. : il. ; {d.get('dimensoes', '')}.", indent=0.8)
+            # 3. Descrição Física (Indented)
+            add_p(f"{d.get('paginas', '')} p. ; {d.get('dimensoes', '')}.", indent=0.8)
         
-            # 4. Nota Acadêmica
-            add_p(f"Orientador: {d.get('tipo', '')} - {d.get('instituicao', '')}.", indent=0.8)
+            # 4. Nota Acadêmica (Indented)
+            add_p(f"{d.get('tipo', '')} – {d.get('instituicao', '')}, {d.get('area', '')}.", indent=0.8)
         
-            # 5. Assuntos
+            # 5. Assuntos (Indented)
             assuntos = d.get("assuntos", [])
             if assuntos:
                 assuntos_str = " ".join([f"{i+1}. {a}." for i, a in enumerate(assuntos)])
