@@ -628,8 +628,8 @@ else:
                                 if termo_selecionado not in st.session_state.assuntos_selecionados:
                                     st.session_state.assuntos_selecionados.append(termo_selecionado)
                                     st.rerun()
-                    else:
-                        st.warning("Nenhum termo correspondente retornado pela API do Senado.")
+                        else:
+                            st.warning("Nenhum termo correspondente retornado pela API do Senado.")
 
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
                 
