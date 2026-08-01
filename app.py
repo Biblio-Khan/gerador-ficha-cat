@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 import requests
+import xml.etree.ElementTree as ET
 import datetime
 from docx import Document
 from docx.shared import Pt
@@ -638,37 +639,63 @@ else:
     
                     # Parâmetros: task=search (buscar), arg=termo, output=json
                     params = {
-                        "task": "search",
+                        "task": "suggest",
                         "arg": termo_busca,
                         "output": "json"
                     }
-    
+                    # Evita que o firewall da universidade bloqueie o robô do Python
+                    headers = {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    }
                     try:
                         # Timeout de 10 segundos para não travar o app se a USP cair
-                        resposta = requests.get(url, params=params, timeout=10)
+                        resposta = requests.get(url, params=params, headers=headers, timeout=10)
         
                         # Se a requisição deu certo
                         if resposta.status_code == 200:
-                            dados = resposta.json()
-            
-                            # Verifica se a API retornou resultados ("result" existe no JSON)
-                            if "result" in dados:
-                                # O TemaTres retorna um dicionário de resultados. Vamos extrair apenas os nomes.
-                                termos_encontrados = [item["term"] for chave, item in dados["result"].items()]
-                                # Retorna a lista em ordem alfabética
-                                return sorted(termos_encontrados)
+                            texto_resposta = resposta.text.strip()
+
+                            # 1. TENTA LER COMO JSON
+                            if texto_resposta.startswith("{") or texto_resposta.startswith("["):
+                                dados = resposta.json()
+                                if "result" in dados and dados["result"]:
+                                    termos = [item["term"] for chave, item in dados["result"].items()]
+                                    return sorted(termos)
+                                return []
+                
+                            # 2. PLANO B: LER COMO XML (Padrão nativo do TemaTres)
+                            elif texto_resposta.startswith("<"):
+                                try:
+                                    root = ET.fromstring(texto_resposta)
+                                    termos_xml = []
+                    
+                                    # Varre todo o XML procurando tags de texto e ignorando IDs numéricos
+                                    for elem in root.iter():
+                                        if elem.tag in ['term', 'string'] and elem.text:
+                                            texto_limpo = elem.text.strip()
+                                            # Só adiciona se não for um número (ID do termo)
+                                            if texto_limpo and not texto_limpo.isdigit():
+                                                termos_xml.append(texto_limpo)
+                    
+                                    # Remove duplicatas e ordena
+                                    return sorted(list(set(termos_xml)))
+                                except ET.ParseError:
+                                    st.error("Erro ao tentar ler o formato da USP.")
+                                    return []
                             else:
-                                return [] # Nenhum resultado encontrado
-                        else:
-                            st.error(f"⚠️ A API da USP retornou erro: {resposta.status_code}")
-                            return []
+                                # Se não for nem JSON nem XML, mostra no app o que chegou para investigarmos
+                                st.info("Resposta inesperada da USP:")
+                                st.code(texto_resposta[:300])
+                                return []
+                    else:
+                        st.error(f"⚠️ A USP retornou erro de conexão: {resposta.status_code}")
+                        return []
             
-                    except requests.exceptions.Timeout:
-                        st.error("⏳ O servidor da USP demorou muito para responder (Timeout).")
-                        return []
-                    except Exception as e:
-                        st.error(f"❌ Erro ao conectar com a USP: {e}")
-                        return []
+                except Exception as e:
+                    st.error(f"❌ Falha de comunicação com o servidor da USP: {e}")
+                    return []
+                            
+                            
                 
 
                 st.markdown("---")
