@@ -874,25 +874,25 @@ else:
                                                 "paginas": paginas_input,
                                                 "dimensoes": dimensoes_input,
                                             },
-                                    }
-                                    st.session_state.lote_fichas.append(
-                                        ficha_completa
-                                    )
-                                    st.session_state["creditos_ativos"] -= 1
-                                    st.session_state.assuntos_selecionados = []
-                                    st.success("✅ Ficha guardada com sucesso!")
-                                    st.rerun()
+                                        }
+                                        st.session_state.lote_fichas.append(
+                                            ficha_completa
+                                        )
+                                        st.session_state["creditos_ativos"] -= 1
+                                        st.session_state.assuntos_selecionados = []
+                                        st.success("✅ Ficha guardada com sucesso!")
+                                        st.rerun()
+                                    else:
+                                        st.error(
+                                            f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}"
+                                        )
                                 else:
                                     st.error(
-                                        f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}"
+                                        f"❌ Falha de conexão. Status: {resposta_google.status_code}"
                                     )
-                            else:
-                                st.error(
-                                    f"❌ Falha de conexão. Status: {resposta_google.status_code}"
-                                )
 
-                        except Exception as e:
-                            st.error(f"❌ Erro ao processar requisição: {e}")
+                            except Exception as e:
+                                st.error(f"❌ Erro ao processar requisição: {e}")
 
                
                 
