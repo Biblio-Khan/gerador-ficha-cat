@@ -611,20 +611,6 @@ else:
 
                 # 2. Definição OBRIGATÓRIA da variável 'termo_busca' antes de usá-la no 'if'
                 termo_busca = st.text_input("Digite um termo para pesquisar:")
-                # ---------------------------------------------------------
-                # 🛠️ MODO RAIO-X PARA DEBUG (Pode apagar depois que resolvermos)
-                if st.button("🕵️ Testar Conexão Direta com a USP"):
-                    import requests
-                    url_teste = "https://vocabulario.abcd.usp.br/pt-br/services.php"
-                    # Desativamos o verify=False para ignorar erros de certificado do governo/USP
-                    try:
-                        st.info(f"Fazendo requisição para: {url_teste}")
-                        res = requests.get(url_teste, params={"task": "search", "arg": "educacao"}, verify=False)
-                        st.write(f"**Código de Resposta (Status):** {res.status_code}")
-                        st.text_area("Resposta Bruta do Servidor da USP:", res.text, height=300)
-                    except Exception as erro:
-                        st.error(f"Erro Crítico de Conexão: {erro}")
-                # ---------------------------------------------------------
 
                 # 3. Verificação (só executa se 'termo_busca' tiver texto)
                 if termo_busca:
@@ -645,69 +631,50 @@ else:
 
                 def buscar_vocab_usp(termo_busca):
                     ''"""
-                    Busca termos no Vocabulário Controlado da USP (SIBi).
-                    Utiliza a API do TemaTres.
+                    Busca termos no Vocabulário Controlado da USP (ABCD).
+                    Lê diretamente o formato XML nativo do TemaTres.
                     ''''"""
                     # URL oficial da API do Vocabulário da USP
                     url = "https://vocabulario.abcd.usp.br/pt-br/services.php"
     
-                    # Parâmetros: task=search (buscar), arg=termo, output=json
                     params = {
-                        "task": "suggest",
-                        "arg": termo_busca,
-                        "output": "json"
+                        "task": "search",
+                        "arg": termo_busca
                     }
-                    # Evita que o firewall da universidade bloqueie o robô do Python
-                    headers = {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                    }
+                   
                     try:
                         # Timeout de 10 segundos para não travar o app se a USP cair
-                        resposta = requests.get(url, params=params, headers=headers, timeout=10)
+                        resposta = requests.get(url, params=params, timeout=10, verify=False)
         
                         # Se a requisição deu certo
                         if resposta.status_code == 200:
-                            texto_resposta = resposta.text.strip()
+                            texto_xml = resposta.text.strip()
 
-                            # 1. TENTA LER COMO JSON
-                            if texto_resposta.startswith("{") or texto_resposta.startswith("["):
-                                dados = resposta.json()
-                                if "result" in dados and dados["result"]:
-                                    termos = [item["term"] for chave, item in dados["result"].items()]
-                                    return sorted(termos)
-                                return []
+                            try:
+                                # Transforma o texto em uma árvore XML que o Python entende
+                                root = ET.fromstring(texto_xml)
+                                termos_encontrados = []
                 
-                            # 2. PLANO B: LER COMO XML (Padrão nativo do TemaTres)
-                            elif texto_resposta.startswith("<"):
-                                try:
-                                    root = ET.fromstring(texto_resposta)
-                                    termos_xml = []
-                    
-                                    # Varre todo o XML procurando tags de texto e ignorando IDs numéricos
-                                    for elem in root.iter():
-                                        if elem.tag in ['term', 'string'] and elem.text:
-                                            texto_limpo = elem.text.strip()
-                                            # Só adiciona se não for um número (ID do termo)
-                                            if texto_limpo and not texto_limpo.isdigit():
-                                                termos_xml.append(texto_limpo)
-                    
-                                    # Remove duplicatas e ordena
-                                    return sorted(list(set(termos_xml)))
-                                except ET.ParseError:
-                                    st.error("Erro ao tentar ler o formato da USP.")
-                                    return []
-                            else:
-                                # Se não for nem JSON nem XML, mostra no app o que chegou para investigarmos
-                                st.info("Resposta inesperada da USP:")
-                                st.code(texto_resposta[:300])
+                                # Procura por todas as tags <string> dentro do XML
+                                for tag_string in root.findall(".//string"):
+                                    if tag_string.text:
+                                        termo = tag_string.text.strip()
+                                        termos_encontrados.append(termo)
+                
+                                # Remove itens duplicados usando set() e retorna em ordem alfabética
+                                return sorted(list(set(termos_encontrados)))
+                
+                            except ET.ParseError:
+                                st.error("❌ Erro ao traduzir o XML da USP.")
                                 return []
                         else:
-                            st.error(f"⚠️ A USP retornou erro de conexão: {resposta.status_code}")
+                            st.error(f"⚠️ Servidor da USP retornou status: {resposta.status_code}")
                             return []
             
                     except Exception as e:
-                        st.error(f"❌ Falha de comunicação com o servidor da USP: {e}")
-                        return []
+                            st.error(f"❌ Erro de conexão com a USP: {e}")
+                            return []
+                            
                             
                             
                 
