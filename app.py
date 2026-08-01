@@ -611,6 +611,20 @@ else:
 
                 # 2. Definição OBRIGATÓRIA da variável 'termo_busca' antes de usá-la no 'if'
                 termo_busca = st.text_input("Digite um termo para pesquisar:")
+                # ---------------------------------------------------------
+                # 🛠️ MODO RAIO-X PARA DEBUG (Pode apagar depois que resolvermos)
+                if st.button("🕵️ Testar Conexão Direta com a USP"):
+                    import requests
+                    url_teste = "https://vocabulario.abcd.usp.br/pt-br/services.php"
+                    # Desativamos o verify=False para ignorar erros de certificado do governo/USP
+                    try:
+                        st.info(f"Fazendo requisição para: {url_teste}")
+                        res = requests.get(url_teste, params={"task": "search", "arg": "educacao"}, verify=False)
+                        st.write(f"**Código de Resposta (Status):** {res.status_code}")
+                        st.text_area("Resposta Bruta do Servidor da USP:", res.text, height=300)
+                    except Exception as erro:
+                        st.error(f"Erro Crítico de Conexão: {erro}")
+                # ---------------------------------------------------------
 
                 # 3. Verificação (só executa se 'termo_busca' tiver texto)
                 if termo_busca:
