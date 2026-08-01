@@ -19,7 +19,7 @@ from datetime import datetime, timezone, timedelta
 # =========================================================================
 
 st.set_page_config(
-    page_title="Gerador de Fichas Jurídicas - VCB Senado",
+    page_title="Gerador de Fichas Catalográficas - VCB Senado",
     page_icon="logo_bibliokhan.ico",
     layout="wide"
 )
@@ -452,7 +452,7 @@ else:
         if st.session_state["creditos_ativos"] <= 0:
             st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
 
-        st.title("⚖️ Gerador de Fichas Jurídicas — NBR/AACR2")
+        st.title("⚖️ Gerador de Fichas Catalográficas — NBR/AACR2")
         st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
 
         st.markdown("---")
@@ -855,7 +855,7 @@ if st.session_state.get("usuario_atual"):
         tab_produtividade = st.container()
 
     with tab_produtividade:
-        st.title("📊 Painel de Produtividade Jurídica")
+        st.title("Painel de Produtividade")
         st.subheader(f"Análise de Obras Processadas por {st.session_state.get('usuario_atual', 'Usuário')}")
 
         with st.spinner("Carregando dados de produtividade..."):
@@ -898,7 +898,7 @@ if st.session_state.get("usuario_atual"):
             
             # 5. Renderiza o Gráfico de Barras se houver assuntos mapeados
             if not df_contagem.empty:
-                st.write("### 🔝 Temas mais Demandados nas suas Fichas")
+                st.write("### Temas mais Demandados nas suas Fichas")
                 st.bar_chart(
                     data=df_contagem,
                     x="Área/Assunto",
@@ -909,7 +909,7 @@ if st.session_state.get("usuario_atual"):
                 st.markdown("---")
 
             # 6. Histórico de Obras Processadas e Opção de Download
-            st.write("### 📚 Histórico de Fichas Emitidas")
+            st.write("### Histórico de Fichas Emitidas")
             
             df_exibicao = df.copy()
             
@@ -932,7 +932,7 @@ if st.session_state.get("usuario_atual"):
             csv_dados = df_final.to_csv(index=False, sep=";").encode('utf-8-sig')
             
             st.download_button(
-                label="📥 Baixar Relatório Jurídico em CSV (Excel)",
+                label="📥 Baixar Relatório em CSV (Excel)",
                 data=csv_dados,
                 file_name=f"produtividade_juridica_{st.session_state['usuario_atual'].split('@')[0]}.csv",
                 mime="text/csv",
