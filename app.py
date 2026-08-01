@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import io
 import requests
+import re
+import urllib3
 import xml.etree.ElementTree as ET
 import datetime
 from docx import Document
