@@ -628,18 +628,47 @@ else:
                     else:
                         st.warning("Nenhum termo correspondente retornado pela API do Senado.")
 
-                elif "USP" in fonte_vocab:
-                    resultados_usp = buscar_vocab_usp(termo_busca)
-                    if resultados_usp:
-                        st.success(f"{len(resultados_usp)} conceitos localizados na USP!")
-                        termo_selecionado_usp = st.selectbox("Selecione o conceito oficial (USP):", resultados_usp)
-
-                        if st.button("➕ Vincular Assunto da USP"):
-                            if termo_selecionado_usp not in st.session_state.assuntos_selecionados:
-                                st.session_state.assuntos_selecionados.append(termo_selecionado_usp)
-                                st.rerun()
+                def buscar_vocab_usp(termo_busca):
+                ''"""
+                Busca termos no Vocabulário Controlado da USP (SIBi).
+                Utiliza a API do TemaTres.
+                ''''"""
+                # URL oficial da API do Vocabulário da USP
+                url = "http://vocabulario.bdt.sibi.usp.br/vocab/services.php"
+    
+                # Parâmetros: task=search (buscar), arg=termo, output=json
+                params = {
+                    "task": "search",
+                    "arg": termo_busca,
+                    "output": "json"
+                }
+    
+                try:
+                    # Timeout de 10 segundos para não travar o app se a USP cair
+                    resposta = requests.get(url, params=params, timeout=10)
+        
+                    # Se a requisição deu certo
+                    if resposta.status_code == 200:
+                        dados = resposta.json()
+            
+                        # Verifica se a API retornou resultados ("result" existe no JSON)
+                        if "result" in dados:
+                            # O TemaTres retorna um dicionário de resultados. Vamos extrair apenas os nomes.
+                            termos_encontrados = [item["term"] for chave, item in dados["result"].items()]
+                            # Retorna a lista em ordem alfabética
+                            return sorted(termos_encontrados)
+                        else:
+                            return [] # Nenhum resultado encontrado
                     else:
-                        st.warning("Nenhum termo retornado pela USP.")
+                        st.error(f"⚠️ A API da USP retornou erro: {resposta.status_code}")
+                        return []
+            
+                except requests.exceptions.Timeout:
+                    st.error("⏳ O servidor da USP demorou muito para responder (Timeout).")
+                    return []
+                except Exception as e:
+                    st.error(f"❌ Erro ao conectar com a USP: {e}")
+                    return []
                 
 
                 st.markdown("---")
