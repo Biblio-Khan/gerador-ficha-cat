@@ -631,6 +631,8 @@ else:
                     else:
                         st.warning("Nenhum termo correspondente retornado pela API do Senado.")
 
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                
                 def buscar_vocab_usp(termo_busca):
                     ''"""
                     Busca termos no Vocabulário Controlado da USP (ABCD).
@@ -650,32 +652,26 @@ else:
         
                         # Se a requisição deu certo
                         if resposta.status_code == 200:
-                            texto_xml = resposta.text.strip()
+                            texto_bruto = resposta.text
 
-                            try:
-                                # Transforma o texto em uma árvore XML que o Python entende
-                                root = ET.fromstring(texto_xml)
-                                termos_encontrados = []
-                
-                                # Procura por todas as tags <string> dentro do XML
-                                for tag_string in root.findall(".//string"):
-                                    if tag_string.text:
-                                        termo = tag_string.text.strip()
-                                        termos_encontrados.append(termo)
-                
-                                # Remove itens duplicados usando set() e retorna em ordem alfabética
+                            # Padrão RegEx: Encontra tudo que está entre <string><![CDATA[ e ]]></string>
+                            padrao = r"<string><!\[CDATA\[(.*?)\]\]></string>"
+
+                            termos_encontrados = re.findall(padrao, texto_bruto)
+
+                             if termos_encontrados:
+                                # Remove duplicatas (usando set) e ordena alfabeticamente
                                 return sorted(list(set(termos_encontrados)))
-                
-                            except ET.ParseError:
-                                st.error("❌ Erro ao traduzir o XML da USP.")
+                            else:
                                 return []
+                
                         else:
                             st.error(f"⚠️ Servidor da USP retornou status: {resposta.status_code}")
                             return []
             
                     except Exception as e:
-                            st.error(f"❌ Erro de conexão com a USP: {e}")
-                            return []
+                        st.error(f"❌ Erro de conexão com a USP: {e}")
+                        return [] 
                             
                             
                             
