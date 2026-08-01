@@ -643,30 +643,30 @@ else:
                                 "Nenhum termo correspondente retornado pela API do Senado."
                             )
 
-        # --- BUSCA NA USP ---
-        else:
-            resultados_usp = buscar_vocab_usp(termo_busca)
-            if resultados_usp:
-                st.success(
-                    f"{len(resultados_usp)} conceitos localizados na USP!"
-                )
-                termo_selecionado_usp = st.selectbox(
-                    "Selecione o conceito oficial (USP):", resultados_usp
-                )
-
-                if st.button("➕ Vincular Assunto da USP"):
-                    if (
-                        termo_selecionado_usp
-                        not in st.session_state.assuntos_selecionados
-                    ):
-                        st.session_state.assuntos_selecionados.append(
-                            termo_selecionado_usp
+                # --- BUSCA NA USP ---
+                else:
+                    resultados_usp = buscar_vocab_usp(termo_busca)
+                    if resultados_usp:
+                        st.success(
+                            f"{len(resultados_usp)} conceitos localizados na USP!"
                         )
-                        st.rerun()
-            else:
-                st.warning(
-                    "Nenhum termo correspondente retornado pela API da USP."
-                )
+                        termo_selecionado_usp = st.selectbox(
+                            "Selecione o conceito oficial (USP):", resultados_usp
+                        )
+
+                        if st.button("➕ Vincular Assunto da USP"):
+                            if (
+                                termo_selecionado_usp
+                                not in st.session_state.assuntos_selecionados
+                            ):
+                                st.session_state.assuntos_selecionados.append(
+                                    termo_selecionado_usp
+                                )    
+                                st.rerun()
+                    else:
+                        st.warning(
+                            "Nenhum termo correspondente retornado pela API da USP."
+                        )
 
             st.markdown("##### ✍️ Adicionar Assunto Manualmente")
             assunto_manual = st.text_input("Digite um assunto customizado:")
