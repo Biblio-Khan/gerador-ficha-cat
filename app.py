@@ -659,7 +659,7 @@ else:
 
                             termos_encontrados = re.findall(padrao, texto_bruto)
 
-                             if termos_encontrados:
+                            if termos_encontrados:
                                 # Remove duplicatas (usando set) e ordena alfabeticamente
                                 return sorted(list(set(termos_encontrados)))
                             else:
