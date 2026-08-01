@@ -187,7 +187,7 @@ if st.session_state["logado"]:
 
 if not st.session_state["logado"]:
     st.markdown("# 🔒 Área do Cliente")
-    st.markdown("### Faça o login para acessar o Gerador de Fichas Jurídicas.")
+    st.markdown("### Faça o login para acessar o Gerador de Fichas Catalográficas.")
     
     with st.form("login_form"):
         email_input = st.text_input("E-mail de Usuário").strip()
