@@ -642,257 +642,257 @@ else:
                         st.warning("Nenhum termo retornado pela USP.")
                 
 
-        st.markdown("---")
+                st.markdown("---")
 
-        st.markdown("##### Adicionar Assunto Manualmente")
-        assunto_manual = st.text_input("Digite um assunto customizado:")
-        if st.button("➕ Vincular Assunto Manual"):
-            if assunto_manual.strip():
-                termo_limpo = assunto_manual.strip()
-                if termo_limpo not in st.session_state.assuntos_selecionados:
-                    st.session_state.assuntos_selecionados.append(termo_limpo)
-                    st.rerun()
+                st.markdown("##### Adicionar Assunto Manualmente")
+                assunto_manual = st.text_input("Digite um assunto customizado:")
+                if st.button("➕ Vincular Assunto Manual"):
+                    if assunto_manual.strip():
+                        termo_limpo = assunto_manual.strip()
+                        if termo_limpo not in st.session_state.assuntos_selecionados:
+                            st.session_state.assuntos_selecionados.append(termo_limpo)
+                            st.rerun()
 
-        if st.session_state.get("assuntos_selecionados"):
-            st.write("**Assuntos Vinculados à Ficha:**")
+                if st.session_state.get("assuntos_selecionados"):
+                    st.write("**Assuntos Vinculados à Ficha:**")
 
-            # Exclusão individual de assunto
-            for idx, ass in enumerate(st.session_state.assuntos_selecionados):
-                col_assunto, col_excluir = st.columns([9, 1])
-                with col_assunto:
-                    st.write(f"{idx + 1}. {ass}")
-                with col_excluir:
-                    if st.button(
-                        "❌",
-                        key=f"remover_assunto_{idx}",
-                        help="Remover apenas este assunto",
-                    ):
-                        st.session_state.assuntos_selecionados.pop(idx)
+                    # Exclusão individual de assunto
+                    for idx, ass in enumerate(st.session_state.assuntos_selecionados):
+                        col_assunto, col_excluir = st.columns([9, 1])
+                        with col_assunto:
+                            st.write(f"{idx + 1}. {ass}")
+                        with col_excluir:
+                            if st.button(
+                                "❌",
+                                key=f"remover_assunto_{idx}",
+                                help="Remover apenas este assunto",
+                            ):
+                                st.session_state.assuntos_selecionados.pop(idx)
+                                st.rerun()
+
+                    # Botão para limpar toda a lista
+                    if st.button("🗑️ Limpar Todos os Assuntos"):
+                        st.session_state.assuntos_selecionados = []
                         st.rerun()
 
-            # Botão para limpar toda a lista
-            if st.button("🗑️ Limpar Todos os Assuntos"):
-                st.session_state.assuntos_selecionados = []
-                st.rerun()
+                st.markdown("---")
+                st.subheader("4. Fechamento e Visualização da Ficha")
 
-        st.markdown("---")
-        st.subheader("4. Fechamento e Visualização da Ficha")
-
-        # Formatação dos dados da ficha
-        (
-            entrada_principal,
-            responsabilidade,
-            entrada_por_titulo,
-        ) = formatar_entrada_e_corpo(
-            tipo_autor=tipo_autor,
-            autores_lista=autores_lista,
-            entidade=entidade_nome,
-            titulo=titulo,
-            tem_organizador=tem_organizador,
-            organizador_nome=organizador_nome,
-            tipo_org=tipo_org,
-            tem_tradutor=tem_tradutor,
-            tradutor_nome=tradutor_nome,
-        )
-
-        cutter = calcular_cutter(
-            tipo_autor,
-            autores_lista,
-            entidade=entidade_nome,
-            titulo=titulo,
-            tem_organizador=tem_organizador,
-            organizador_nome=organizador_nome,
-        )
-        dgm = " [recurso eletrônico]" if suporte == "Digital" else ""
-        desc_fisica = (
-            f"1 recurso online ({paginas_input} p.)"
-            if suporte == "Digital"
-            else f"{paginas_input} p."
-        )
-        if suporte != "Digital" and dimensoes_input.strip():
-            desc_fisica = f"{desc_fisica} ; {dimensoes_input.strip()}"
-
-        bloco_colecao = ""
-        if tem_colecao and colecao_nome.strip():
-            text_colecao = colecao_nome.strip()
-            text_colecao = text_colecao[0].upper() + text_colecao[1:]
-            bloco_colecao = f" ({text_colecao})"
-
-        # Nota de trabalho acadêmico (ABNT)
-        nota_trabalho_str = ""
-        if grau_academico != "Livro / Código / Obra Geral":
-            inst_str = (
-                f" – {instituicao.strip()}" if instituicao.strip() else ""
-            )
-            area_str = (
-                f" em {area_concentracao.strip()}"
-                if area_concentracao.strip()
-                else ""
-            )
-            nota_trabalho_str = f"\n            {grau_academico}{area_str}{inst_str}, {ano.strip()}."
-
-        nota_acesso = (
-            f"\n            Modo de acesso: {url_acesso}"
-            if suporte == "Digital" and url_acesso
-            else ""
-        )
-        isbn_bloco = f"\n            ISBN {isbn}" if isbn.strip() else ""
-        nota_traducao = (
-            "\n            Traduzido de obra original."
-            if tem_tradutor and tradutor_nome.strip()
-            else ""
-        )
-        ed_bloco = f"{edicao.strip()} – " if edicao.strip() else ""
-        pub_bloco = f"{cidade.strip()} : {editora.strip()}, {ano.strip()}."
-
-        string_assuntos = " ".join(
-            [
-                f"{i + 1}. {ass}"
-                for i, ass in enumerate(st.session_state.assuntos_selecionados)
-            ]
-        )
-        rastreabilidade = ""
-        romanos = ["I", "II", "III", "IV", "V"]
-        r_idx = 0
-
-        if not entrada_por_titulo:
-            rastreabilidade += f" {romanos[r_idx]}. Título."
-            r_idx += 1
-
-        if tem_organizador and organizador_nome.strip():
-            partes_org = organizador_nome.strip().split()
-            nome_invertido_org = (
-                f"{partes_org[-1].upper()}, {' '.join(partes_org[:-1])}"
-                if len(partes_org) > 1
-                else organizador_nome.strip().upper()
-            )
-            rastreabilidade += f" {romanos[r_idx]}. {nome_invertido_org}, {abreviatura_org}."
-            r_idx += 1
-
-        if tem_tradutor and tradutor_nome.strip():
-            partes_trad = tradutor_nome.strip().split()
-            nome_invertido_trad = (
-                f"{partes_trad[-1].upper()}, {' '.join(partes_trad[:-1])}"
-                if len(partes_trad) > 1
-                else tradutor_nome.strip().upper()
-            )
-            rastreabilidade += f" {romanos[r_idx]}. {nome_invertido_trad}, trad."
-            r_idx += 1
-
-        # Montagem da string final da Ficha
-        if entrada_por_titulo:
-            txt_ficha = f"""{classificacao}
-    {cutter}   {titulo.strip()}{dgm} / {responsabilidade}. – {ed_bloco}{pub_bloco}
-                {desc_fisica}.{bloco_colecao}{nota_trabalho_str}{nota_traducao}{nota_acesso}{isbn_bloco}
-            
-                {string_assuntos}{rastreabilidade}"""
-        else:
-            txt_ficha = f"""{classificacao}
-    {cutter}   {entrada_principal}
-                {titulo.strip()}{dgm} / {responsabilidade}. – {ed_bloco}{pub_bloco}
-                {desc_fisica}.{bloco_colecao}{nota_trabalho_str}{nota_traducao}{nota_acesso}{isbn_bloco}
-            
-                {string_assuntos}{rastreabilidade}"""
-
-        st.text_area(
-            "Visualização Normativa (Fonte Monoespaçada)",
-            value=txt_ficha,
-            height=240,
-        )
-
-        # Validação e salvamento
-        btn_salvar = st.button(
-            "💾 CONCLUIR FICHA E ENVIAR AO LOTE",
-            disabled=st.session_state.get("creditos_ativos", 0) <= 0,
-        )
-
-        if btn_salvar:
-            valido = True
-            if (
-                tipo_autor == "Pessoa Física"
-                and not any(a.strip() for a in autores_lista)
-                and not tem_organizador
-            ):
-                valido = False
-                st.error(
-                    "❌ É necessário informar ao menos um autor ou organizador."
+                # Formatação dos dados da ficha
+                (
+                    entrada_principal,
+                    responsabilidade,
+                    entrada_por_titulo,
+                ) = formatar_entrada_e_corpo(
+                    tipo_autor=tipo_autor,
+                    autores_lista=autores_lista,
+                    entidade=entidade_nome,
+                    titulo=titulo,
+                    tem_organizador=tem_organizador,
+                    organizador_nome=organizador_nome,
+                    tipo_org=tipo_org,
+                    tem_tradutor=tem_tradutor,
+                    tradutor_nome=tradutor_nome,
                 )
 
-            if not titulo.strip():
-                valido = False
-                st.error("❌ O título é obrigatório.")
+                cutter = calcular_cutter(
+                    tipo_autor,
+                    autores_lista,
+                    entidade=entidade_nome,
+                    titulo=titulo,
+                    tem_organizador=tem_organizador,
+                    organizador_nome=organizador_nome,
+                )
+                dgm = " [recurso eletrônico]" if suporte == "Digital" else ""
+                desc_fisica = (
+                    f"1 recurso online ({paginas_input} p.)"
+                    if suporte == "Digital"
+                    else f"{paginas_input} p."
+                )
+                if suporte != "Digital" and dimensoes_input.strip():
+                    desc_fisica = f"{desc_fisica} ; {dimensoes_input.strip()}"
 
-            if valido:
-                with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
-                    try:
-                        import json
+                bloco_colecao = ""
+                if tem_colecao and colecao_nome.strip():
+                    text_colecao = colecao_nome.strip()
+                    text_colecao = text_colecao[0].upper() + text_colecao[1:]
+                    bloco_colecao = f" ({text_colecao})"
 
-                        import requests
+                # Nota de trabalho acadêmico (ABNT)
+                nota_trabalho_str = ""
+                if grau_academico != "Livro / Código / Obra Geral":
+                    inst_str = (
+                        f" – {instituicao.strip()}" if instituicao.strip() else ""
+                    )
+                    area_str = (
+                        f" em {area_concentracao.strip()}"
+                        if area_concentracao.strip()
+                        else ""
+                    )
+                    nota_trabalho_str = f"\n            {grau_academico}{area_str}{inst_str}, {ano.strip()}."
 
-                        url_script = st.secrets["URL_SCRIPT_GOOGLE"]
-                        lista_assuntos = st.session_state.get(
-                            "assuntos_selecionados", []
+                nota_acesso = (
+                    f"\n            Modo de acesso: {url_acesso}"
+                    if suporte == "Digital" and url_acesso
+                    else ""
+                )
+                isbn_bloco = f"\n            ISBN {isbn}" if isbn.strip() else ""
+                nota_traducao = (
+                    "\n            Traduzido de obra original."
+                    if tem_tradutor and tradutor_nome.strip()
+                    else ""
+                )
+                ed_bloco = f"{edicao.strip()} – " if edicao.strip() else ""
+                pub_bloco = f"{cidade.strip()} : {editora.strip()}, {ano.strip()}."
+
+                string_assuntos = " ".join(
+                    [
+                        f"{i + 1}. {ass}"
+                        for i, ass in enumerate(st.session_state.assuntos_selecionados)
+                    ]
+                )
+                rastreabilidade = ""
+                romanos = ["I", "II", "III", "IV", "V"]
+                r_idx = 0
+
+                if not entrada_por_titulo:
+                    rastreabilidade += f" {romanos[r_idx]}. Título."
+                    r_idx += 1
+
+                if tem_organizador and organizador_nome.strip():
+                    partes_org = organizador_nome.strip().split()
+                    nome_invertido_org = (
+                        f"{partes_org[-1].upper()}, {' '.join(partes_org[:-1])}"
+                        if len(partes_org) > 1
+                        else organizador_nome.strip().upper()
+                    )
+                    rastreabilidade += f" {romanos[r_idx]}. {nome_invertido_org}, {abreviatura_org}."
+                    r_idx += 1
+
+                if tem_tradutor and tradutor_nome.strip():
+                    partes_trad = tradutor_nome.strip().split()
+                    nome_invertido_trad = (
+                        f"{partes_trad[-1].upper()}, {' '.join(partes_trad[:-1])}"
+                        if len(partes_trad) > 1
+                        else tradutor_nome.strip().upper()
+                    )
+                    rastreabilidade += f" {romanos[r_idx]}. {nome_invertido_trad}, trad."
+                    r_idx += 1
+
+                # Montagem da string final da Ficha
+                if entrada_por_titulo:
+                    txt_ficha = f"""{classificacao}
+            {cutter}   {titulo.strip()}{dgm} / {responsabilidade}. – {ed_bloco}{pub_bloco}
+                        {desc_fisica}.{bloco_colecao}{nota_trabalho_str}{nota_traducao}{nota_acesso}{isbn_bloco}
+            
+                        {string_assuntos}{rastreabilidade}"""
+                else:
+                    txt_ficha = f"""{classificacao}
+            {cutter}   {entrada_principal}
+                        {titulo.strip()}{dgm} / {responsabilidade}. – {ed_bloco}{pub_bloco}
+                        {desc_fisica}.{bloco_colecao}{nota_trabalho_str}{nota_traducao}{nota_acesso}{isbn_bloco}
+            
+                        {string_assuntos}{rastreabilidade}"""
+
+                st.text_area(
+                    "Visualização Normativa (Fonte Monoespaçada)",
+                    value=txt_ficha,
+                    height=240,
+                )
+
+                # Validação e salvamento
+                btn_salvar = st.button(
+                    "💾 CONCLUIR FICHA E ENVIAR AO LOTE",
+                    disabled=st.session_state.get("creditos_ativos", 0) <= 0,
+                )
+
+                if btn_salvar:
+                    valido = True
+                    if (
+                        tipo_autor == "Pessoa Física"
+                        and not any(a.strip() for a in autores_lista)
+                        and not tem_organizador
+                    ):
+                        valido = False
+                        st.error(
+                            "❌ É necessário informar ao menos um autor ou organizador."
                         )
-                        assuntos_texto = (
-                            ", ".join(lista_assuntos)
-                            if lista_assuntos
-                            else "Não informado"
-                        )
 
-                        payload = {
-                            "email": st.session_state["usuario_atual"],
-                            "acao": "descontar",
-                            "titulo": titulo if titulo else "Não Informado",
-                            "assunto": assuntos_texto,
-                        }
+                    if not titulo.strip():
+                        valido = False
+                        st.error("❌ O título é obrigatório.")
 
-                        resposta_google = requests.post(
-                            url_script, json=payload, timeout=15
-                        )
+                    if valido:
+                        with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
+                            try:
+                                import json
 
-                        if resposta_google.status_code == 200:
-                            conteudo = (
-                                resposta_google.content.decode("utf-8-sig").strip()
-                            )
-                            if "{" in conteudo:
-                                conteudo = conteudo[conteudo.find("{") :]
+                                import requests
 
-                            resultado_json = json.loads(conteudo)
-
-                            if resultado_json.get("status") == "sucesso":
-                                ficha_completa = {
-                                    "texto_ficha": txt_ficha,
-                                    "dados_marc": {
-                                        "entrada": entrada_principal,
-                                        "titulo": titulo,
-                                        "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                        "tipo": grau_academico,
-                                        "instituicao": instituicao.strip(),
-                                        "area": area_concentracao.strip(),
-                                        "assuntos": st.session_state.assuntos_selecionados,
-                                        "ano": ano.strip(),
-                                        "paginas": paginas_input,
-                                        "dimensoes": dimensoes_input,
-                                    },
-                                }
-                                st.session_state.lote_fichas.append(
-                                    ficha_completa
+                                url_script = st.secrets["URL_SCRIPT_GOOGLE"]
+                                lista_assuntos = st.session_state.get(
+                                    "assuntos_selecionados", []
                                 )
-                                st.session_state["creditos_ativos"] -= 1
-                                st.session_state.assuntos_selecionados = []
-                                st.success("✅ Ficha guardada com sucesso!")
-                                st.rerun()
+                                assuntos_texto = (
+                                    ", ".join(lista_assuntos)
+                                    if lista_assuntos
+                                    else "Não informado"
+                                )
+
+                                payload = {
+                                    "email": st.session_state["usuario_atual"],
+                                    "acao": "descontar",
+                                    "titulo": titulo if titulo else "Não Informado",
+                                    "assunto": assuntos_texto,
+                                }
+
+                                resposta_google = requests.post(
+                                url_script, json=payload, timeout=15
+                                )
+
+                                if resposta_google.status_code == 200:
+                                    conteudo = (
+                                        resposta_google.content.decode("utf-8-sig").strip()
+                                    )
+                                    if "{" in conteudo:
+                                        conteudo = conteudo[conteudo.find("{") :]
+
+                                    resultado_json = json.loads(conteudo)
+
+                                    if resultado_json.get("status") == "sucesso":
+                                        ficha_completa = {
+                                            "texto_ficha": txt_ficha,
+                                            "dados_marc": {
+                                                "entrada": entrada_principal,
+                                                "titulo": titulo,
+                                                "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                                "tipo": grau_academico,
+                                                "instituicao": instituicao.strip(),
+                                                "area": area_concentracao.strip(),
+                                                "assuntos": st.session_state.assuntos_selecionados,
+                                                "ano": ano.strip(),
+                                                "paginas": paginas_input,
+                                                "dimensoes": dimensoes_input,
+                                            },
+                                    }
+                                    st.session_state.lote_fichas.append(
+                                        ficha_completa
+                                    )
+                                    st.session_state["creditos_ativos"] -= 1
+                                    st.session_state.assuntos_selecionados = []
+                                    st.success("✅ Ficha guardada com sucesso!")
+                                    st.rerun()
+                                else:
+                                    st.error(
+                                        f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}"
+                                    )
                             else:
                                 st.error(
-                                    f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}"
+                                    f"❌ Falha de conexão. Status: {resposta_google.status_code}"
                                 )
-                        else:
-                            st.error(
-                                f"❌ Falha de conexão. Status: {resposta_google.status_code}"
-                            )
 
-                    except Exception as e:
-                        st.error(f"❌ Erro ao processar requisição: {e}")
+                        except Exception as e:
+                            st.error(f"❌ Erro ao processar requisição: {e}")
 
                
                 
