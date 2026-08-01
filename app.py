@@ -687,13 +687,13 @@ else:
                                 st.info("Resposta inesperada da USP:")
                                 st.code(texto_resposta[:300])
                                 return []
-                    else:
-                        st.error(f"⚠️ A USP retornou erro de conexão: {resposta.status_code}")
-                        return []
+                        else:
+                            st.error(f"⚠️ A USP retornou erro de conexão: {resposta.status_code}")
+                            return []
             
-                except Exception as e:
-                    st.error(f"❌ Falha de comunicação com o servidor da USP: {e}")
-                    return []
+                    except Exception as e:
+                        st.error(f"❌ Falha de comunicação com o servidor da USP: {e}")
+                        return []
                             
                             
                 
