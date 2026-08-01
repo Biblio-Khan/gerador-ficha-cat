@@ -601,9 +601,9 @@ else:
                 except Exception:
                     pass
                 return []
-
             with col_direita:
                 st.subheader("3. Indexação por Assunto")
+    
                 # 1. Escolha da fonte
                 fonte_vocab = st.radio(
                     "Selecione o Vocabulário Controlado:",
@@ -611,8 +611,9 @@ else:
                     horizontal=True,
                 )
 
-                # 2. Definição OBRIGATÓRIA da variável 'termo_busca' antes de usá-la no 'if'
+                # 2. Definição da variável de busca
                 termo_busca = st.text_input("Digite um termo para pesquisar:")
+    
                 if termo_busca:
                     if "USP" in fonte_vocab:
                         resultados_usp = buscar_vocab_usp(termo_busca)
@@ -621,7 +622,6 @@ else:
                             st.success(f"{len(resultados_usp)} conceitos localizados na USP!")
                             termo_selecionado_usp = st.selectbox("Selecione o conceito oficial (USP):", resultados_usp)
                 
-                            # Este é o botão que adiciona o termo escolhido à sua ficha
                             if st.button("➕ Vincular Assunto da USP"):
                                 if termo_selecionado_usp not in st.session_state.assuntos_selecionados:
                                     st.session_state.assuntos_selecionados.append(termo_selecionado_usp)
@@ -629,38 +629,22 @@ else:
                         else:
                             st.warning("⚠️ Nenhum termo retornado pela USP.")
                 
-        elif "Senado" in fonte_vocab:
-            resultados_vcb = buscar_vcb_senado(termo_busca)
-            if resultados_vcb:
-                st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
-                mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
-                lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
-                termo_selecionado = st.selectbox("Selecione o conceito oficial (Senado):", lista_opcoes)
-                
-                if st.button("➕ Vincular Assunto do Senado"):
-                    if termo_selecionado not in st.session_state.assuntos_selecionados:
-                        st.session_state.assuntos_selecionados.append(termo_selecionado)
-                        st.rerun()
-            else:
-                st.warning("Nenhum termo correspondente retornado pela API do Senado.")
-                
-                # 3. Verificação (só executa se 'termo_busca' tiver texto)
-                if termo_busca:
-                    if "Senado" in fonte_vocab:
+                    elif "Senado" in fonte_vocab:
                         resultados_vcb = buscar_vcb_senado(termo_busca)
                         if resultados_vcb:
                             st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
                             mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
                             lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
                             termo_selecionado = st.selectbox("Selecione o conceito oficial (Senado):", lista_opcoes)
-
+                
                             if st.button("➕ Vincular Assunto do Senado"):
                                 if termo_selecionado not in st.session_state.assuntos_selecionados:
                                     st.session_state.assuntos_selecionados.append(termo_selecionado)
                                     st.rerun()
                         else:
                             st.warning("Nenhum termo correspondente retornado pela API do Senado.")
-
+                
+                
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
                 
                 def buscar_vocab_usp(termo_busca):
