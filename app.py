@@ -576,25 +576,97 @@ else:
             suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
             url_acesso = st.text_input("URL de Acesso / DOI") if suporte == "Digital" else ""
 
-        with col_direita:
-            st.subheader("3. Indexação por Assunto")
-            st.markdown("##### 🏛️ Buscar no VCB do Senado Federal")
-            termo_busca = st.text_input("Digite um termo jurídico para pesquisar:")
-            
-            if termo_busca:
-                resultados_vcb = buscar_vcb_senado(termo_busca)
-                if resultados_vcb:
-                    st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
-                    mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
-                    lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
-                    termo_selecionado = st.selectbox("Selecione o conceito oficial:", lista_opcoes)
-                    
-                    if st.button("➕ Vincular Assunto do Senado"):
-                        if termo_selecionado not in st.session_state.assuntos_selecionados:
-                            st.session_state.assuntos_selecionados.append(termo_selecionado)
-                            st.rerun()
-                else:
-                    st.warning("Nenhum termo correspondente retornado pela API do Senado.")
+       # --- COLOQUE ESTA FUNÇÃO NO INÍCIO DO SEU ARQUIVO PYTHON (FORA DO LAYOUT) ---
+@st.cache_data(ttl=3600)
+def buscar_vocab_usp(termo):
+    if not termo or len(termo) < 3:
+        return []
+
+    url = f"https://vocabulario.abcd.usp.br/pt-br/services.php?task=fetch&arg={termo}&output=json"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            dados = response.json()
+            resultados = dados.get("result", {})
+
+            sugestoes = []
+            if isinstance(resultados, dict):
+                for _, item in resultados.items():
+                    if isinstance(item, dict) and "string" in item:
+                        sugestoes.append(item["string"])
+            return sorted(list(set(sugestoes)))
+    except Exception:
+        pass
+    return []
+
+
+# --- SUBSTITUA O SEU BLOCO 'with col_direita:' POR ESTE AQUI ---
+with col_direita:
+    st.subheader("3. Indexação por Assunto")
+
+    # Botão para alternar a fonte da pesquisa
+    fonte_vocab = st.radio(
+        "Selecione o Vocabulário Controlado:",
+        ["🏛️ VCB Senado Federal", "🎓 USP (Multidisciplinar)"],
+        horizontal=True,
+    )
+
+    termo_busca = st.text_input("Digite um termo para pesquisar:")
+
+    if termo_busca:
+        # --- BUSCA NO SENADO ---
+        if "Senado" in fonte_vocab:
+            resultados_vcb = buscar_vcb_senado(termo_busca)
+            if resultados_vcb:
+                st.success(
+                    f"{len(resultados_vcb)} conceitos localizados no Senado!"
+                )
+                mapeamento_opcoes = {
+                    item["termo"]: item for item in resultados_vcb
+                }
+                lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
+                termo_selecionado = st.selectbox(
+                    "Selecione o conceito oficial (Senado):", lista_opcoes
+                )
+
+                if st.button("➕ Vincular Assunto do Senado"):
+                    if (
+                        termo_selecionado
+                        not in st.session_state.assuntos_selecionados
+                    ):
+                        st.session_state.assuntos_selecionados.append(
+                            termo_selecionado
+                        )
+                        st.rerun()
+            else:
+                st.warning(
+                    "Nenhum termo correspondente retornado pela API do Senado."
+                )
+
+        # --- BUSCA NA USP ---
+        else:
+            resultados_usp = buscar_vocab_usp(termo_busca)
+            if resultados_usp:
+                st.success(
+                    f"{len(resultados_usp)} conceitos localizados na USP!"
+                )
+                termo_selecionado_usp = st.selectbox(
+                    "Selecione o conceito oficial (USP):", resultados_usp
+                )
+
+                if st.button("➕ Vincular Assunto da USP"):
+                    if (
+                        termo_selecionado_usp
+                        not in st.session_state.assuntos_selecionados
+                    ):
+                        st.session_state.assuntos_selecionados.append(
+                            termo_selecionado_usp
+                        )
+                        st.rerun()
+            else:
+                st.warning(
+                    "Nenhum termo correspondente retornado pela API da USP."
+                )
 
             st.markdown("##### ✍️ Adicionar Assunto Manualmente")
             assunto_manual = st.text_input("Digite um assunto customizado:")
