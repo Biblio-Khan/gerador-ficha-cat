@@ -664,11 +664,11 @@ else:
                                 )    
                                 st.rerun()
                     else:
-                        st.warning(
-                            "Nenhum termo correspondente retornado pela API da USP."
-                        )
+                        st.warning("Nenhum termo retornado")
 
-            st.markdown("##### ✍️ Adicionar Assunto Manualmente")
+            st.markdown("---")
+            
+            st.markdown("##### Adicionar Assunto Manualmente")
             assunto_manual = st.text_input("Digite um assunto customizado:")
             if st.button("➕ Vincular Assunto Manual"):
                 if assunto_manual.strip():
