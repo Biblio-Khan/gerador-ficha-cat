@@ -634,7 +634,7 @@ else:
                     Utiliza a API do TemaTres.
                     ''''"""
                     # URL oficial da API do Vocabulário da USP
-                    url = "http://vocabulario.bdt.sibi.usp.br/vocab/services.php"
+                    url = "https://vocabulario.abcd.usp.br/pt-br/services.php"
     
                     # Parâmetros: task=search (buscar), arg=termo, output=json
                     params = {
