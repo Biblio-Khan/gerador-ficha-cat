@@ -606,55 +606,55 @@ else:
                 if termo_busca:
                     # 1. Se a opção for o Senado
                     if "Senado" in fonte_vocab:
-                    resultados_vcb = buscar_vcb_senado(termo_busca)
-                    if resultados_vcb:
-                        st.success(
-                            f"{len(resultados_vcb)} conceitos localizados no Senado!"
-                        )
-                        mapeamento_opcoes = {
-                            item["termo"]: item for item in resultados_vcb
-                        }
-                        lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
-                        termo_selecionado = st.selectbox(
-                            "Selecione o conceito oficial (Senado):", lista_opcoes
+                        resultados_vcb = buscar_vcb_senado(termo_busca)
+                        if resultados_vcb:
+                            st.success(
+                                f"{len(resultados_vcb)} conceitos localizados no Senado!"
+                            )
+                            mapeamento_opcoes = {
+                                item["termo"]: item for item in resultados_vcb
+                            }
+                            lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
+                            termo_selecionado = st.selectbox(
+                                "Selecione o conceito oficial (Senado):", lista_opcoes
+                            )
+
+                            if st.button("➕ Vincular Assunto do Senado"):
+                                if (
+                                    termo_selecionado
+                                    not in st.session_state.assuntos_selecionados
+                                ):
+                                    st.session_state.assuntos_selecionados.append(
+                                        termo_selecionado
+                                    )
+                                    st.rerun()
+                    else:
+                        st.warning(
+                            "Nenhum termo correspondente retornado pela API do Senado."
                         )
 
-                        if st.button("➕ Vincular Assunto do Senado"):
+                # 2. Se a opção for a USP (agora encadeado diretamente no if anterior)
+                elif "USP" in fonte_vocab:
+                    resultados_usp = buscar_vocab_usp(termo_busca)
+                    if resultados_usp:
+                        st.success(
+                            f"{len(resultados_usp)} conceitos localizados na USP!"
+                        )
+                        termo_selecionado_usp = st.selectbox(
+                            "Selecione o conceito oficial (USP):", resultados_usp
+                        )
+
+                        if st.button("➕ Vincular Assunto da USP"):
                             if (
-                                termo_selecionado
+                                termo_selecionado_usp
                                 not in st.session_state.assuntos_selecionados
                             ):
                                 st.session_state.assuntos_selecionados.append(
-                                    termo_selecionado
+                                    termo_selecionado_usp
                                 )
                                 st.rerun()
-                else:
-                    st.warning(
-                        "Nenhum termo correspondente retornado pela API do Senado."
-                    )
-
-            # 2. Se a opção for a USP (agora encadeado diretamente no if anterior)
-            elif "USP" in fonte_vocab:
-                resultados_usp = buscar_vocab_usp(termo_busca)
-                if resultados_usp:
-                    st.success(
-                        f"{len(resultados_usp)} conceitos localizados na USP!"
-                    )
-                    termo_selecionado_usp = st.selectbox(
-                        "Selecione o conceito oficial (USP):", resultados_usp
-                    )
-
-                    if st.button("➕ Vincular Assunto da USP"):
-                        if (
-                            termo_selecionado_usp
-                            not in st.session_state.assuntos_selecionados
-                        ):
-                            st.session_state.assuntos_selecionados.append(
-                                termo_selecionado_usp
-                            )
-                            st.rerun()
-                else:
-                    st.warning("Nenhum termo retornado pela USP.")
+                    else:
+                        st.warning("Nenhum termo retornado pela USP.")
 
         st.markdown("---")
 
