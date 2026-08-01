@@ -452,7 +452,7 @@ else:
         if st.session_state["creditos_ativos"] <= 0:
             st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
 
-        st.title("⚖️ Gerador de Fichas Catalográficas — NBR/AACR2")
+        st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
         st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
 
         st.markdown("---")
