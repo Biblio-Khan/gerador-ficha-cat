@@ -642,7 +642,7 @@ else:
                     )
 
             # --- BUSCA NA USP ---
-            elif "USP" in fonte_vocab:
+                elif "USP" in fonte_vocab:
                 resultados_usp = buscar_vocab_usp(termo_busca)
                 if resultados_usp:
                     st.success(
