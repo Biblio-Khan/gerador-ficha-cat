@@ -579,28 +579,6 @@ else:
             suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
             url_acesso = st.text_input("URL de Acesso / DOI") if suporte == "Digital" else ""
 
-            # --- COLOQUE ESTA FUNÇÃO NO INÍCIO DO SEU ARQUIVO PYTHON (FORA DO LAYOUT) ---
-            @st.cache_data(ttl=3600)
-            def buscar_vocab_usp(termo):
-                if not termo or len(termo) < 3:
-                    return []
-
-                url = f"https://vocabulario.abcd.usp.br/pt-br/services.php?task=fetch&arg={termo}&output=json"
-                try:
-                    response = requests.get(url, timeout=5)
-                    if response.status_code == 200:
-                        dados = response.json()
-                        resultados = dados.get("result", {})
-
-                        sugestoes = []
-                        if isinstance(resultados, dict):
-                            for _, item in resultados.items():
-                                if isinstance(item, dict) and "string" in item:
-                                    sugestoes.append(item["string"])
-                        return sorted(list(set(sugestoes)))
-                except Exception:
-                    pass
-                return []
                 with col_direita:
                     st.subheader("3. Indexação por Assunto")
     
