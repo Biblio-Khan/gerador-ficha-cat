@@ -579,27 +579,27 @@ else:
             suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
             url_acesso = st.text_input("URL de Acesso / DOI") if suporte == "Digital" else ""
 
-                with col_direita:
-                    st.subheader("3. Indexação por Assunto")
+            with col_direita:
+                st.subheader("3. Indexação por Assunto")
     
-                    # Campo direto de busca para o VCB do Senado
-                    termo_busca = st.text_input("Digite um termo para pesquisar no Vocabulário Controlado do Senado:")
+                # Campo direto de busca para o VCB do Senado
+                termo_busca = st.text_input("Digite um termo para pesquisar no Vocabulário Controlado do Senado:")
     
-                    if termo_busca:
-                        resultados_vcb = buscar_vcb_senado(termo_busca)
+                if termo_busca:
+                    resultados_vcb = buscar_vcb_senado(termo_busca)
         
-                        if resultados_vcb:
-                            st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
-                            mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
-                            lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
-                            termo_selecionado = st.selectbox("Selecione o conceito oficial (Senado):", lista_opcoes)
+                    if resultados_vcb:
+                        st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
+                        mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
+                        lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
+                        termo_selecionado = st.selectbox("Selecione o conceito oficial (Senado):", lista_opcoes)
             
-                            if st.button("➕ Vincular Assunto do Senado"):
-                                if termo_selecionado not in st.session_state.assuntos_selecionados:
-                                    st.session_state.assuntos_selecionados.append(termo_selecionado)
-                                    st.rerun()
-                            else:
-                                st.warning("Nenhum termo correspondente retornado pela API do Senado.")
+                        if st.button("➕ Vincular Assunto do Senado"):
+                            if termo_selecionado not in st.session_state.assuntos_selecionados:
+                                st.session_state.assuntos_selecionados.append(termo_selecionado)
+                                st.rerun()
+                        else:
+                            st.warning("Nenhum termo correspondente retornado pela API do Senado.")
                             
 
                 st.markdown("---")
