@@ -656,7 +656,7 @@ else:
                     url = "https://vocabulario.abcd.usp.br/pt-br/services.php"
     
                     params = {
-                        "task": "search",
+                        "task": "suggest",
                         "arg": termo_busca
                     }
                    
@@ -670,7 +670,6 @@ else:
 
                             # Padrão RegEx: Encontra tudo que está entre <string><![CDATA[ e ]]></string>
                             padrao = r"<string><!\[CDATA\[(.*?)\]\]></string>"
-
                             termos_encontrados = re.findall(padrao, texto_bruto)
 
                             if termos_encontrados:
@@ -687,9 +686,6 @@ else:
                         st.error(f"❌ Erro de conexão com a USP: {e}")
                         return [] 
                             
-                            
-                            
-                
 
                 st.markdown("---")
 
