@@ -598,8 +598,8 @@ else:
                             if termo_selecionado not in st.session_state.assuntos_selecionados:
                                 st.session_state.assuntos_selecionados.append(termo_selecionado)
                                 st.rerun()
-                        else:
-                            st.warning()
+                        
+                            
                             
 
                 st.markdown("---")
