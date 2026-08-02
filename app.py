@@ -672,9 +672,16 @@ else:
                             padrao = r"<string><!\[CDATA\[(.*?)\]\]></string>"
                             termos_encontrados = re.findall(padrao, texto_bruto)
 
+                            if not termos_encontrados or len(termos_encontrados) < 3:
+                                params_alt = {"task": "suggest", "arg": termo_busca}
+                                resp_alt = requests.get(url, params=params_alt, timeout=10, verify=False)
+                                if resp_alt.status_code == 200:
+                                    termos_alt = re.findall(padrao, resp_alt.text)
+                                    termos_encontrados.extend(termos_alt)
+
                             if termos_encontrados:
-                                # Remove duplicatas (usando set) e ordena alfabeticamente
-                                return sorted(list(set(termos_encontrados)))
+                                termos_unicos = [t.strip() for t in set(termos_encontrados) if t.strip()]
+                                return sorted(termos_unicos)
                             else:
                                 return []
                 
