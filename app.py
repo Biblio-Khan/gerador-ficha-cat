@@ -599,7 +599,7 @@ else:
                                 st.session_state.assuntos_selecionados.append(termo_selecionado)
                                 st.rerun()
                         else:
-                            st.warning("Nenhum termo correspondente retornado pela API do Senado.")
+                            st.warning()
                             
 
                 st.markdown("---")
