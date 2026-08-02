@@ -601,97 +601,27 @@ else:
                 except Exception:
                     pass
                 return []
-            with col_direita:
-                st.subheader("3. Indexação por Assunto")
+                with col_direita:
+                    st.subheader("3. Indexação por Assunto")
     
-                # 1. Escolha da fonte
-                fonte_vocab = st.radio(
-                    "Selecione o Vocabulário Controlado:",
-                    ["🏛️ VCB Senado Federal", "🎓 USP (Multidisciplinar)"],
-                    horizontal=True,
-                )
-
-                # 2. Definição da variável de busca
-                termo_busca = st.text_input("Digite um termo para pesquisar:")
+                    # Campo direto de busca para o VCB do Senado
+                    termo_busca = st.text_input("Digite um termo para pesquisar no Vocabulário Controlado do Senado:")
     
-                if termo_busca:
-                    if "USP" in fonte_vocab:
-                        resultados_usp = buscar_vocab_usp(termo_busca)
-            
-                        if resultados_usp:
-                            st.success(f"{len(resultados_usp)} conceitos localizados na USP!")
-                            termo_selecionado_usp = st.selectbox("Selecione o conceito oficial (USP):", resultados_usp)
-                
-                            if st.button("➕ Vincular Assunto da USP"):
-                                if termo_selecionado_usp not in st.session_state.assuntos_selecionados:
-                                    st.session_state.assuntos_selecionados.append(termo_selecionado_usp)
-                                    st.rerun()
-                        else:
-                            st.warning("⚠️ Nenhum termo retornado pela USP.")
-                
-                    elif "Senado" in fonte_vocab:
+                    if termo_busca:
                         resultados_vcb = buscar_vcb_senado(termo_busca)
+        
                         if resultados_vcb:
                             st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
                             mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
                             lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
                             termo_selecionado = st.selectbox("Selecione o conceito oficial (Senado):", lista_opcoes)
-                
+            
                             if st.button("➕ Vincular Assunto do Senado"):
                                 if termo_selecionado not in st.session_state.assuntos_selecionados:
                                     st.session_state.assuntos_selecionados.append(termo_selecionado)
                                     st.rerun()
-                        else:
-                            st.warning("Nenhum termo correspondente retornado pela API do Senado.")
-                
-                
-                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                
-                def buscar_vocab_usp(termo_busca):
-                    ''"""
-                    Busca termos no Vocabulário Controlado da USP (ABCD).
-                    Lê diretamente o formato XML nativo do TemaTres.
-                    ''''"""
-                    # URL oficial da API do Vocabulário da USP
-                    url = "https://vocabulario.abcd.usp.br/pt-br/services.php"
-    
-                    params = {
-                        "task": "suggest",
-                        "arg": termo_busca
-                    }
-                   
-                    try:
-                        # Timeout de 10 segundos para não travar o app se a USP cair
-                        resposta = requests.get(url, params=params, timeout=10, verify=False)
-        
-                        # Se a requisição deu certo
-                        if resposta.status_code == 200:
-                            texto_bruto = resposta.text
-
-                            # Padrão RegEx: Encontra tudo que está entre <string><![CDATA[ e ]]></string>
-                            padrao = r"<string><!\[CDATA\[(.*?)\]\]></string>"
-                            termos_encontrados = re.findall(padrao, texto_bruto)
-
-                            if not termos_encontrados or len(termos_encontrados) < 3:
-                                params_alt = {"task": "suggest", "arg": termo_busca}
-                                resp_alt = requests.get(url, params=params_alt, timeout=10, verify=False)
-                                if resp_alt.status_code == 200:
-                                    termos_alt = re.findall(padrao, resp_alt.text)
-                                    termos_encontrados.extend(termos_alt)
-
-                            if termos_encontrados:
-                                termos_unicos = [t.strip() for t in set(termos_encontrados) if t.strip()]
-                                return sorted(termos_unicos)
                             else:
-                                return []
-                
-                        else:
-                            st.error(f"⚠️ Servidor da USP retornou status: {resposta.status_code}")
-                            return []
-            
-                    except Exception as e:
-                        st.error(f"❌ Erro de conexão com a USP: {e}")
-                        return [] 
+                                st.warning("Nenhum termo correspondente retornado pela API do Senado.")
                             
 
                 st.markdown("---")
