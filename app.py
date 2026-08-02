@@ -582,7 +582,6 @@ else:
             with col_direita:
                 st.subheader("3. Indexação por Assunto")
     
-                # Campo direto de busca para o VCB do Senado
                 termo_busca = st.text_input("Digite um termo para pesquisar no Vocabulário Controlado do Senado:")
     
                 if termo_busca:
@@ -590,10 +589,31 @@ else:
         
                     if resultados_vcb:
                         st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
+            
+                        # Mapeia o termo para o objeto completo contendo os metadados da API
                         mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
                         lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
+            
                         termo_selecionado = st.selectbox("Selecione o conceito oficial (Senado):", lista_opcoes)
             
+                        # 🌟 DIFERENCIAL: Exibe a rede semântica / termos relacionados do Senado em tempo real
+                        dados_termo = mapeamento_opcoes[termo_selecionado]
+            
+                        # Verifica se a API retornou informações de relacionamento (ex: termos remissivos, UF, TG, TE)
+                        # Adaptado conforme a estrutura de chaves do retorno do Senado
+                        relacionados = dados_termo.get("relacionados", []) or dados_termo.get("termos_relacionados", [])
+                        termo_generico = dados_termo.get("termo_generico", None)
+            
+                        if relacionados or termo_generico:
+                            with st.expander("Rede Semântica Oficial (Tesauro do Senado)", expanded=False):
+                                if termo_generico:
+                                    st.markdown(f"**Termo Genérico (Pai):** `{termo_generico}`")
+                                if relacionados:
+                                    st.markdown("**Termos Relacionados / Remissivos:**")
+                                    for rel in relacionados:
+                                        st.markdown(f"- `{rel}`")
+            
+                        # Botão de vínculo do assunto selecionado
                         if st.button("➕ Vincular Assunto do Senado"):
                             if termo_selecionado not in st.session_state.assuntos_selecionados:
                                 st.session_state.assuntos_selecionados.append(termo_selecionado)
