@@ -537,14 +537,30 @@ else:
         
         st.markdown("---")
         # --- BUSCA POR ISBN ---
+        col_esquerda, col_direita = st.columns(2)
+        
+        with col_esquerda:
+            st.subheader("1. Dados da Obra / Autor")
+    
+        # --- BLOCO DE BUSCA POR ISBN (Subcolunas internas da esquerda) ---
+        st.markdown("📚 **Preenchimento Automático por ISBN**")
         col_isbn1, col_isbn2 = st.columns([0.7, 0.3])
+    
         with col_isbn1:
-            isbn_input = st.text_input("Preencher via ISBN:", placeholder="Digite o ISBN...", key="input_isbn_busca")
+            isbn_input = st.text_input(
+                "Preencher via ISBN:", 
+                placeholder="Digite o ISBN...", 
+                key="input_isbn_busca",
+                label_visibility="collapsed"
+            )
+        
         with col_isbn2:
-            if st.button("🔍 Buscar ISBN"):
+            btn_buscar = st.button("🔍 Buscar", use_container_width=True)
+        
+        if btn_buscar and isbn_input:
+            with st.spinner("Buscando dados do livro..."):
                 livro = buscar_dados_isbn(isbn_input)
                 if livro:
-                    # Atualiza o estado interno com a chave exata dos SEUS campos existentes:
                     st.session_state["meu_campo_titulo"] = livro["titulo"]
                     st.session_state["meu_campo_autor"] = livro["autor"]
                     st.session_state["meu_campo_ano"] = livro["ano"]
@@ -552,6 +568,8 @@ else:
                     st.rerun()
                 else:
                     st.error("ISBN não encontrado.")
+                
+        st.markdown("---")
         
             
 
