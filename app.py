@@ -160,48 +160,31 @@ import requests
 import streamlit as st
 
 def buscar_dados_isbn(isbn):
-    """
-    Busca metadados de livros focando no Google Books de forma robusta e segura.
-    """
-    # Remove qualquer caractere que não seja número
     isbn_limpo = ''.join(filter(str.isdigit, str(isbn)))
-    
-    if not isbn_limpo:
-        return None
+    if not isbn_limpo: return None
 
-    # Consulta direta ao Google Books (altamente estável para ISBNs nacionais e internacionais)
-    url_google = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_limpo}"
-    
+    url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_limpo}"
     try:
-        resp_g = requests.get(url_google, timeout=8)
-        if resp_g.status_code == 200:
-            dados_g = resp_g.json()
-            if "items" in dados_g and len(dados_g["items"]) > 0:
-                info = dados_g["items"][0].get("volumeInfo", {})
+        resp = requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            dados = resp.json()
+            if "items" in dados:
+                info = dados["items"][0].get("volumeInfo", {})
                 
                 titulo = info.get("title", "")
-                subtitulo = info.get("subtitle", "")
-                if subtitulo:
-                    titulo = f"{titulo}: {subtitulo}"
+                if info.get("subtitle"):
+                    titulo += f": {info.get('subtitle')}"
                     
                 autores = info.get("authors", [])
-                autor_formatado = ", ".join(autores) if autores else ""
-                
-                data_pub = info.get("publishedDate", "")
-                ano = data_pub.split("-")[0] if data_pub else ""
-                
-                editora = info.get("publisher", "")
                 
                 return {
                     "titulo": titulo,
-                    "autor": autor_formatado,
-                    "ano": ano,
-                    "editora": editora,
-                    "fonte": "Google Books"
+                    "autor": ", ".join(autores) if autores else "",
+                    "ano": info.get("publishedDate", "")[:4],
+                    "editora": info.get("publisher", "")
                 }
     except Exception as e:
-        print(f"Erro na busca: {e}")
-        
+        st.error(f"Erro de conexão com a API: {e}")
     return None
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
@@ -555,44 +538,43 @@ else:
         st.markdown("---")
         col_esquerda, col_direita = st.columns(2)
         
-        # Inicializa o session_state para os campos se não existirem
-        for campo in ["titulo", "autor", "ano", "editora"]:
-            if campo not in st.session_state:
-                st.session_state[campo] = ""
-        
+        # 1. Garanta que as chaves dos seus campos existem no session_state no começo do código
+        for chave in ["campo_titulo", "campo_autor", "campo_ano", "campo_editora"]:
+            if chave not in st.session_state:
+                st.session_state[chave] = ""
+
         with col_esquerda:
-            st.subheader("Busca ISBN")
+                st.subheader("Busca por ISBN")
     
-            # 🌟 ISBN posicionado no topo da coluna esquerda
-            st.markdown("Funciona melhor para livros de literatura")
-            col_isbn1, col_isbn2 = st.columns([0.65, 0.35])
+        st.markdown("📚 **Preenchimento Automático**")
+        col_isbn1, col_isbn2 = st.columns([0.7, 0.3])
     
-            with col_isbn1:
-                isbn_input = st.text_input("Digite o ISBN:", placeholder="Ex: 97885...", key="input_isbn_campo", label_visibility="collapsed")
-            with col_isbn2:
-                btn_buscar_isbn = st.button("🔍 Buscar", use_container_width=True)
+        with col_isbn1:
+            isbn_input = st.text_input("Digite o ISBN:", key="input_busca_isbn", label_visibility="collapsed")
+        with col_isbn2:
+            btn_buscar = st.button("🔍 Buscar", use_container_width=True)
+        
+        if btn_buscar and isbn_input:
+            with st.spinner("Buscando..."):
+                livro = buscar_dados_isbn(isbn_input)
+                if livro:
+                    # 2. Injeta os dados DIRETAMENTE nas chaves dos campos manuais!
+                    st.session_state["campo_titulo"] = livro["titulo"]
+                    st.session_state["campo_autor"] = livro["autor"]
+                    st.session_state["campo_ano"] = livro["ano"]
+                    st.session_state["campo_editora"] = livro["editora"]
+                    st.rerun()
+                else:
+                    st.error("Livro não encontrado ou sem dados no Google Books.")
+    
+        st.markdown("---")
 
-            if btn_buscar_isbn and isbn_input:
-                with st.spinner("Buscando livro..."):
-                    livro_encontrado = buscar_dados_isbn(isbn_input)
-                    if livro_encontrado:
-                        st.session_state["titulo"] = livro_encontrado["titulo"]
-                        st.session_state["autor"] = livro_encontrado["autor"]
-                        st.session_state["ano"] = str(livro_encontrado["ano"])
-                        st.session_state["editora"] = livro_encontrado["editora"]
-                
-                        st.success("Dados preenchidos com sucesso!")
-                        st.rerun()
-                    else:
-                        st.error("ISBN não encontrado.")
-            
-            st.markdown("---")
-
-            # --- SEUS CAMPOS MANUAIS EXISTENTES (agora conectados ao session_state) ---
-            titulo = st.text_input("Título da Obra", value=st.session_state["titulo"], key="campo_titulo_manual")
-            autor = st.text_input("Autor", value=st.session_state["autor"], key="campo_autor_manual")
-            ano = st.text_input("Ano de Publicação", value=st.session_state["ano"], key="campo_ano_manual")
-            editora = st.text_input("Editora", value=st.session_state["editora"], key="campo_editora_manual")
+        # 3. SEUS CAMPOS MANUAIS: note que agora eles SÓ têm a `key`. 
+        # Não use `value=`. O Streamlit vai puxar o valor da key automaticamente!
+        titulo = st.text_input("Título da Obra", key="campo_titulo")
+        autor = st.text_input("Autor", key="campo_autor")
+        ano = st.text_input("Ano de Publicação", key="campo_ano")
+        editora = st.text_input("Editora", key="campo_editora")
         
             
 
