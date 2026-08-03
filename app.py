@@ -536,45 +536,22 @@ else:
                 col_lote_2.info("O lote está vazio.")
         
         st.markdown("---")
-        col_esquerda, col_direita = st.columns(2)
-        
-        # 1. Garanta que as chaves dos seus campos existem no session_state no começo do código
-        for chave in ["campo_titulo", "campo_autor", "campo_ano", "campo_editora"]:
-            if chave not in st.session_state:
-                st.session_state[chave] = ""
-
-        with col_esquerda:
-                st.subheader("Busca por ISBN")
-    
-                st.markdown("📚 **Preenchimento Automático**")
-                col_isbn1, col_isbn2 = st.columns([0.7, 0.3])
-    
-                with col_isbn1:
-                    isbn_input = st.text_input("Digite o ISBN:", key="input_busca_isbn", label_visibility="collapsed")
-                with col_isbn2:
-                    btn_buscar = st.button("🔍 Buscar", use_container_width=True)
-        
-                if btn_buscar and isbn_input:
-                    with st.spinner("Buscando..."):
-                        livro = buscar_dados_isbn(isbn_input)
-                        if livro:
-                            # 2. Injeta os dados DIRETAMENTE nas chaves dos campos manuais!
-                            st.session_state["campo_titulo"] = livro["titulo"]
-                            st.session_state["campo_autor"] = livro["autor"]
-                            st.session_state["campo_ano"] = livro["ano"]
-                            st.session_state["campo_editora"] = livro["editora"]
-                            st.rerun()
-                        else:
-                            st.error("Livro não encontrado ou sem dados no Google Books.")
-    
-                st.markdown("---")
-
-                # 3. SEUS CAMPOS MANUAIS: note que agora eles SÓ têm a `key`. 
-                # Não use `value=`. O Streamlit vai puxar o valor da key automaticamente!
-                titulo = st.text_input("Título da Obra", key="campo_titulo")
-                autor = st.text_input("Autor", key="campo_autor")
-                ano = st.text_input("Ano de Publicação", key="campo_ano")
-                editora = st.text_input("Editora", key="campo_editora")
+        # --- BUSCA POR ISBN ---
+        col_isbn1, col_isbn2 = st.columns([0.7, 0.3])
+        with col_isbn1:
+            isbn_input = st.text_input("Preencher via ISBN:", placeholder="Digite o ISBN...", key="input_isbn_busca")
+        with col_isbn2:
+            if st.button("🔍 Buscar ISBN"):
+                livro = buscar_dados_isbn(isbn_input)
+                if livro:
+                    # Atualiza o estado interno com a chave exata dos SEUS campos existentes:
+                    st.session_state["meu_campo_titulo"] = livro["titulo"]
+                    st.session_state["meu_campo_autor"] = livro["autor"]
+                    st.session_state["meu_campo_ano"] = livro["ano"]
+                    st.session_state["meu_campo_editora"] = livro["editora"]
+                    st.rerun()
+                else:
+                    st.error("ISBN não encontrado.")
         
             
 
@@ -593,7 +570,7 @@ else:
             else:
                 entidade_nome = st.text_input("Nome da Entidade (Ex: Brasil. Supremo Tribunal Federal)")
                 
-            titulo = st.text_input("Título Principal")
+            titulo = st.text_input("Título Principal", key= "meu_campo_titulo")
             st.markdown("---")
             col_resp_1, col_resp_2 = st.columns(2)
             
@@ -617,9 +594,9 @@ else:
             st.markdown("---")
             st.subheader("2. Publicação & Descrição Física")
             edicao = st.text_input("Edição e Volume (Ex: 2. ed., 3. ed. rev. e ampl.)", value="1. ed.")
-            editora = st.text_input("Editora")
+            editora = st.text_input("Editora", key="meu_campo_editora")
             cidade = st.text_input("Cidade de Publicação", value="Brasília")
-            ano = st.text_input("Ano de Publicação", value="2026")
+            ano = st.text_input("Ano de Publicação", value="2026", key="meu_campo_ano")
             paginas_input = st.text_input("Número de Páginas/Folhas", value="180")
             dimensoes_input = st.text_input("Dimensões", value="30 cm")
             
