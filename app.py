@@ -155,6 +155,78 @@ def api_obter_produtividade_juridica(usuario):
     return filtro
     
     return df
+
+import requests
+import streamlit as st
+
+def buscar_dados_isbn(isbn):
+    """
+    Busca metadados de livros usando a BrasilAPI como primeira opção 
+    e o Google Books como fallback (redundância).
+    """
+    isbn_limpo = ''.join(filter(str.isalnum, isbn))
+    
+    # 1. TENTATIVA 1: BrasilAPI (Foco em livros publicados no Brasil / ISBN Brasil)
+    url_brasilapi = f"https://brasilapi.com.br/api/isbn/v1/{isbn_limpo}"
+    try:
+        resp = requests.get(url_brasilapi, timeout=5)
+        if resp.status_code == 200:
+            dados = resp.json()
+            
+            # Extrai e formata os dados da BrasilAPI
+            titulo = dados.get("title", "")
+            
+            # Autores na BrasilAPI costumam vir em uma lista
+            autores = dados.get("authors", [])
+            autor_formatado = ", ".join(autores) if autores else ""
+            
+            ano = str(dados.get("year", ""))
+            editora = dados.get("publisher", "")
+            
+            if titulo:
+                return {
+                    "titulo": titulo,
+                    "autor": autor_formatado,
+                    "ano": ano,
+                    "editora": editora,
+                    "fonte": "BrasilAPI"
+                }
+    except Exception:
+        pass  # Se falhar, segue para o fallback do Google Books
+
+    # 2. TENTATIVA 2: Google Books API (Fallback para abrangência global)
+    url_google = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_limpo}"
+    try:
+        resp_g = requests.get(url_google, timeout=5)
+        if resp_g.status_code == 200:
+            dados_g = resp_g.json()
+            if "items" in dados_g and len(dados_g["items"]) > 0:
+                info = dados_g["items"][0].get("volumeInfo", {})
+                
+                titulo = info.get("title", "")
+                subtitulo = info.get("subtitle", "")
+                if subtitulo:
+                    titulo = f"{titulo}: {subtitulo}"
+                    
+                autores = info.get("authors", [])
+                autor_formatado = ", ".join(autores) if autores else ""
+                
+                data_pub = info.get("publishedDate", "")
+                ano = data_pub.split("-")[0] if data_pub else ""
+                
+                editora = info.get("publisher", "")
+                
+                return {
+                    "titulo": titulo,
+                    "autor": autor_formatado,
+                    "ano": ano,
+                    "editora": editora,
+                    "fonte": "Google Books"
+                }
+    except Exception:
+        pass
+
+    return None
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
@@ -506,6 +578,32 @@ else:
         
         st.markdown("---")
         col_esquerda, col_direita = st.columns(2)
+
+        with col_esquerda:
+    st.subheader("Busca ISBN")
+    
+    # 🌟 ISBN posicionado no topo da coluna esquerda
+    st.markdown("---")
+    col_isbn1, col_isbn2 = st.columns([0.65, 0.35])
+    
+    with col_isbn1:
+        isbn_input = st.text_input("Digite o ISBN:", placeholder="Ex: 97885...", key="input_isbn_campo", label_visibility="collapsed")
+    with col_isbn2:
+        btn_buscar_isbn = st.button("🔍 Buscar", use_container_width=True)
+        
+    if btn_buscar_isbn and isbn_input:
+        with st.spinner("Buscando..."):
+            livro_encontrado = buscar_dados_isbn(isbn_input)
+            if livro_encontrado:
+                st.success(f"Encontrado ({livro_encontrado['fonte']})!")
+                st.session_state["titulo_gerado"] = livro_encontrado["titulo"]
+                st.session_state["autor_gerado"] = livro_encontrado["autor"]
+                st.session_state["ano_gerado"] = livro_encontrado["ano"]
+                st.session_state["editora_gerada"] = livro_encontrado["editora"]
+                st.rerun()
+            else:
+                st.error("ISBN não encontrado.")
+    st.markdown("---")
 
         with col_esquerda:
             st.subheader("1. Metadados & Responsabilidade")
