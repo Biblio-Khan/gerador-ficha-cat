@@ -581,7 +581,7 @@ else:
         
         for campo in ["titulo_gerado", "autor_gerado", "ano_gerado", "editora_gerada"]:
             if campo not in st.session_state:
-        st.session_state[campo] = ""
+                st.session_state[campo] = ""
         
         with col_esquerda:
             st.subheader("Busca ISBN")
