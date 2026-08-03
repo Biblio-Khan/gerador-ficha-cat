@@ -555,7 +555,8 @@ else:
         st.markdown("---")
         col_esquerda, col_direita = st.columns(2)
         
-        for campo in ["titulo_gerado", "autor_gerado", "ano_gerado", "editora_gerada"]:
+        # Inicializa o session_state para os campos se não existirem
+        for campo in ["titulo", "autor", "ano", "editora"]:
             if campo not in st.session_state:
                 st.session_state[campo] = ""
         
@@ -570,25 +571,30 @@ else:
                 isbn_input = st.text_input("Digite o ISBN:", placeholder="Ex: 97885...", key="input_isbn_campo", label_visibility="collapsed")
             with col_isbn2:
                 btn_buscar_isbn = st.button("🔍 Buscar", use_container_width=True)
-        
+
             if btn_buscar_isbn and isbn_input:
-                with st.spinner("Buscando..."):
+                with st.spinner("Buscando livro..."):
                     livro_encontrado = buscar_dados_isbn(isbn_input)
                     if livro_encontrado:
-                        st.success(f"Encontrado ({livro_encontrado['fonte']})!")
-                        st.session_state["titulo_gerado"] = livro_encontrado["titulo"]
-                        st.session_state["autor_gerado"] = livro_encontrado["autor"]
-                        st.session_state["ano_gerado"] = livro_encontrado["ano"]
-                        st.session_state["editora_gerada"] = livro_encontrado["editora"]
-                        st.rerun()
-                    else:
-                        st.error("ISBN não encontrado.")
-                st.markdown("---")
+                            # Altera diretamente os valores no session_state dos campos existentes
+                            st.session_state["titulo"] = livro_encontrado["titulo"]
+                            st.session_state["autor"] = livro_encontrado["autor"]
+                            st.session_state["ano"] = str(livro_encontrado["ano"])
+                            st.session_state["editora"] = livro_encontrado["editora"]
+                
+                            st.success("Dados preenchidos com sucesso!")
+                            st.rerun() # Atualiza a tela para exibir os dados nos campos abaixo
+                        else:
+                            st.error("ISBN não encontrado.")
+            st.markdown("---")
 
-                titulo = st.text_input("Título da Obra", value=st.session_state["titulo_gerado"], key="input_titulo_val")
-                autor = st.text_input("Autor", value=st.session_state["autor_gerado"], key="input_autor_val")
-                ano = st.text_input("Ano de Publicação", value=st.session_state["ano_gerado"], key="input_ano_val")
-                editora = st.text_input("Editora", value=st.session_state["editora_gerada"], key="input_editora_val")
+            # --- SEUS CAMPOS MANUAIS EXISTENTES (agora conectados ao session_state) ---
+            titulo = st.text_input("Título da Obra", value=st.session_state["titulo"], key="campo_titulo_manual")
+            autor = st.text_input("Autor", value=st.session_state["autor"], key="campo_autor_manual")
+            ano = st.text_input("Ano de Publicação", value=st.session_state["ano"], key="campo_ano_manual")
+            editora = st.text_input("Editora", value=st.session_state["editora"], key="campo_editora_manual")
+        
+            
 
         with col_esquerda:
             st.subheader("1. Metadados & Responsabilidade")
