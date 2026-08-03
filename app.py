@@ -575,7 +575,7 @@ else:
             if btn_buscar_isbn and isbn_input:
                 with st.spinner("Buscando livro..."):
                     livro_encontrado = buscar_dados_isbn(isbn_input)
-                        if livro_encontrado:
+                    if livro_encontrado:
                             # Altera diretamente os valores no session_state dos campos existentes
                             st.session_state["titulo"] = livro_encontrado["titulo"]
                             st.session_state["autor"] = livro_encontrado["autor"]
