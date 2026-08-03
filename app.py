@@ -576,16 +576,15 @@ else:
                 with st.spinner("Buscando livro..."):
                     livro_encontrado = buscar_dados_isbn(isbn_input)
                     if livro_encontrado:
-                            # Altera diretamente os valores no session_state dos campos existentes
-                            st.session_state["titulo"] = livro_encontrado["titulo"]
-                            st.session_state["autor"] = livro_encontrado["autor"]
-                            st.session_state["ano"] = str(livro_encontrado["ano"])
-                            st.session_state["editora"] = livro_encontrado["editora"]
+                        st.session_state["titulo"] = livro_encontrado["titulo"]
+                        st.session_state["autor"] = livro_encontrado["autor"]
+                        st.session_state["ano"] = str(livro_encontrado["ano"])
+                        st.session_state["editora"] = livro_encontrado["editora"]
                 
-                            st.success("Dados preenchidos com sucesso!")
-                            st.rerun() # Atualiza a tela para exibir os dados nos campos abaixo
-                        else:
-                            st.error("ISBN não encontrado.")
+                        st.success("Dados preenchidos com sucesso!")
+                        st.rerun()
+                    else:
+                        st.error("ISBN não encontrado.")
             
             st.markdown("---")
 
