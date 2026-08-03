@@ -546,35 +546,35 @@ else:
         with col_esquerda:
                 st.subheader("Busca por ISBN")
     
-        st.markdown("📚 **Preenchimento Automático**")
-        col_isbn1, col_isbn2 = st.columns([0.7, 0.3])
+                st.markdown("📚 **Preenchimento Automático**")
+                col_isbn1, col_isbn2 = st.columns([0.7, 0.3])
     
-        with col_isbn1:
-            isbn_input = st.text_input("Digite o ISBN:", key="input_busca_isbn", label_visibility="collapsed")
-        with col_isbn2:
-            btn_buscar = st.button("🔍 Buscar", use_container_width=True)
+                with col_isbn1:
+                    isbn_input = st.text_input("Digite o ISBN:", key="input_busca_isbn", label_visibility="collapsed")
+                with col_isbn2:
+                    btn_buscar = st.button("🔍 Buscar", use_container_width=True)
         
-        if btn_buscar and isbn_input:
-            with st.spinner("Buscando..."):
-                livro = buscar_dados_isbn(isbn_input)
-                if livro:
-                    # 2. Injeta os dados DIRETAMENTE nas chaves dos campos manuais!
-                    st.session_state["campo_titulo"] = livro["titulo"]
-                    st.session_state["campo_autor"] = livro["autor"]
-                    st.session_state["campo_ano"] = livro["ano"]
-                    st.session_state["campo_editora"] = livro["editora"]
-                    st.rerun()
-                else:
-                    st.error("Livro não encontrado ou sem dados no Google Books.")
+                if btn_buscar and isbn_input:
+                    with st.spinner("Buscando..."):
+                        livro = buscar_dados_isbn(isbn_input)
+                        if livro:
+                            # 2. Injeta os dados DIRETAMENTE nas chaves dos campos manuais!
+                            st.session_state["campo_titulo"] = livro["titulo"]
+                            st.session_state["campo_autor"] = livro["autor"]
+                            st.session_state["campo_ano"] = livro["ano"]
+                            st.session_state["campo_editora"] = livro["editora"]
+                            st.rerun()
+                        else:
+                            st.error("Livro não encontrado ou sem dados no Google Books.")
     
-        st.markdown("---")
+                st.markdown("---")
 
-        # 3. SEUS CAMPOS MANUAIS: note que agora eles SÓ têm a `key`. 
-        # Não use `value=`. O Streamlit vai puxar o valor da key automaticamente!
-        titulo = st.text_input("Título da Obra", key="campo_titulo")
-        autor = st.text_input("Autor", key="campo_autor")
-        ano = st.text_input("Ano de Publicação", key="campo_ano")
-        editora = st.text_input("Editora", key="campo_editora")
+                # 3. SEUS CAMPOS MANUAIS: note que agora eles SÓ têm a `key`. 
+                # Não use `value=`. O Streamlit vai puxar o valor da key automaticamente!
+                titulo = st.text_input("Título da Obra", key="campo_titulo")
+                autor = st.text_input("Autor", key="campo_autor")
+                ano = st.text_input("Ano de Publicação", key="campo_ano")
+                editora = st.text_input("Editora", key="campo_editora")
         
             
 
