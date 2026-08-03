@@ -583,7 +583,7 @@ else:
             st.subheader("Busca ISBN")
     
             # 🌟 ISBN posicionado no topo da coluna esquerda
-            st.markdown("---")
+            st.markdown("Funciona melhor para livros de literatura")
             col_isbn1, col_isbn2 = st.columns([0.65, 0.35])
     
             with col_isbn1:
