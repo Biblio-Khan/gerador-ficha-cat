@@ -161,43 +161,19 @@ import streamlit as st
 
 def buscar_dados_isbn(isbn):
     """
-    Busca metadados de livros usando a BrasilAPI como primeira opção 
-    e o Google Books como fallback (redundância).
+    Busca metadados de livros focando no Google Books de forma robusta e segura.
     """
-    isbn_limpo = ''.join(filter(str.isalnum, isbn))
+    # Remove qualquer caractere que não seja número
+    isbn_limpo = ''.join(filter(str.isdigit, str(isbn)))
     
-    # 1. TENTATIVA 1: BrasilAPI (Foco em livros publicados no Brasil / ISBN Brasil)
-    url_brasilapi = f"https://brasilapi.com.br/api/isbn/v1/{isbn_limpo}"
-    try:
-        resp = requests.get(url_brasilapi, timeout=5)
-        if resp.status_code == 200:
-            dados = resp.json()
-            
-            # Extrai e formata os dados da BrasilAPI
-            titulo = dados.get("title", "")
-            
-            # Autores na BrasilAPI costumam vir em uma lista
-            autores = dados.get("authors", [])
-            autor_formatado = ", ".join(autores) if autores else ""
-            
-            ano = str(dados.get("year", ""))
-            editora = dados.get("publisher", "")
-            
-            if titulo:
-                return {
-                    "titulo": titulo,
-                    "autor": autor_formatado,
-                    "ano": ano,
-                    "editora": editora,
-                    "fonte": "BrasilAPI"
-                }
-    except Exception:
-        pass  # Se falhar, segue para o fallback do Google Books
+    if not isbn_limpo:
+        return None
 
-    # 2. TENTATIVA 2: Google Books API (Fallback para abrangência global)
+    # Consulta direta ao Google Books (altamente estável para ISBNs nacionais e internacionais)
     url_google = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_limpo}"
+    
     try:
-        resp_g = requests.get(url_google, timeout=5)
+        resp_g = requests.get(url_google, timeout=8)
         if resp_g.status_code == 200:
             dados_g = resp_g.json()
             if "items" in dados_g and len(dados_g["items"]) > 0:
@@ -223,9 +199,9 @@ def buscar_dados_isbn(isbn):
                     "editora": editora,
                     "fonte": "Google Books"
                 }
-    except Exception:
-        pass
-
+    except Exception as e:
+        print(f"Erro na busca: {e}")
+        
     return None
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
