@@ -547,15 +547,13 @@ else:
         col_isbn1, col_isbn2 = st.columns([0.7, 0.3])
     
         with col_isbn1:
-            isbn_input = st.text_input(
-                "Preencher via ISBN:", 
-                placeholder="Digite o ISBN...", 
-                key="input_isbn_busca",
-                label_visibility="collapsed"
-            )
+            # Rótulo visível para garantir que o Streamlit reserve o espaço na tela
+            isbn_input = st.text_input("Número do ISBN", placeholder="Ex: 97885...", key="input_isbn_busca")
         
         with col_isbn2:
-            btn_buscar = st.button("🔍 Buscar", use_container_width=True)
+            # Espaçador invisível para alinhar o botão na mesma altura da caixa de texto
+            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+            btn_buscar = st.button("🔍 Buscar", use_container_width=True, key="btn_isbn_trigger")
         
         if btn_buscar and isbn_input:
             with st.spinner("Buscando dados do livro..."):
