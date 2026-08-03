@@ -518,9 +518,9 @@ else:
     # SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS LIMITADOS ATÉ 300)
     # =========================================================================
     tab_gerador, tab_financeiro, tab_produtividade = st.tabs([
-    "⚖️ Gerar Ficha", 
-    "💳 Compra e Gestão de Créditos",
-    "📊 Painel de Produtividade"
+    "Gerar Ficha", 
+    "Compra e Gestão de Créditos",
+    "Painel de Produtividade"
 ])
 
     with tab_gerador:
@@ -536,7 +536,7 @@ else:
             # Adicionei uma terceira coluna (col_lote_3) para o botão MARC
             col_lote_1, col_lote_2, col_lote_3 = st.columns([2, 1, 1])
             qtd_fichas = len(st.session_state.lote_fichas)
-            col_lote_1.subheader(f"📦 Lote: {qtd_fichas} Ficha(s)")
+            col_lote_1.subheader(f"Lote: {qtd_fichas} Ficha(s)")
             
             if qtd_fichas > 0:
                 # 1. Botão Word (Mantido)
@@ -578,7 +578,11 @@ else:
         
         st.markdown("---")
         col_esquerda, col_direita = st.columns(2)
-
+        
+        for campo in ["titulo_gerado", "autor_gerado", "ano_gerado", "editora_gerada"]:
+            if campo not in st.session_state:
+        st.session_state[campo] = ""
+        
         with col_esquerda:
             st.subheader("Busca ISBN")
     
@@ -604,6 +608,11 @@ else:
                     else:
                         st.error("ISBN não encontrado.")
                 st.markdown("---")
+
+                titulo = st.text_input("Título da Obra", value=st.session_state["titulo_gerado"], key="input_titulo_val")
+                autor = st.text_input("Autor", value=st.session_state["autor_gerado"], key="input_autor_val")
+                ano = st.text_input("Ano de Publicação", value=st.session_state["ano_gerado"], key="input_ano_val")
+                editora = st.text_input("Editora", value=st.session_state["editora_gerada"], key="input_editora_val")
 
         with col_esquerda:
             st.subheader("1. Metadados & Responsabilidade")
