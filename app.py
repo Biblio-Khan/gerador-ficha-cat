@@ -580,30 +580,30 @@ else:
         col_esquerda, col_direita = st.columns(2)
 
         with col_esquerda:
-    st.subheader("Busca ISBN")
+            st.subheader("Busca ISBN")
     
-    # 🌟 ISBN posicionado no topo da coluna esquerda
-    st.markdown("---")
-    col_isbn1, col_isbn2 = st.columns([0.65, 0.35])
+            # 🌟 ISBN posicionado no topo da coluna esquerda
+            st.markdown("---")
+            col_isbn1, col_isbn2 = st.columns([0.65, 0.35])
     
-    with col_isbn1:
-        isbn_input = st.text_input("Digite o ISBN:", placeholder="Ex: 97885...", key="input_isbn_campo", label_visibility="collapsed")
-    with col_isbn2:
-        btn_buscar_isbn = st.button("🔍 Buscar", use_container_width=True)
+            with col_isbn1:
+                isbn_input = st.text_input("Digite o ISBN:", placeholder="Ex: 97885...", key="input_isbn_campo", label_visibility="collapsed")
+            with col_isbn2:
+                btn_buscar_isbn = st.button("🔍 Buscar", use_container_width=True)
         
-    if btn_buscar_isbn and isbn_input:
-        with st.spinner("Buscando..."):
-            livro_encontrado = buscar_dados_isbn(isbn_input)
-            if livro_encontrado:
-                st.success(f"Encontrado ({livro_encontrado['fonte']})!")
-                st.session_state["titulo_gerado"] = livro_encontrado["titulo"]
-                st.session_state["autor_gerado"] = livro_encontrado["autor"]
-                st.session_state["ano_gerado"] = livro_encontrado["ano"]
-                st.session_state["editora_gerada"] = livro_encontrado["editora"]
-                st.rerun()
-            else:
-                st.error("ISBN não encontrado.")
-    st.markdown("---")
+            if btn_buscar_isbn and isbn_input:
+                with st.spinner("Buscando..."):
+                    livro_encontrado = buscar_dados_isbn(isbn_input)
+                    if livro_encontrado:
+                        st.success(f"Encontrado ({livro_encontrado['fonte']})!")
+                        st.session_state["titulo_gerado"] = livro_encontrado["titulo"]
+                        st.session_state["autor_gerado"] = livro_encontrado["autor"]
+                        st.session_state["ano_gerado"] = livro_encontrado["ano"]
+                        st.session_state["editora_gerada"] = livro_encontrado["editora"]
+                        st.rerun()
+                    else:
+                        st.error("ISBN não encontrado.")
+                st.markdown("---")
 
         with col_esquerda:
             st.subheader("1. Metadados & Responsabilidade")
