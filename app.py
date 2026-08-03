@@ -585,7 +585,7 @@ else:
                             st.success("Dados preenchidos com sucesso!")
                             st.rerun() # Atualiza a tela para exibir os dados nos campos abaixo
                             else:
-                                st.error("ISBN não encontrado.")
+                            st.error("ISBN não encontrado.")
             st.markdown("---")
 
             # --- SEUS CAMPOS MANUAIS EXISTENTES (agora conectados ao session_state) ---
