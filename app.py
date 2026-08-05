@@ -870,7 +870,6 @@ else:
         if comprovante is None:
             st.warning("⚠️ Por favor, anexe o comprovante do PIX antes de enviar.")
         else:
-            # Sucesso: Apenas orienta o cliente (o admin aprova manualmente no painel)
             st.success("✅ Comprovante enviado com sucesso! Seus créditos serão liberados em breve pelo administrador.")
             
             if st.form_submit_button("Enviar para Restauração de Saldo"):
