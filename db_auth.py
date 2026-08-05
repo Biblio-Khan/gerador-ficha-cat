@@ -116,7 +116,7 @@ def descontar_credito(email):
     finally:
         client.close()
 
-def registrar_produtividade(usuario_id, autor, titulo, assunto):
+def registro_produtividade(usuario_id, autor, titulo, assunto):
     """Registra no banco de dados os detalhes da ficha gerada."""
     client = conectar_turso()
     try:
