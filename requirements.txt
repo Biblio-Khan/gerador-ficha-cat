@@ -3,7 +3,8 @@ python-docx
 requests
 streamlit>=1.38.0
 starlette<=0.38.2
-firebase-admin
+libsql-experimental
+bcrypt
 gspread
 oauth2client
 google-auth
