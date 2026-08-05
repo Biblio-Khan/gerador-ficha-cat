@@ -78,40 +78,41 @@ def listar_usuarios():
     finally:
         client.close()
 
-
-def adicionar_creditos(email, quantidade):
-    """Admin adiciona créditos a um usuário específico."""
+def descontar_credito_e_registrar(email, usuario_id, autor, titulo, assunto):
+    """
+    Desconta 1 crédito do saldo do usuário e, se der certo, 
+    registra os dados da ficha na tabela de produtividade.
+    """
     client = conectar_turso()
     try:
-        check = client.execute("SELECT creditos FROM usuarios WHERE email = ?", [email])
-        if not check.rows:
-            return False, "Usuário não encontrado."
-        
-        saldo_atual = check.rows[0][0]
-        novo_saldo = saldo_atual + quantidade
-        
-        client.execute(
-            "UPDATE usuarios SET creditos = ? WHERE email = ?", 
-            [novo_saldo, email]
-        )
-        return True, f"Créditos atualizados! Novo saldo: {novo_saldo} fichas."
-    except Exception as e:
-        return False, f"Erro ao adicionar créditos: {e}"
-    finally:
-        client.close()
-
-
-def descontar_credito(email):
-    """Desconta 1 crédito do usuário após gerar a ficha."""
-    client = conectar_turso()
-    try:
-        check = client.execute("SELECT creditos FROM usuarios WHERE email = ?", [email])
+        # 1. Verifica quantos créditos o usuário tem
+        check = client.execute("SELECT creditos FROM usuarios WHERE email = ?", (email,))
         if check.rows:
             saldo_atual = check.rows[0][0]
+            
+            # Se tiver saldo positivo
             if saldo_atual > 0:
                 novo_saldo = saldo_atual - 1
-                client.execute("UPDATE usuarios SET creditos = ? WHERE email = ?", [novo_saldo, email])
+                
+                # 2. Desconta o crédito na tabela usuarios
+                client.execute(
+                    "UPDATE usuarios SET creditos = ? WHERE email = ?", 
+                    (novo_saldo, email)
+                )
+                
+                # 3. Registra os dados da ficha na tabela produtividade
+                client.execute(
+                    "INSERT INTO produtividade (usuario_id, autor, titulo, assunto) VALUES (?, ?, ?, ?)",
+                    (usuario_id, autor, titulo, assunto)
+                )
+                
                 return True, novo_saldo
+                
+        # Se não tiver créditos ou usuário não for encontrado
+        return False, 0
+        
+    except Exception as e:
+        print(f"Erro ao descontar crédito e registrar: {e}")
         return False, 0
     finally:
         client.close()
