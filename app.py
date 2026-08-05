@@ -14,6 +14,7 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
 from db_auth import autenticar_usuario, cadastrar_usuario
+from db_auth import autenticar_usuario, cadastrar_usuario, adicionar_creditos, listar_usuarios
 
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
