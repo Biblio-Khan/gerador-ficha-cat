@@ -12,8 +12,8 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from datetime import datetime, timezone, timedelta
-from db_auth import autenticar_usuario, cadastrar_usuario
-from db_auth import autenticar_usuario, cadastrar_usuario, adicionar_creditos, listar_usuarios
+from db_auth import autenticar_usuario, criar_usuario
+from db_auth import autenticar_usuario, criar_usuario, adicionar_creditos, listar_usuarios
 
 import streamlit as st
 from db_auth import (
