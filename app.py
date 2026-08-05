@@ -345,13 +345,12 @@ else:
                 st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
                 st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
     
-    
-        container_lote = st.container()
-        with container_lote:
-            # Adicionei uma terceira coluna (col_lote_3) para o botão MARC
-            col_lote_1, col_lote_2, col_lote_3 = st.columns([2, 1, 1])
-            qtd_fichas = len(st.session_state.lote_fichas)
-            col_lote_1.subheader(f"Lote: {qtd_fichas} Ficha(s)")
+                st.markdown("---")
+                container_lote = st.container()
+                with container_lote:
+                    col_lote_1, col_lote_2, col_lote_3 = st.columns([2, 1, 1])
+                    qtd_fichas = len(st.session_state.get("lote_fichas", []))
+                    col_lote_1.subheader(f"Lote: {qtd_fichas} Ficha(s)")
             
             if qtd_fichas > 0:
                 # 1. Botão Word (Mantido)
