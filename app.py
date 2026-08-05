@@ -962,9 +962,12 @@ else:
 
         st.markdown("---")
         st.subheader("📩 Envio de Comprovante")
+
+        usuario = st.session_state.get("usuario_logado", {})
+        email_atual = usuario.get("email", "") if isinstance(usuario, dict) else ""
+
+        email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=email_atual, disabled=True)
         
-        with st.form("pix_form_original"):
-            email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=st.session_state["usuario_atual"], disabled=True)
            
             pacote_escolhido = st.selectbox(
                 "Qual pacote de créditos você comprou?",
