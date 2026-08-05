@@ -18,7 +18,7 @@ from db_auth import autenticar_usuario, cadastrar_usuario, adicionar_creditos, l
 import streamlit as st
 from db_auth import (
     autenticar_usuario, 
-    cadastrar_usuario, 
+    criar_usuario, 
     descontar_credito_e_registrar, 
     adicionar_creditos, 
     listar_usuarios
