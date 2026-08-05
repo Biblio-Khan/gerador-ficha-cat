@@ -1,7 +1,8 @@
 pandas
 python-docx
 requests
-streamlit
+streamlit>=1.38.0
+starlette<=0.38.2
 firebase-admin
 gspread
 oauth2client
