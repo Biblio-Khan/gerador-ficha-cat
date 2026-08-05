@@ -503,10 +503,14 @@ else:
     "Painel de Produtividade"
 ])
 
-    with tab_gerador:
-        if st.session_state["creditos_ativos"] <= 0:
-            st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
+    # Recupera os dados do usuário logado na sessão
+    usuario = st.session_state.get("usuario_logado")
+    creditos_disponiveis = usuario.get("creditos", 0) if usuario else 0
 
+    if creditos_disponiveis <= 0:
+        st.error("❌ Você não possui créditos suficientes. Entre em contato com o suporte/administrador para recarregar.")
+    else:
+        
         st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
         st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
 
