@@ -22,13 +22,14 @@ def autenticar_usuario(email, senha):
     """Verifica login e retorna os dados do usuário."""
     client = conectar_turso()
     try:
+        # Mudamos de 'senha' para 'senha_hash' aqui no SELECT
         result = client.execute(
-            "SELECT id, nome, email, creditos, is_admin, senha FROM usuarios WHERE email = ?", 
-            [email]
+            "SELECT id, nome, email, creditos, is_admin, senha_hash FROM usuarios WHERE email = ?", 
+            (email,)
         )
         if result.rows:
             row = result.rows[0]
-            if str(row[5]) == str(senha):  # Confirma a senha
+            if str(row[5]) == str(senha):  # row[5] agora compara com a senha_hash
                 user_data = {
                     "id": row[0],
                     "nome": row[1],
@@ -49,14 +50,14 @@ def criar_usuario(nome, email, senha):
     client = conectar_turso()
     try:
         # Verifica se o e-mail já existe
-        check = client.execute("SELECT id FROM usuarios WHERE email = ?", [email])
+        check = client.execute("SELECT id FROM usuarios WHERE email = ?", (email,))
         if check.rows:
             return False, "E-mail já cadastrado!"
         
-        # Insere o novo usuário (inicia com 0 créditos e is_admin = 0)
+        # Mudamos de 'senha' para 'senha_hash' aqui no INSERT
         client.execute(
-            "INSERT INTO usuarios (nome, email, senha, creditos, is_admin) VALUES (?, ?, ?, ?, ?)",
-            [nome, email, senha, 0, 0]
+            "INSERT INTO usuarios (nome, email, senha_hash, creditos, is_admin) VALUES (?, ?, ?, ?, ?)",
+            (nome, email, senha, 4, 0) # Coloquei 4 créditos para bater com o padrão do seu banco!
         )
         return True, "Cadastro realizado com sucesso!"
     except Exception as e:
