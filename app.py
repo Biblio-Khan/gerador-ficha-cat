@@ -345,7 +345,7 @@ else:
                 st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
                 st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
     
-        st.markdown("---")
+    
         container_lote = st.container()
         with container_lote:
             # Adicionei uma terceira coluna (col_lote_3) para o botão MARC
