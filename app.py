@@ -335,7 +335,7 @@ else:
     "📊 Painel de Produtividade",
     "👑 Painel Admin"
 ])
-        with tab_gerador:
+    with tab_gerador:
             usuario = st.session_state.get("usuario_logado")
             creditos_disponiveis = usuario.get("creditos", 0) if usuario else 0
 
