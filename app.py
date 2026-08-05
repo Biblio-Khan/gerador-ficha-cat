@@ -329,66 +329,22 @@ else:
     # =========================================================================
     # SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS LIMITADOS ATÉ 300)
     # =========================================================================
+    tab_gerador, tab_financeiro, tab_produtividade, tab_admin = st.tabs([
+    "📄 Gerar Ficha", 
+    "💳 Compra e Gestão de Créditos", 
+    "📊 Painel de Produtividade",
+    "👑 Painel Admin"
+])
+        with tab_gerador:
+            usuario = st.session_state.get("usuario_logado")
+            creditos_disponiveis = usuario.get("creditos", 0) if usuario else 0
 
-    # --- ÁREA DE GESTÃO DE CRÉDITOS (Apenas visível se for Admin) ---
-    usuario = st.session_state.get("usuario_logado")
-
-    if usuario and usuario.get("is_admin") == 1:
-        with st.expander("👑 Painel do Administrador - Gestão de Créditos"):
-            st.subheader("Adicionar ou Remover Créditos")
-        
-            col1, col2, col3 = st.columns([2, 1, 1])
-            with col1:
-                email_recarga = st.text_input("E-mail do Cliente")
-            with col2:
-                qtd_creditos = st.number_input("Quantidade", min_value=1, value=10, step=1)
-            with col3:
-                st.write("") # Espaçamento
-                st.write("")
-                btn_recarregar = st.button("➕ Enviar Créditos", use_container_width=True)
-            
-            if btn_recarregar:
-                if email_recarga:
-                    sucesso, msg = adicionar_creditos(email_recarga, qtd_creditos)
-                    if sucesso:
-                        st.success(msg)
-                        st.rerun()
-                    else:
-                        st.error(msg)
-                else:
-                    st.warning("Informe o e-mail do cliente.")
-                
-            st.markdown("---")
-            st.subheader("📋 Lista de Usuários Cadastrados")
-            usuarios_lista = listar_usuarios()
-        
-            # Exibe em formato de tabela simples
-            dados_tabela = [
-                {"ID": u[0], "Nome": u[1], "E-mail": u[2], "Créditos": u[3], "É Admin?": "Sim" if u[4] == 1 else "Não"}
-                for u in usuarios_lista
-            ]
-            st.dataframe(dados_tabela, use_container_width=True)
-            ()
-            
-            tab_gerador, tab_financeiro, tab_produtividade = st.tabs([
-            "Gerar Ficha", 
-            "Compra e Gestão de Créditos",
-            "Painel de Produtividade"
-        ])
-
-            # 1. Tudo o que pertence à primeira aba entra recuado dentro deste 'with'
-            with tab_gerador:
-                # Recupera os dados do usuário logado na sessão
-                usuario = st.session_state.get("usuario_logado")
-                creditos_disponiveis = usuario.get("creditos", 0) if usuario else 0
-
-                if creditos_disponiveis <= 0:
-                    st.error("❌ Você não possui créditos suficientes. Entre em contato com o suporte/administrador para recarregar.")
-                else:
-                    st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
-                    st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
-  
-
+            if creditos_disponiveis <= 0:
+                st.error("❌ Você não possui créditos suficientes. Entre em contato com o suporte/administrador para recarregar.")
+            else:
+                st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
+                st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
+    
         st.markdown("---")
         container_lote = st.container()
         with container_lote:
