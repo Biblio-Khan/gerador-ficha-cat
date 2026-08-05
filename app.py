@@ -60,6 +60,16 @@ with st.sidebar:
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
 # =========================================================================
 
+import streamlit as st
+
+# Diagnóstico de segredos (remova após testar)
+st.write("📋 **Seções encontradas no st.secrets:**", list(st.secrets.keys()))
+
+if "turso" in st.secrets:
+    st.write("🔑 **Chaves dentro de [turso]:**", list(st.secrets["turso"].keys()))
+else:
+    st.error("❌ A seção 'turso' NÃO está sendo reconhecida no dicionário de secrets!")
+
 # Inicializa as variáveis de sessão se não existirem
 if "logado" not in st.session_state:
     st.session_state["logado"] = False
