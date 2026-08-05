@@ -368,6 +368,8 @@ else:
                 for u in usuarios_lista
             ]
             st.dataframe(dados_tabela, use_container_width=True)
+            ()
+            
             tab_gerador, tab_financeiro, tab_produtividade = st.tabs([
             "Gerar Ficha", 
             "Compra e Gestão de Créditos",
