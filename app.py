@@ -329,13 +329,13 @@ else:
     # =========================================================================
     # SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS LIMITADOS ATÉ 300)
     # =========================================================================
-    tab_gerador, tab_financeiro, tab_produtividade, tab_admin = st.tabs([
-    "📄 Gerar Ficha", 
-    "💳 Compra e Gestão de Créditos", 
-    "📊 Painel de Produtividade",
-    "👑 Painel Admin"
-])
-    with tab_gerador:
+        tab_gerador, tab_financeiro, tab_produtividade, tab_admin = st.tabs([
+        "📄 Gerar Ficha", 
+        "💳 Compra e Gestão de Créditos", 
+        "📊 Painel de Produtividade",
+        "👑 Painel Admin"
+    ])
+        with tab_gerador:
             usuario = st.session_state.get("usuario_logado")
             creditos_disponiveis = usuario.get("creditos", 0) if usuario else 0
 
