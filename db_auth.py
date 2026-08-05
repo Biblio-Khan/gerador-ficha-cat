@@ -3,12 +3,15 @@ import libsql_client
 import bcrypt
 
 def conectar_turso():
-    # Lê diretamente da raiz do st.secrets
-    url = st.secrets.get("TURSO_DATABASE_URL")
-    auth_token = st.secrets.get("TURSO_AUTH_TOKEN")
+    # 1. Tenta buscar primeiro dentro da seção [turso], se não encontrar, busca na raiz do secrets
+    turso_secrets = st.secrets.get("turso", {})
     
+    url = turso_secrets.get("TURSO_DATABASE_URL") or st.secrets.get("TURSO_DATABASE_URL")
+    auth_token = turso_secrets.get("TURSO_AUTH_TOKEN") or st.secrets.get("TURSO_AUTH_TOKEN")
+    
+    # 2. Se ainda assim não encontrar, exibe aviso e interrompe com segurança
     if not url or not auth_token:
-        st.error("⚠️ Credenciais do Turso não foram encontradas no st.secrets.")
+        st.error("⚠️ Credenciais do Turso ausentes. Configure TURSO_DATABASE_URL e TURSO_AUTH_TOKEN no st.secrets.")
         st.stop()
         
     return libsql.connect(database=url, auth_token=auth_token)
