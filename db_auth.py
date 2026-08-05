@@ -115,3 +115,37 @@ def descontar_credito(email):
         return False, 0
     finally:
         client.close()
+
+def registrar_produtividade(usuario_id, autor, titulo, assunto):
+    """Registra no banco de dados os detalhes da ficha gerada."""
+    client = conectar_turso()
+    try:
+        # ATENÇÃO: Confirme se o nome da tabela é realmente 'produtividade'
+        client.execute(
+            "INSERT INTO produtividade (usuario_id, autor, titulo, assunto) VALUES (?, ?, ?, ?)",
+            (usuario_id, autor, titulo, assunto)
+        )
+        return True
+    except Exception as e:
+        print(f"Erro ao registrar produtividade: {e}")
+        return False
+    finally:
+        client.close()
+
+def listar_produtividade():
+    """Busca o histórico de fichas para exibir no Painel do Admin."""
+    client = conectar_turso()
+    try:
+        # Fazemos um JOIN com a tabela 'usuarios' para cruzar o 'usuario_id' com o nome e e-mail da pessoa
+        result = client.execute("""
+            SELECT p.id, u.nome, u.email, p.autor, p.titulo, p.assunto, p.data_registro 
+            FROM produtividade p
+            JOIN usuarios u ON p.usuario_id = u.id
+            ORDER BY p.data_registro DESC
+        """)
+        return result.rows
+    except Exception as e:
+        print(f"Erro ao listar produtividade: {e}")
+        return []
+    finally:
+        client.close()
