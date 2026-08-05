@@ -2,18 +2,13 @@ import streamlit as st
 import libsql_client
 import bcrypt
 
-
 def conectar_turso():
-    # Verifica se a chave [turso] existe nos secrets
-    if "turso" not in st.secrets:
-        st.error("⚠️ Credenciais do Turso não encontradas em st.secrets. Configure a seção [turso].")
-        st.stop()
-        
-    url = st.secrets["turso"].get("TURSO_DATABASE_URL")
-    auth_token = st.secrets["turso"].get("TURSO_AUTH_TOKEN")
+    # Lê diretamente da raiz do st.secrets
+    url = st.secrets.get("TURSO_DATABASE_URL")
+    auth_token = st.secrets.get("TURSO_AUTH_TOKEN")
     
     if not url or not auth_token:
-        st.error("⚠️ URL ou Auth Token do Turso ausentes nos secrets.")
+        st.error("⚠️ Credenciais do Turso não foram encontradas no st.secrets.")
         st.stop()
         
     return libsql.connect(database=url, auth_token=auth_token)
