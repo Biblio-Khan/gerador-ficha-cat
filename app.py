@@ -11,10 +11,30 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
 from db_auth import autenticar_usuario, cadastrar_usuario
 from db_auth import autenticar_usuario, cadastrar_usuario, adicionar_creditos, listar_usuarios
+
+import streamlit as st
+from db_auth import (
+    autenticar_usuario, 
+    cadastrar_usuario, 
+    descontar_credito_e_registrar, 
+    adicionar_creditos, 
+    listar_usuarios
+)
+
+# ==========================================
+# 1. INICIALIZAÇÃO DO ESTADO DA SESSÃO
+# ==========================================
+if "usuario_logado" not in st.session_state:
+    st.session_state["usuario_logado"] = None
+
+if "lote_fichas" not in st.session_state:
+    st.session_state.lote_fichas = []
+
+if "assuntos_selecionados" not in st.session_state:
+    st.session_state.assuntos_selecionados = []
 
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
@@ -35,150 +55,6 @@ with st.sidebar:
     st.write("**Inteligência e Automação para Bibliotecas**")
     st.write("bibliokhancontato@gmail.com")
     st.markdown("---")
-
-# =========================================================================
-# 🌟 RECARGA AUTOMÁTICA EM BACKEND
-# =========================================================================
-import re
-
-def carregar_e_filtrar_saldo(url_planilha, token_usuario):
-    url_tratada = tratar_url_google_sheets(url_planilha)
-    
-    # header=None: tratamos a primeira linha como dado, não como título
-    df = pd.read_csv(url_tratada, header=None)
-    
-    # Agora só temos duas colunas: 0 (token) e 1 (creditos)
-    df.columns = ['token', 'creditos']
-    
-    # Remove espaços em branco por segurança
-    df['token'] = df['token'].astype(str).str.strip()
-    
-    # Filtra o usuário pelo token
-    usuario = df[df['token'] == token_usuario.strip()]
-    
-    if not usuario.empty:
-        # Pega o valor da coluna créditos
-        valor = float(usuario['creditos'].iloc[0])
-        return int(valor)
-    else:
-        st.warning(f"Token '{token_usuario}' não encontrado!")
-        return 0
-        
-def carregar_creditos_planilha(url_planilha):
-    try:
-        url_tratada = tratar_url_google_sheets(url_planilha)
-        
-        # Lemos o CSV garantindo que ele entenda o cabeçalho
-        df = pd.read_csv(url_tratada)
-        
-        # Debug: veja quais colunas o pandas enxergou
-        # st.write("Colunas encontradas:", df.columns.tolist())
-        
-        # Limpeza forçada: converte a coluna de créditos para número
-        # Substitua 'CREDITOS' pelo nome exato da sua coluna de saldo
-        coluna_saldo = 'creditos' 
-        if coluna_saldo in df.columns:
-            df[coluna_saldo] = pd.to_numeric(df[coluna_saldo], errors='coerce').fillna(0)
-            
-        return df
-    except Exception as e:
-        st.error(f"Erro ao processar o CSV: {e}")
-        return None
-
-
-import pandas as pd
-import streamlit as st
-
-def atualizar_saldo_usuario(token_usuario):
-    url_direta = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=0"
-    
-    try:
-        # header=0 diz ao pandas: "a primeira linha é o cabeçalho (títulos)"
-        df = pd.read_csv(url_direta, header=0)
-        
-        # Agora vamos renomear as colunas para garantir que o Python ache elas
-        # (ajuste os nomes abaixo se a sua planilha tiver nomes diferentes na primeira linha)
-        df.columns = ['token', 'creditos']
-        
-        # Remove espaços em branco dos nomes das colunas por segurança
-        df.columns = df.columns.str.strip()
-        
-        # Filtra o token
-        token_buscado = str(token_usuario).strip()
-        df['token'] = df['token'].astype(str).str.strip()
-        
-        usuario = df[df['token'] == token_buscado]
-        
-        if not usuario.empty:
-            # Pega o valor e converte para float (o erro de string sumiu porque pulamos a linha de títulos)
-            saldo = int(float(usuario['creditos'].iloc[0]))
-            st.session_state["creditos_ativos"] = saldo
-            st.success(f"✅ Sincronizado: {saldo:.0f} créditos")
-        else:
-            st.session_state["creditos_ativos"] = 0
-            st.error("❌ Token não encontrado na planilha.")
-            
-    except Exception as e:
-        st.error(f"Erro ao processar os dados: {e}")
-        
-def api_obter_produtividade_juridica(usuario):
-    url_produtividade = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=54763437"
-    
-    # 1. Carrega a planilha
-    df = pd.read_csv(url_produtividade, header=0)
-    
-    # 2. Renomeia APENAS as colunas que você sabe que existem, 
-    # mantendo as demais intactas (evita o ValueError)
-    # Supondo que as 4 primeiras colunas são as que você listou:
-    df = df.rename(columns={
-        df.columns[0]: 'data',
-        df.columns[1]: 'email',
-        df.columns[2]: 'titulo',
-        df.columns[3]: 'assunto'
-    })
-    
-    # 3. Agora o filtro funcionará normalmente
-    df['email'] = df['email'].astype(str).str.strip().str.lower()
-    filtro = df[df['email'] == usuario.strip().lower()]
-    
-    return filtro
-    
-    return df
-
-import requests
-import streamlit as st
-
-def buscar_dados_isbn(isbn):
-    isbn_limpo = ''.join(filter(str.isdigit, str(isbn)))
-    if not isbn_limpo: return None
-
-    url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_limpo}"
-    try:
-        resp = requests.get(url, timeout=10)
-        if resp.status_code == 200:
-            dados = resp.json()
-            if "items" in dados:
-                info = dados["items"][0].get("volumeInfo", {})
-                
-                titulo = info.get("title", "")
-                if info.get("subtitle"):
-                    titulo += f": {info.get('subtitle')}"
-                    
-                autores = info.get("authors", [])
-                
-                return {
-                    "titulo": titulo,
-                    "autor": ", ".join(autores) if autores else "",
-                    "ano": info.get("publishedDate", "")[:4],
-                    "editora": info.get("publisher", "")
-                }
-    except Exception as e:
-        st.error(f"Erro de conexão com a API: {e}")
-    return None
-# =========================================================================
-# 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
-# =========================================================================
-
 
 # =========================================================================
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
