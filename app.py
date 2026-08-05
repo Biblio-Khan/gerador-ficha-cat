@@ -11,11 +11,9 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from docx.enum.table import WD_TABLE_ALIGNMENT
-import firebase_admin
-from firebase_admin import auth
-from firebase_admin import credentials
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
+from db_auth import autenticar_usuario, cadastrar_usuario
 
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
@@ -219,6 +217,13 @@ if st.session_state["logado"]:
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
 # =========================================================================
 
+# Inicializa as variáveis de sessão se não existirem
+if "logado" not in st.session_state:
+    st.session_state["logado"] = False
+if "usuario_logado" not in st.session_state:
+    st.session_state["usuario_logado"] = None
+
+# --- TELA DE LOGIN ---
 if not st.session_state["logado"]:
     st.markdown("# 🔒 Área do Cliente")
     st.markdown("### Faça o login para acessar o Gerador de Fichas Catalográficas.")
@@ -230,9 +235,14 @@ if not st.session_state["logado"]:
         
         if botao_entrar:
             if email_input and senha_input:
-                verificar_login_firebase(email_input, senha_input)
-                if st.session_state["logado"]:
+                sucesso, msg, dados_user = autenticar_usuario(email_input, senha_input)
+                if sucesso:
+                    st.session_state["logado"] = True
+                    st.session_state["usuario_logado"] = dados_user
+                    st.success(msg)
                     st.rerun()
+                else:
+                    st.error(f"❌ {msg}")
             else:
                 st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
 
@@ -244,24 +254,24 @@ if not st.session_state["logado"]:
         Para redefinir sua senha, entre em contato diretamente com o suporte técnico através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
         """)
 
-# --- TELA DE CADASTRO (Abaixo do Login) ---
+# --- TELA DE CADASTRO ---
 if not st.session_state["logado"]:
     with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
         with st.form("cadastro_form"):
+            novo_nome = st.text_input("Nome Completo").strip()
             novo_email = st.text_input("Novo E-mail").strip()
             nova_senha = st.text_input("Escolha uma senha", type="password")
             botao_cadastrar = st.form_submit_button("Criar Conta")
             
             if botao_cadastrar:
-                if novo_email and nova_senha:
-                    try:
-                        # Chama o Firebase para criar o usuário
-                        auth.create_user(email=novo_email, password=nova_senha)
-                        st.success("✅ Conta criada com sucesso! Faça o login agora.")
-                    except Exception as e:
-                        st.error(f"❌ Erro ao criar conta: {e}")
+                if novo_nome and novo_email and nova_senha:
+                    sucesso, msg = cadastrar_usuario(novo_email, novo_nome, nova_senha)
+                    if sucesso:
+                        st.success(f"✅ {msg}")
+                    else:
+                        st.error(f"❌ {msg}")
                 else:
-                    st.warning("⚠️ Preencha e-mail e senha.")
+                    st.warning("⚠️ Preencha nome, e-mail e senha.")
 
 else:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
