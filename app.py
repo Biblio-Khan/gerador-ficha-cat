@@ -839,12 +839,15 @@ else:
         st.markdown("---")
         st.subheader("📩 Envio de Comprovante")
 
+        # Extract the current user's email safely
         usuario = st.session_state.get("usuario_logado", {})
         email_atual = usuario.get("email", "") if isinstance(usuario, dict) else ""
 
-        email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=email_atual, disabled=True)
-        
-           
+        st.markdown("### 💳 Solicitar Recarga de Créditos")
+
+        with st.form("form_solicitar_recarga"):
+            email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=email_atual, disabled=True)
+    
             pacote_escolhido = st.selectbox(
                 "Qual pacote de créditos você comprou?",
                 options=[
@@ -852,11 +855,23 @@ else:
                     "30 Fichas (R$ 80,00)",
                     "100 Fichas (R$ 240,00)",
                     "300 Fichas (R$ 660,00)",
-                    "600 Fichas (R$ 1,200.00)"
-                ]
-            )
-            
-            comprovante = st.file_uploader("Anexe a imagem ou PDF do comprovante do PIX", type=["jpg", "png", "jpeg", "pdf"])
+                    "600 Fichas (R$ 1.200,00)"
+            ]
+        )
+    
+        comprovante = st.file_uploader(
+            "Anexe a imagem ou PDF do comprovante do PIX", 
+            type=["jpg", "png", "jpeg", "pdf"]
+        )
+    
+        btn_enviar_comprovante = st.form_submit_button("Enviar Comprovante", use_container_width=True)
+
+    if btn_enviar_comprovante:
+        if comprovante is None:
+            st.warning("⚠️ Por favor, anexe o comprovante do PIX antes de enviar.")
+        else:
+            # Sucesso: Apenas orienta o cliente (o admin aprova manualmente no painel)
+            st.success("✅ Comprovante enviado com sucesso! Seus créditos serão liberados em breve pelo administrador.")
             
             if st.form_submit_button("Enviar para Restauração de Saldo"):
                 if comprovante is not None:
