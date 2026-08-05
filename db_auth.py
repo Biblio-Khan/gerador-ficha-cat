@@ -6,6 +6,13 @@ def conectar_turso():
     """Conecta ao banco de dados Turso via HTTP/API (compatível com Streamlit Cloud)."""
     url = st.secrets["turso"]["TURSO_DATABASE_URL"]
     token = st.secrets["turso"]["TURSO_AUTH_TOKEN"]
+    
+    # Converte o protocolo da URL para https:// se necessário
+    if url.startswith("libsql://"):
+        url = url.replace("libsql://", "https://")
+    elif url.startswith("wss://"):
+        url = url.replace("wss://", "https://")
+        
     return libsql_client.create_client_sync(url=url, auth_token=token)
 
 def cadastrar_usuario(email, nome, senha):
