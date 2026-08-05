@@ -189,30 +189,6 @@ def buscar_dados_isbn(isbn):
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
 
-def verificar_login_firebase(email, senha):
-    try:
-        user = auth.get_user_by_email(email)
-        st.session_state["logado"] = True
-        st.session_state["usuario_atual"] = user.email
-        atualizar_saldo_usuario(user.email)
-        return True
-    except Exception as e:
-        st.error("❌ Acesso negado: E-mail não cadastrado ou credenciais inválidas.")
-        return False
-
-if "logado" not in st.session_state:
-    st.session_state["logado"] = False
-
-if "creditos_ativos" not in st.session_state:
-    st.session_state["creditos_ativos"] = 0
-
-# Exibe o saldo na barra lateral caso o usuário esteja logado
-if st.session_state["logado"]:
-    with st.sidebar:
-        if st.session_state["creditos_ativos"] > 0:
-            st.success(f"💳 Saldo: {st.session_state['creditos_ativos']} fichas")
-        else:
-            st.error("💳 Sem créditos ativos")
 
 # =========================================================================
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
@@ -487,6 +463,50 @@ else:
     # =========================================================================
     # SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS LIMITADOS ATÉ 300)
     # =========================================================================
+
+    # --- ÁREA DE GESTÃO DE CRÉDITOS (Apenas visível se for Admin) ---
+    usuario = st.session_state.get("usuario_logado")
+
+    if usuario and usuario.get("is_admin") == 1:
+        with st.expander("👑 Painel do Administrador - Gestão de Créditos"):
+            st.subheader("Adicionar ou Remover Créditos")
+        
+            col1, col2, col3 = st.columns([2, 1, 1])
+            with col1:
+                email_recarga = st.text_input("E-mail do Cliente")
+            with col2:
+                qtd_creditos = st.number_input("Quantidade", min_value=1, value=10, step=1)
+            with col3:
+                st.write("") # Espaçamento
+                st.write("")
+                btn_recarregar = st.button("➕ Enviar Créditos", use_container_width=True)
+            
+            if btn_recarregar:
+                if email_recarga:
+                    sucesso, msg = adicionar_creditos(email_recarga, qtd_creditos)
+                    if sucesso:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+                else:
+                    st.warning("Informe o e-mail do cliente.")
+                
+            st.markdown("---")
+            st.subheader("📋 Lista de Usuários Cadastrados")
+            usuarios_lista = listar_usuarios()
+        
+            # Exibe em formato de tabela simples
+            dados_tabela = [
+                {"ID": u[0], "Nome": u[1], "E-mail": u[2], "Créditos": u[3], "É Admin?": "Sim" if u[4] == 1 else "Não"}
+                for u in usuarios_lista
+            ]
+            st.dataframe(dados_tabela, use_container_width=True)
+
+
+
+
+    
     tab_gerador, tab_financeiro, tab_produtividade = st.tabs([
     "Gerar Ficha", 
     "Compra e Gestão de Créditos",
