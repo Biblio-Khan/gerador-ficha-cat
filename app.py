@@ -368,27 +368,24 @@ else:
                 for u in usuarios_lista
             ]
             st.dataframe(dados_tabela, use_container_width=True)
+            tab_gerador, tab_financeiro, tab_produtividade = st.tabs([
+            "Gerar Ficha", 
+            "Compra e Gestão de Créditos",
+            "Painel de Produtividade"
+        ])
 
+            # 1. Tudo o que pertence à primeira aba entra recuado dentro deste 'with'
+            with tab_gerador:
+                # Recupera os dados do usuário logado na sessão
+                usuario = st.session_state.get("usuario_logado")
+                creditos_disponiveis = usuario.get("creditos", 0) if usuario else 0
 
-
-
-    
-    tab_gerador, tab_financeiro, tab_produtividade = st.tabs([
-    "Gerar Ficha", 
-    "Compra e Gestão de Créditos",
-    "Painel de Produtividade"
-])
-
-    # Recupera os dados do usuário logado na sessão
-    usuario = st.session_state.get("usuario_logado")
-    creditos_disponiveis = usuario.get("creditos", 0) if usuario else 0
-
-    if creditos_disponiveis <= 0:
-        st.error("❌ Você não possui créditos suficientes. Entre em contato com o suporte/administrador para recarregar.")
-    else:
-        
-        st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
-        st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
+                if creditos_disponiveis <= 0:
+                    st.error("❌ Você não possui créditos suficientes. Entre em contato com o suporte/administrador para recarregar.")
+                else:
+                    st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
+                    st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
+  
 
         st.markdown("---")
         container_lote = st.container()
