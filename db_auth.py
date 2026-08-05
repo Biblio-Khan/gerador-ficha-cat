@@ -2,18 +2,21 @@ import streamlit as st
 import libsql_client
 import bcrypt
 
+
 def conectar_turso():
-    """Conecta ao banco de dados Turso via HTTP/API (compatível com Streamlit Cloud)."""
-    url = st.secrets["turso"]["TURSO_DATABASE_URL"]
-    token = st.secrets["turso"]["TURSO_AUTH_TOKEN"]
-    
-    # Converte o protocolo da URL para https:// se necessário
-    if url.startswith("libsql://"):
-        url = url.replace("libsql://", "https://")
-    elif url.startswith("wss://"):
-        url = url.replace("wss://", "https://")
+    # Verifica se a chave [turso] existe nos secrets
+    if "turso" not in st.secrets:
+        st.error("⚠️ Credenciais do Turso não encontradas em st.secrets. Configure a seção [turso].")
+        st.stop()
         
-    return libsql_client.create_client_sync(url=url, auth_token=token)
+    url = st.secrets["turso"].get("TURSO_DATABASE_URL")
+    auth_token = st.secrets["turso"].get("TURSO_AUTH_TOKEN")
+    
+    if not url or not auth_token:
+        st.error("⚠️ URL ou Auth Token do Turso ausentes nos secrets.")
+        st.stop()
+        
+    return libsql.connect(database=url, auth_token=auth_token)
 
 def cadastrar_usuario(email, nome, senha):
     """Cadastra um novo usuário no Turso. Ganha 4 créditos automaticamente."""
