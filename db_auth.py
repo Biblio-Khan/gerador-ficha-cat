@@ -17,19 +17,18 @@ def conectar_turso():
         st.error(f"❌ Erro ao conectar no Turso: {e}")
         st.stop()
 
-
 def autenticar_usuario(email, senha):
     """Verifica login e retorna os dados do usuário."""
     client = conectar_turso()
     try:
-        # Mudamos de 'senha' para 'senha_hash' aqui no SELECT
+        # Busca pela coluna senha_hash
         result = client.execute(
             "SELECT id, nome, email, creditos, is_admin, senha_hash FROM usuarios WHERE email = ?", 
             (email,)
         )
         if result.rows:
             row = result.rows[0]
-            if str(row[5]) == str(senha):  # row[5] agora compara com a senha_hash
+            if str(row[5]) == str(senha):  # Confirma a senha
                 user_data = {
                     "id": row[0],
                     "nome": row[1],
@@ -44,9 +43,8 @@ def autenticar_usuario(email, senha):
     finally:
         client.close()
 
-
 def criar_usuario(nome, email, senha):
-    """Cadastra um novo usuário no sistema."""
+    """Cadastra um novo usuário no sistema com 4 créditos iniciais."""
     client = conectar_turso()
     try:
         # Verifica se o e-mail já existe
@@ -54,17 +52,16 @@ def criar_usuario(nome, email, senha):
         if check.rows:
             return False, "E-mail já cadastrado!"
         
-        # Mudamos de 'senha' para 'senha_hash' aqui no INSERT
+        # Insere na coluna senha_hash e dá 4 créditos
         client.execute(
             "INSERT INTO usuarios (nome, email, senha_hash, creditos, is_admin) VALUES (?, ?, ?, ?, ?)",
-            (nome, email, senha, 4, 0) # Coloquei 4 créditos para bater com o padrão do seu banco!
+            (nome, email, senha, 4, 0)
         )
         return True, "Cadastro realizado com sucesso!"
     except Exception as e:
         return False, f"Erro ao cadastrar: {e}"
     finally:
         client.close()
-
 
 def listar_usuarios():
     """Lista todos os usuários para o painel do Admin."""
@@ -78,29 +75,47 @@ def listar_usuarios():
     finally:
         client.close()
 
+def adicionar_creditos(email, quantidade):
+    """Admin adiciona créditos a um usuário específico."""
+    client = conectar_turso()
+    try:
+        check = client.execute("SELECT creditos FROM usuarios WHERE email = ?", (email,))
+        if not check.rows:
+            return False, "Usuário não encontrado."
+        
+        saldo_atual = check.rows[0][0]
+        novo_saldo = saldo_atual + quantidade
+        
+        client.execute(
+            "UPDATE usuarios SET creditos = ? WHERE email = ?", 
+            (novo_saldo, email)
+        )
+        return True, f"Créditos atualizados! Novo saldo: {novo_saldo} fichas."
+    except Exception as e:
+        return False, f"Erro ao adicionar créditos: {e}"
+    finally:
+        client.close()
+
 def descontar_credito_e_registrar(email, usuario_id, autor, titulo, assunto):
     """
-    Desconta 1 crédito do saldo do usuário e, se der certo, 
-    registra os dados da ficha na tabela de produtividade.
+    Desconta 1 crédito e registra a ficha gerada.
     """
     client = conectar_turso()
     try:
-        # 1. Verifica quantos créditos o usuário tem
         check = client.execute("SELECT creditos FROM usuarios WHERE email = ?", (email,))
         if check.rows:
             saldo_atual = check.rows[0][0]
             
-            # Se tiver saldo positivo
             if saldo_atual > 0:
                 novo_saldo = saldo_atual - 1
                 
-                # 2. Desconta o crédito na tabela usuarios
+                # Desconta o crédito
                 client.execute(
                     "UPDATE usuarios SET creditos = ? WHERE email = ?", 
                     (novo_saldo, email)
                 )
                 
-                # 3. Registra os dados da ficha na tabela produtividade
+                # Registra na tabela produtividade
                 client.execute(
                     "INSERT INTO produtividade (usuario_id, autor, titulo, assunto) VALUES (?, ?, ?, ?)",
                     (usuario_id, autor, titulo, assunto)
@@ -108,36 +123,17 @@ def descontar_credito_e_registrar(email, usuario_id, autor, titulo, assunto):
                 
                 return True, novo_saldo
                 
-        # Se não tiver créditos ou usuário não for encontrado
         return False, 0
-        
     except Exception as e:
         print(f"Erro ao descontar crédito e registrar: {e}")
         return False, 0
     finally:
         client.close()
 
-def registro_produtividade(usuario_id, autor, titulo, assunto):
-    """Registra no banco de dados os detalhes da ficha gerada."""
-    client = conectar_turso()
-    try:
-        # ATENÇÃO: Confirme se o nome da tabela é realmente 'produtividade'
-        client.execute(
-            "INSERT INTO produtividade (usuario_id, autor, titulo, assunto) VALUES (?, ?, ?, ?)",
-            (usuario_id, autor, titulo, assunto)
-        )
-        return True
-    except Exception as e:
-        print(f"Erro ao registrar produtividade: {e}")
-        return False
-    finally:
-        client.close()
-
 def listar_produtividade():
-    """Busca o histórico de fichas para exibir no Painel do Admin."""
+    """Lista o histórico de fichas para o Painel Admin."""
     client = conectar_turso()
     try:
-        # Fazemos um JOIN com a tabela 'usuarios' para cruzar o 'usuario_id' com o nome e e-mail da pessoa
         result = client.execute("""
             SELECT p.id, u.nome, u.email, p.autor, p.titulo, p.assunto, p.data_registro 
             FROM produtividade p
