@@ -87,3 +87,32 @@ def descontar_credito_e_registrar(usuario_id, autor, titulo, assunto):
         return True, "Ficha registrada e 1 crédito consumido com sucesso."
     except Exception as e:
         return False, f"Erro ao processar registro: {e}"
+
+def adicionar_creditos(email_destino, quantidade):
+    """Adiciona ou remove créditos de um usuário pelo e-mail."""
+    conn = conectar_turso()
+    cursor = conn.cursor()
+    
+    email_limpo = email_destino.lower().strip()
+    res = cursor.execute("SELECT id, creditos FROM usuarios WHERE email = ?", (email_limpo,))
+    row = res.fetchone()
+    
+    if not row:
+        return False, "Usuário não encontrado."
+        
+    try:
+        cursor.execute(
+            "UPDATE usuarios SET creditos = creditos + ? WHERE email = ?",
+            (quantidade, email_limpo)
+        )
+        conn.commit()
+        return True, f"Sucesso! {quantidade} crédito(s) adicionado(s) para {email_limpo}."
+    except Exception as e:
+        return False, f"Erro ao atualizar créditos: {e}"
+
+def listar_usuarios():
+    """Retorna a lista de todos os usuários cadastrados."""
+    conn = conectar_turso()
+    cursor = conn.cursor()
+    res = cursor.execute("SELECT id, nome, email, creditos, is_admin FROM usuarios ORDER BY criado_em DESC")
+    return res.fetchall()
