@@ -36,16 +36,6 @@ with st.sidebar:
     st.write("bibliokhancontato@gmail.com")
     st.markdown("---")
 
-if not firebase_admin._apps:
-    try:
-        firebase_secrets = dict(st.secrets["firebase"])
-        firebase_secrets["private_key"] = firebase_secrets["private_key"].replace("\\n", "\n")
-        
-        cred = credentials.Certificate(firebase_secrets)
-        firebase_admin.initialize_app(cred)
-    except Exception as e:
-        st.error(f"❌ Erro crítico nas credenciais do Firebase: {str(e)}")
-
 # =========================================================================
 # 🌟 RECARGA AUTOMÁTICA EM BACKEND
 # =========================================================================
