@@ -108,7 +108,7 @@ if not st.session_state["logado"]:
             
             if botao_cadastrar:
                 if novo_nome and novo_email and nova_senha:
-                    sucesso, msg = criar_usuario(novo_email, novo_nome, nova_senha)
+                    sucesso, msg = criar_usuario(novo_nome, novo_email, nova_senha)
                     if sucesso:
                         st.success(f"✅ {msg}")
                     else:
