@@ -759,15 +759,15 @@ else:
                             except Exception as e:
                                 st.error(f"❌ Erro ao processar requisição: {e}")
               
-    with tab_financeiro:
-        st.header("💳 Gestão Financeira e Saldo")
-        col_f1, col_f2 = st.columns(2)
+with tab_financeiro:
+    st.header("💳 Gestão Financeira e Saldo")
+    col_f1, col_f2 = st.columns(2)
     
-    with col_f1:
-        st.subheader("🔄 Sincronização")
-        usuario = st.session_state.get("usuario_logado", {})
-        email_usuario = usuario.get("email", "E-mail não identificado") if usuario else "Desconectado"
-        st.write(f"**Usuário conectado:** {email_usuario}")
+with col_f1:
+    st.subheader("🔄 Sincronização")
+    usuario = st.session_state.get("usuario_logado", {})
+    email_usuario = usuario.get("email", "E-mail não identificado") if usuario else "Desconectado"
+    st.write(f"**Usuário conectado:** {email_usuario}")
 
         st.info(f"Seu sistema está vinculado ao e-mail: **{email_usuario}**")
         if st.button("Atualizar meu Saldo"):
