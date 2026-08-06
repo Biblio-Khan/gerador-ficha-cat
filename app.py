@@ -817,11 +817,11 @@ else:
     
         btn_enviar_comprovante = st.form_submit_button("Enviar Comprovante", use_container_width=True)
 
-    if btn_enviar_comprovante:
-        if comprovante is None:
-            st.warning("⚠️ Por favor, anexe o comprovante do PIX antes de enviar.")
-        else:
-            st.success("✅ Comprovante enviado com sucesso! Seus créditos serão liberados em breve pelo administrador.")
+        if btn_enviar_comprovante:
+            if comprovante is None:
+                st.warning("⚠️ Por favor, anexe o comprovante do PIX antes de enviar.")
+            else:
+                st.success("✅ Comprovante enviado com sucesso! Seus créditos serão liberados em breve pelo administrador.")
             
             if st.form_submit_button("Enviar para Restauração de Saldo"):
                 if comprovante is not None:
