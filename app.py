@@ -769,7 +769,7 @@ with col_f1:
     email_usuario = usuario.get("email", "E-mail não identificado") if usuario else "Desconectado"
     st.write(f"**Usuário conectado:** {email_usuario}")
 
-        st.info(f"Seu sistema está vinculado ao e-mail: **{email_usuario}**")
+    st.info(f"Seu sistema está vinculado ao e-mail: **{email_usuario}**")
         if st.button("Atualizar meu Saldo"):
             with st.spinner("Puxando dados atualizados do Sheets..."):
                 atualizar_saldo_usuario(st.session_state["usuario_atual"])
