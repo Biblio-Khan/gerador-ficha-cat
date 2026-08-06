@@ -4,6 +4,7 @@ requests
 streamlit>=1.38.0
 starlette<=0.38.2
 gspread
+firebase-admin
 oauth2client
 google-auth
 google-api-python-client
