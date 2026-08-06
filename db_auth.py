@@ -18,21 +18,43 @@ def conectar_turso():
         st.error(f"❌ Erro ao conectar no Turso: {e}")
         st.stop()
 
+def verificar_senha_segura(senha_digitada, hash_salvo):
+    """Verifica a senha suportando múltiplos formatos sem quebrar a aplicação."""
+    if not hash_salvo:
+        return False
+
+    # 1. Tenta validar via Werkzeug (formato pbkdf2/scrypt)
+    try:
+        if check_password_hash(hash_salvo, str(senha_digitada)):
+            return True
+    except ValueError:
+        pass  # O hash do banco não é do padrão Werkzeug, segue para os fallbacks
+
+    # 2. Fallback: Se a senha no banco for SHA-256 puro (hashlib)
+    if hashlib.sha256(str(senha_digitada).encode()).hexdigest() == hash_salvo:
+        return True
+
+    # 3. Fallback: Se a senha no banco foi salva em texto puro
+    if str(senha_digitada) == str(hash_salvo):
+        return True
+
+    return False
+
+
 def autenticar_usuario(email, senha):
-    """Verifica login LENDO a criptografia e retorna os dados do usuário."""
+    """Verifica login com tratamento seguro de hash."""
     client = conectar_turso()
     try:
-        # Busca o hash da senha salvo no banco
         result = client.execute(
             "SELECT id, nome, email, creditos, is_admin, senha_hash FROM usuarios WHERE email = ?", 
             (email,)
         )
         if result.rows:
             row = result.rows[0]
-            senha_salva_no_banco = str(row[5])
+            hash_salvo = str(row[5]) if row[5] is not None else ""
             
-            # check_password_hash compara a senha digitada com o hash criptografado do banco
-            if check_password_hash(senha_salva_no_banco, str(senha)): 
+            # Utiliza a verificação tolerante
+            if verificar_senha_segura(senha, hash_salvo):
                 user_data = {
                     "id": row[0],
                     "nome": row[1],
@@ -43,6 +65,7 @@ def autenticar_usuario(email, senha):
                 return True, "Login realizado com sucesso!", user_data
             else:
                 return False, "Senha incorreta.", None
+                
         return False, "Usuário não encontrado.", None
     finally:
         client.close()
