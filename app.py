@@ -11,30 +11,11 @@ from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from docx.enum.table import WD_TABLE_ALIGNMENT
+import firebase_admin
+from firebase_admin import auth
+from firebase_admin import credentials
+from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
-from db_auth import autenticar_usuario, criar_usuario
-from db_auth import autenticar_usuario, criar_usuario, adicionar_creditos, listar_usuarios
-
-import streamlit as st
-from db_auth import (
-    autenticar_usuario, 
-    criar_usuario, 
-    descontar_credito_e_registrar, 
-    adicionar_creditos, 
-    listar_usuarios
-)
-
-# ==========================================
-# 1. INICIALIZAÇÃO DO ESTADO DA SESSÃO
-# ==========================================
-if "usuario_logado" not in st.session_state:
-    st.session_state["usuario_logado"] = None
-
-if "lote_fichas" not in st.session_state:
-    st.session_state.lote_fichas = []
-
-if "assuntos_selecionados" not in st.session_state:
-    st.session_state.assuntos_selecionados = []
 
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
@@ -56,17 +37,188 @@ with st.sidebar:
     st.write("bibliokhancontato@gmail.com")
     st.markdown("---")
 
+if not firebase_admin._apps:
+    try:
+        firebase_secrets = dict(st.secrets["firebase"])
+        firebase_secrets["private_key"] = firebase_secrets["private_key"].replace("\\n", "\n")
+        
+        cred = credentials.Certificate(firebase_secrets)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        st.error(f"❌ Erro crítico nas credenciais do Firebase: {str(e)}")
+
+# =========================================================================
+# 🌟 RECARGA AUTOMÁTICA EM BACKEND
+# =========================================================================
+import re
+
+def carregar_e_filtrar_saldo(url_planilha, token_usuario):
+    url_tratada = tratar_url_google_sheets(url_planilha)
+    
+    # header=None: tratamos a primeira linha como dado, não como título
+    df = pd.read_csv(url_tratada, header=None)
+    
+    # Agora só temos duas colunas: 0 (token) e 1 (creditos)
+    df.columns = ['token', 'creditos']
+    
+    # Remove espaços em branco por segurança
+    df['token'] = df['token'].astype(str).str.strip()
+    
+    # Filtra o usuário pelo token
+    usuario = df[df['token'] == token_usuario.strip()]
+    
+    if not usuario.empty:
+        # Pega o valor da coluna créditos
+        valor = float(usuario['creditos'].iloc[0])
+        return int(valor)
+    else:
+        st.warning(f"Token '{token_usuario}' não encontrado!")
+        return 0
+        
+def carregar_creditos_planilha(url_planilha):
+    try:
+        url_tratada = tratar_url_google_sheets(url_planilha)
+        
+        # Lemos o CSV garantindo que ele entenda o cabeçalho
+        df = pd.read_csv(url_tratada)
+        
+        # Debug: veja quais colunas o pandas enxergou
+        # st.write("Colunas encontradas:", df.columns.tolist())
+        
+        # Limpeza forçada: converte a coluna de créditos para número
+        # Substitua 'CREDITOS' pelo nome exato da sua coluna de saldo
+        coluna_saldo = 'creditos' 
+        if coluna_saldo in df.columns:
+            df[coluna_saldo] = pd.to_numeric(df[coluna_saldo], errors='coerce').fillna(0)
+            
+        return df
+    except Exception as e:
+        st.error(f"Erro ao processar o CSV: {e}")
+        return None
+
+
+import pandas as pd
+import streamlit as st
+
+def atualizar_saldo_usuario(token_usuario):
+    url_direta = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=0"
+    
+    try:
+        # header=0 diz ao pandas: "a primeira linha é o cabeçalho (títulos)"
+        df = pd.read_csv(url_direta, header=0)
+        
+        # Agora vamos renomear as colunas para garantir que o Python ache elas
+        # (ajuste os nomes abaixo se a sua planilha tiver nomes diferentes na primeira linha)
+        df.columns = ['token', 'creditos']
+        
+        # Remove espaços em branco dos nomes das colunas por segurança
+        df.columns = df.columns.str.strip()
+        
+        # Filtra o token
+        token_buscado = str(token_usuario).strip()
+        df['token'] = df['token'].astype(str).str.strip()
+        
+        usuario = df[df['token'] == token_buscado]
+        
+        if not usuario.empty:
+            # Pega o valor e converte para float (o erro de string sumiu porque pulamos a linha de títulos)
+            saldo = int(float(usuario['creditos'].iloc[0]))
+            st.session_state["creditos_ativos"] = saldo
+            st.success(f"✅ Sincronizado: {saldo:.0f} créditos")
+        else:
+            st.session_state["creditos_ativos"] = 0
+            st.error("❌ Token não encontrado na planilha.")
+            
+    except Exception as e:
+        st.error(f"Erro ao processar os dados: {e}")
+        
+def api_obter_produtividade_juridica(usuario):
+    url_produtividade = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=54763437"
+    
+    # 1. Carrega a planilha
+    df = pd.read_csv(url_produtividade, header=0)
+    
+    # 2. Renomeia APENAS as colunas que você sabe que existem, 
+    # mantendo as demais intactas (evita o ValueError)
+    # Supondo que as 4 primeiras colunas são as que você listou:
+    df = df.rename(columns={
+        df.columns[0]: 'data',
+        df.columns[1]: 'email',
+        df.columns[2]: 'titulo',
+        df.columns[3]: 'assunto'
+    })
+    
+    # 3. Agora o filtro funcionará normalmente
+    df['email'] = df['email'].astype(str).str.strip().str.lower()
+    filtro = df[df['email'] == usuario.strip().lower()]
+    
+    return filtro
+    
+    return df
+
+import requests
+import streamlit as st
+
+def buscar_dados_isbn(isbn):
+    isbn_limpo = ''.join(filter(str.isdigit, str(isbn)))
+    if not isbn_limpo: return None
+
+    url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn_limpo}"
+    try:
+        resp = requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            dados = resp.json()
+            if "items" in dados:
+                info = dados["items"][0].get("volumeInfo", {})
+                
+                titulo = info.get("title", "")
+                if info.get("subtitle"):
+                    titulo += f": {info.get('subtitle')}"
+                    
+                autores = info.get("authors", [])
+                
+                return {
+                    "titulo": titulo,
+                    "autor": ", ".join(autores) if autores else "",
+                    "ano": info.get("publishedDate", "")[:4],
+                    "editora": info.get("publisher", "")
+                }
+    except Exception as e:
+        st.error(f"Erro de conexão com a API: {e}")
+    return None
+# =========================================================================
+# 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
+# =========================================================================
+
+def verificar_login_firebase(email, senha):
+    try:
+        user = auth.get_user_by_email(email)
+        st.session_state["logado"] = True
+        st.session_state["usuario_atual"] = user.email
+        atualizar_saldo_usuario(user.email)
+        return True
+    except Exception as e:
+        st.error("❌ Acesso negado: E-mail não cadastrado ou credenciais inválidas.")
+        return False
+
+if "logado" not in st.session_state:
+    st.session_state["logado"] = False
+
+if "creditos_ativos" not in st.session_state:
+    st.session_state["creditos_ativos"] = 0
+
+# Exibe o saldo na barra lateral caso o usuário esteja logado
+if st.session_state["logado"]:
+    with st.sidebar:
+        if st.session_state["creditos_ativos"] > 0:
+            st.success(f"💳 Saldo: {st.session_state['creditos_ativos']} fichas")
+        else:
+            st.error("💳 Sem créditos ativos")
+
 # =========================================================================
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
 # =========================================================================
 
-# Inicializa as variáveis de sessão se não existirem
-if "logado" not in st.session_state:
-    st.session_state["logado"] = False
-if "usuario_logado" not in st.session_state:
-    st.session_state["usuario_logado"] = None
-
-# --- TELA DE LOGIN ---
 if not st.session_state["logado"]:
     st.markdown("# 🔒 Área do Cliente")
     st.markdown("### Faça o login para acessar o Gerador de Fichas Catalográficas.")
@@ -78,14 +230,9 @@ if not st.session_state["logado"]:
         
         if botao_entrar:
             if email_input and senha_input:
-                sucesso, msg, dados_user = autenticar_usuario(email_input, senha_input)
-                if sucesso:
-                    st.session_state["logado"] = True
-                    st.session_state["usuario_logado"] = dados_user
-                    st.success(msg)
+                verificar_login_firebase(email_input, senha_input)
+                if st.session_state["logado"]:
                     st.rerun()
-                else:
-                    st.error(f"❌ {msg}")
             else:
                 st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
 
@@ -97,24 +244,24 @@ if not st.session_state["logado"]:
         Para redefinir sua senha, entre em contato diretamente com o suporte técnico através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
         """)
 
-# --- TELA DE CADASTRO ---
+# --- TELA DE CADASTRO (Abaixo do Login) ---
 if not st.session_state["logado"]:
     with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
         with st.form("cadastro_form"):
-            novo_nome = st.text_input("Nome Completo").strip()
             novo_email = st.text_input("Novo E-mail").strip()
             nova_senha = st.text_input("Escolha uma senha", type="password")
             botao_cadastrar = st.form_submit_button("Criar Conta")
             
             if botao_cadastrar:
-                if novo_nome and novo_email and nova_senha:
-                    sucesso, msg = criar_usuario(novo_nome, novo_email, nova_senha)
-                    if sucesso:
-                        st.success(f"✅ {msg}")
-                    else:
-                        st.error(f"❌ {msg}")
+                if novo_email and nova_senha:
+                    try:
+                        # Chama o Firebase para criar o usuário
+                        auth.create_user(email=novo_email, password=nova_senha)
+                        st.success("✅ Conta criada com sucesso! Faça o login agora.")
+                    except Exception as e:
+                        st.error(f"❌ Erro ao criar conta: {e}")
                 else:
-                    st.warning("⚠️ Preencha nome, e-mail e senha.")
+                    st.warning("⚠️ Preencha e-mail e senha.")
 
 else:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
@@ -329,28 +476,26 @@ else:
     # =========================================================================
     # SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS LIMITADOS ATÉ 300)
     # =========================================================================
-        tab_gerador, tab_financeiro, tab_produtividade, tab_admin = st.tabs([
-        "📄 Gerar Ficha", 
-        "💳 Compra e Gestão de Créditos", 
-        "📊 Painel de Produtividade",
-        "👑 Painel Admin"
-    ])
-        with tab_gerador:
-            usuario = st.session_state.get("usuario_logado")
-            creditos_disponiveis = usuario.get("creditos", 0) if usuario else 0
+    tab_gerador, tab_financeiro, tab_produtividade = st.tabs([
+    "Gerar Ficha", 
+    "Compra e Gestão de Créditos",
+    "Painel de Produtividade"
+])
 
-            if creditos_disponiveis <= 0:
-                st.error("❌ Você não possui créditos suficientes. Entre em contato com o suporte/administrador para recarregar.")
-            else:
-                st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
-                st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
-    
-                st.markdown("---")
-                container_lote = st.container()
-                with container_lote:
-                    col_lote_1, col_lote_2, col_lote_3 = st.columns([2, 1, 1])
-                    qtd_fichas = len(st.session_state.get("lote_fichas", []))
-                    col_lote_1.subheader(f"Lote: {qtd_fichas} Ficha(s)")
+    with tab_gerador:
+        if st.session_state["creditos_ativos"] <= 0:
+            st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
+
+        st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
+        st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
+
+        st.markdown("---")
+        container_lote = st.container()
+        with container_lote:
+            # Adicionei uma terceira coluna (col_lote_3) para o botão MARC
+            col_lote_1, col_lote_2, col_lote_3 = st.columns([2, 1, 1])
+            qtd_fichas = len(st.session_state.lote_fichas)
+            col_lote_1.subheader(f"Lote: {qtd_fichas} Ficha(s)")
             
             if qtd_fichas > 0:
                 # 1. Botão Word (Mantido)
@@ -390,8 +535,42 @@ else:
             else:
                 col_lote_2.info("O lote está vazio.")
         
+        st.markdown("---")
+        # --- BUSCA POR ISBN ---
         col_esquerda, col_direita = st.columns(2)
         
+        with col_esquerda:
+            st.subheader("1. Dados da Obra / Autor")
+    
+        # --- BLOCO DE BUSCA POR ISBN (Subcolunas internas da esquerda) ---
+        st.markdown("📚 **Preenchimento Automático por ISBN**")
+        col_isbn1, col_isbn2 = st.columns([0.7, 0.3])
+    
+        with col_isbn1:
+            # Rótulo visível para garantir que o Streamlit reserve o espaço na tela
+            isbn_input = st.text_input("Número do ISBN", placeholder="Ex: 97885...", key="input_isbn_busca")
+        
+        with col_isbn2:
+            # Espaçador invisível para alinhar o botão na mesma altura da caixa de texto
+            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+            btn_buscar = st.button("🔍 Buscar", use_container_width=True, key="btn_isbn_trigger")
+        
+        if btn_buscar and isbn_input:
+            with st.spinner("Buscando dados do livro..."):
+                livro = buscar_dados_isbn(isbn_input)
+                if livro:
+                    st.session_state["meu_campo_titulo"] = livro["titulo"]
+                    st.session_state["meu_campo_autor"] = livro["autor"]
+                    st.session_state["meu_campo_ano"] = livro["ano"]
+                    st.session_state["meu_campo_editora"] = livro["editora"]
+                    st.rerun()
+                else:
+                    st.error("ISBN não encontrado.")
+                
+        st.markdown("---")
+        
+            
+
         with col_esquerda:
             st.subheader("1. Metadados & Responsabilidade")
             classificacao = st.text_input("Número de Classificação (CDD ou CDU)", value="340.1")
@@ -758,24 +937,23 @@ else:
 
                             except Exception as e:
                                 st.error(f"❌ Erro ao processar requisição: {e}")
-              
-            with tab_financeiro:
-                st.header("💳 Gestão Financeira e Saldo")
-                col_f1, col_f2 = st.columns(2)
-    
-            with col_f1:
-                st.subheader("🔄 Sincronização")
-                usuario = st.session_state.get("usuario_logado", {})
-                email_usuario = usuario.get("email", "E-mail não identificado") if usuario else "Desconectado"
-                st.write(f"**Usuário conectado:** {email_usuario}")
 
-                st.info(f"Seu sistema está vinculado ao e-mail: **{email_usuario}**")
-                if st.button("Atualizar meu Saldo"):
-                    with st.spinner("Puxando dados atualizados do Sheets..."):
-                        if "usuario_atual" in st.session_state:
-                            atualizar_saldo_usuario(st.session_state["usuario_atual"])
-                            st.success("Saldo checado com sucesso!")
-                            st.rerun()
+               
+                
+# Abaixo, fora de qualquer bloco 'if' ou 'try', começa o tab_financeiro
+    with tab_financeiro:
+        st.header("💳 Gestão Financeira e Saldo")
+        # ... resto do seu código da aba
+        col_f1, col_f2 = st.columns(2)
+    
+    with col_f1:
+        st.subheader("🔄 Sincronização")
+        st.info(f"Seu sistema está vinculado ao e-mail: **{st.session_state['usuario_atual']}**")
+        if st.button("Atualizar meu Saldo"):
+            with st.spinner("Puxando dados atualizados do Sheets..."):
+                atualizar_saldo_usuario(st.session_state["usuario_atual"])
+                st.success("Saldo checado com sucesso!")
+                st.rerun()
 
         with col_f2:
             st.subheader("🛒 Tabela de Preços")
@@ -788,41 +966,24 @@ else:
             """)
             st.info("🔑 **PIX:** `bibliokhancontato@gmail.com`")
 
-    st.markdown("---")
-    st.subheader("📩 Envio de Comprovante")
-
-    # Extrai o e-mail do usuário com segurança
-    usuario = st.session_state.get("usuario_logado", {})
-    email_atual = usuario.get("email", "") if isinstance(usuario, dict) else ""
-
-    st.markdown("### 💳 Solicitar Recarga de Créditos")
-
-    with st.form("form_solicitar_recarga"):
-        email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=email_atual, disabled=True)
+        st.markdown("---")
+        st.subheader("📩 Envio de Comprovante")
         
-        pacote_escolhido = st.selectbox(
-            "Qual pacote de créditos você comprou?",
-            options=[
-                "20 Fichas (R$ 55,00)",
-                "30 Fichas (R$ 80,00)",
-                "100 Fichas (R$ 240,00)",
-                "300 Fichas (R$ 660,00)",
-                "600 Fichas (R$ 1.200,00)"
-            ]
-        )
-        
-        comprovante = st.file_uploader(
-            "Anexe a imagem ou PDF do comprovante do PIX", 
-            type=["jpg", "png", "jpeg", "pdf"]
-        )
-        
-        btn_enviar_comprovante = st.form_submit_button("Enviar Comprovante", use_container_width=True)
-
-        if btn_enviar_comprovante:
-            if comprovante is None:
-                st.warning("⚠️ Por favor, anexe o comprovante do PIX antes de enviar.")
-            else:
-                st.success("✅ Comprovante enviado com sucesso! Seus créditos serão liberados em breve pelo administrador.")
+        with st.form("pix_form_original"):
+            email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=st.session_state["usuario_atual"], disabled=True)
+           
+            pacote_escolhido = st.selectbox(
+                "Qual pacote de créditos você comprou?",
+                options=[
+                    "20 Fichas (R$ 55,00)",
+                    "30 Fichas (R$ 80,00)",
+                    "100 Fichas (R$ 240,00)",
+                    "300 Fichas (R$ 660,00)",
+                    "600 Fichas (R$ 1,200.00)"
+                ]
+            )
+            
+            comprovante = st.file_uploader("Anexe a imagem ou PDF do comprovante do PIX", type=["jpg", "png", "jpeg", "pdf"])
             
             if st.form_submit_button("Enviar para Restauração de Saldo"):
                 if comprovante is not None:
