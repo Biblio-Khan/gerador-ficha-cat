@@ -763,18 +763,18 @@ else:
                 st.header("💳 Gestão Financeira e Saldo")
                 col_f1, col_f2 = st.columns(2)
     
-    with col_f1:
-        st.subheader("🔄 Sincronização")
-        usuario = st.session_state.get("usuario_logado", {})
-        email_usuario = usuario.get("email", "E-mail não identificado") if usuario else "Desconectado"
-        st.write(f"**Usuário conectado:** {email_usuario}")
+            with col_f1:
+                st.subheader("🔄 Sincronização")
+                usuario = st.session_state.get("usuario_logado", {})
+                email_usuario = usuario.get("email", "E-mail não identificado") if usuario else "Desconectado"
+                st.write(f"**Usuário conectado:** {email_usuario}")
 
-        st.info(f"Seu sistema está vinculado ao e-mail: **{email_usuario}**")
-        if st.button("Atualizar meu Saldo"):
-            with st.spinner("Puxando dados atualizados do Sheets..."):
-                atualizar_saldo_usuario(st.session_state["usuario_atual"])
-                st.success("Saldo checado com sucesso!")
-                st.rerun()
+                st.info(f"Seu sistema está vinculado ao e-mail: **{email_usuario}**")
+                if st.button("Atualizar meu Saldo"):
+                    with st.spinner("Puxando dados atualizados do Sheets..."):
+                        atualizar_saldo_usuario(st.session_state["usuario_atual"])
+                        st.success("Saldo checado com sucesso!")
+                        st.rerun()
 
         with col_f2:
             st.subheader("🛒 Tabela de Preços")
