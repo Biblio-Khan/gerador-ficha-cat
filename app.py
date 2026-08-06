@@ -763,13 +763,15 @@ else:
                 
 # Abaixo, fora de qualquer bloco 'if' ou 'try', começa o tab_financeiro
     with tab_financeiro:
-        st.header("💳 Gestão Financeira e Saldo")
-        col_f1, col_f2 = st.columns(2)
+    st.header("💳 Gestão Financeira e Saldo")
+    col_f1, col_f2 = st.columns(2)
     
+    # Observe o recuo de 4 espaços para dentro do with tab_financeiro
     with col_f1:
         st.subheader("🔄 Sincronização")
         usuario = st.session_state.get("usuario_logado", {})
         email_usuario = usuario.get("email", "E-mail não identificado") if usuario else "Desconectado"
+        st.write(f"**Usuário conectado:** {email_usuario}")
 
         st.info(f"Seu sistema está vinculado ao e-mail: **{email_usuario}**")
         if st.button("Atualizar meu Saldo"):
