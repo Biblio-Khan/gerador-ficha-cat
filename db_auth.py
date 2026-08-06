@@ -1,5 +1,6 @@
 import streamlit as st
 import libsql_client
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def conectar_turso():
     """Estabelece a conexão com o banco Turso."""
@@ -18,17 +19,20 @@ def conectar_turso():
         st.stop()
 
 def autenticar_usuario(email, senha):
-    """Verifica login e retorna os dados do usuário."""
+    """Verifica login LENDO a criptografia e retorna os dados do usuário."""
     client = conectar_turso()
     try:
-        # Busca pela coluna senha_hash
+        # Busca o hash da senha salvo no banco
         result = client.execute(
             "SELECT id, nome, email, creditos, is_admin, senha_hash FROM usuarios WHERE email = ?", 
             (email,)
         )
         if result.rows:
             row = result.rows[0]
-            if str(row[5]) == str(senha):  # Confirma a senha
+            senha_salva_no_banco = str(row[5])
+            
+            # check_password_hash compara a senha digitada com o hash criptografado do banco
+            if check_password_hash(senha_salva_no_banco, str(senha)): 
                 user_data = {
                     "id": row[0],
                     "nome": row[1],
@@ -44,7 +48,7 @@ def autenticar_usuario(email, senha):
         client.close()
 
 def criar_usuario(nome, email, senha):
-    """Cadastra um novo usuário no sistema com 4 créditos iniciais."""
+    """Cadastra um novo usuário SALVANDO com criptografia."""
     client = conectar_turso()
     try:
         # Verifica se o e-mail já existe
@@ -52,10 +56,13 @@ def criar_usuario(nome, email, senha):
         if check.rows:
             return False, "E-mail já cadastrado!"
         
-        # Insere na coluna senha_hash e dá 4 créditos
+        # Cria o Hash (criptografia) da senha antes de salvar no banco
+        senha_criptografada = generate_password_hash(senha)
+        
+        # Salva a senha criptografada
         client.execute(
             "INSERT INTO usuarios (nome, email, senha_hash, creditos, is_admin) VALUES (?, ?, ?, ?, ?)",
-            (nome, email, senha, 4, 0)
+            (nome, email, senha_criptografada, 4, 0)
         )
         return True, "Cadastro realizado com sucesso!"
     except Exception as e:
@@ -97,9 +104,7 @@ def adicionar_creditos(email, quantidade):
         client.close()
 
 def descontar_credito_e_registrar(email, usuario_id, autor, titulo, assunto):
-    """
-    Desconta 1 crédito e registra a ficha gerada.
-    """
+    """Desconta 1 crédito e registra a ficha gerada."""
     client = conectar_turso()
     try:
         check = client.execute("SELECT creditos FROM usuarios WHERE email = ?", (email,))
