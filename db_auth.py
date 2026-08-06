@@ -3,7 +3,7 @@ import libsql_client
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def conectar_turso():
-    """Estabelece a conexão com o banco Turso."""
+    """Estabelece a conexão síncrona com o banco de dados Turso."""
     turso_secrets = st.secrets.get("turso", {})
     url = turso_secrets.get("TURSO_DATABASE_URL") or st.secrets.get("TURSO_DATABASE_URL")
     auth_token = turso_secrets.get("TURSO_AUTH_TOKEN") or st.secrets.get("TURSO_AUTH_TOKEN")
@@ -18,31 +18,8 @@ def conectar_turso():
         st.error(f"❌ Erro ao conectar no Turso: {e}")
         st.stop()
 
-def verificar_senha_segura(senha_digitada, hash_salvo):
-    """Verifica a senha suportando múltiplos formatos sem quebrar a aplicação."""
-    if not hash_salvo:
-        return False
-
-    # 1. Tenta validar via Werkzeug (formato pbkdf2/scrypt)
-    try:
-        if check_password_hash(hash_salvo, str(senha_digitada)):
-            return True
-    except ValueError:
-        pass  # O hash do banco não é do padrão Werkzeug, segue para os fallbacks
-
-    # 2. Fallback: Se a senha no banco for SHA-256 puro (hashlib)
-    if hashlib.sha256(str(senha_digitada).encode()).hexdigest() == hash_salvo:
-        return True
-
-    # 3. Fallback: Se a senha no banco foi salva em texto puro
-    if str(senha_digitada) == str(hash_salvo):
-        return True
-
-    return False
-
-
 def autenticar_usuario(email, senha):
-    """Verifica login com tratamento seguro de hash."""
+    """Verifica login comparando a senha com o hash criptografado do banco."""
     client = conectar_turso()
     try:
         result = client.execute(
@@ -51,10 +28,9 @@ def autenticar_usuario(email, senha):
         )
         if result.rows:
             row = result.rows[0]
-            hash_salvo = str(row[5]) if row[5] is not None else ""
+            hash_salvo = row[5]
             
-            # Utiliza a verificação tolerante
-            if verificar_senha_segura(senha, hash_salvo):
+            if hash_salvo and check_password_hash(hash_salvo, str(senha)):
                 user_data = {
                     "id": row[0],
                     "nome": row[1],
@@ -71,21 +47,18 @@ def autenticar_usuario(email, senha):
         client.close()
 
 def criar_usuario(nome, email, senha):
-    """Cadastra um novo usuário SALVANDO com criptografia."""
+    """Cadastra um novo usuário gerando hash da senha e atribuindo 4 créditos iniciais."""
     client = conectar_turso()
     try:
-        # Verifica se o e-mail já existe
         check = client.execute("SELECT id FROM usuarios WHERE email = ?", (email,))
         if check.rows:
             return False, "E-mail já cadastrado!"
         
-        # Cria o Hash (criptografia) da senha antes de salvar no banco
-        senha_criptografada = generate_password_hash(senha)
+        senha_hash = generate_password_hash(senha)
         
-        # Salva a senha criptografada
         client.execute(
             "INSERT INTO usuarios (nome, email, senha_hash, creditos, is_admin) VALUES (?, ?, ?, ?, ?)",
-            (nome, email, senha_criptografada, 4, 0)
+            (nome, email, senha_hash, 4, 0)
         )
         return True, "Cadastro realizado com sucesso!"
     except Exception as e:
@@ -94,7 +67,7 @@ def criar_usuario(nome, email, senha):
         client.close()
 
 def listar_usuarios():
-    """Lista todos os usuários para o painel do Admin."""
+    """Lista todos os usuários para o painel de administração."""
     client = conectar_turso()
     try:
         result = client.execute("SELECT id, nome, email, creditos, is_admin FROM usuarios")
@@ -106,7 +79,7 @@ def listar_usuarios():
         client.close()
 
 def adicionar_creditos(email, quantidade):
-    """Admin adiciona créditos a um usuário específico."""
+    """Adiciona créditos ao saldo de um usuário específico."""
     client = conectar_turso()
     try:
         check = client.execute("SELECT creditos FROM usuarios WHERE email = ?", (email,))
@@ -127,7 +100,7 @@ def adicionar_creditos(email, quantidade):
         client.close()
 
 def descontar_credito_e_registrar(email, usuario_id, autor, titulo, assunto):
-    """Desconta 1 crédito e registra a ficha gerada."""
+    """Desconta 1 crédito do usuário e registra a ficha na tabela produtividade."""
     client = conectar_turso()
     try:
         check = client.execute("SELECT creditos FROM usuarios WHERE email = ?", (email,))
@@ -137,13 +110,13 @@ def descontar_credito_e_registrar(email, usuario_id, autor, titulo, assunto):
             if saldo_atual > 0:
                 novo_saldo = saldo_atual - 1
                 
-                # Desconta o crédito
+                # Atualiza créditos na tabela usuarios
                 client.execute(
                     "UPDATE usuarios SET creditos = ? WHERE email = ?", 
                     (novo_saldo, email)
                 )
                 
-                # Registra na tabela produtividade
+                # Registra ficha na tabela produtividade
                 client.execute(
                     "INSERT INTO produtividade (usuario_id, autor, titulo, assunto) VALUES (?, ?, ?, ?)",
                     (usuario_id, autor, titulo, assunto)
@@ -153,13 +126,13 @@ def descontar_credito_e_registrar(email, usuario_id, autor, titulo, assunto):
                 
         return False, 0
     except Exception as e:
-        print(f"Erro ao descontar crédito e registrar: {e}")
+        print(f"Erro ao descontar crédito e registrar produtividade: {e}")
         return False, 0
     finally:
         client.close()
 
 def listar_produtividade():
-    """Lista o histórico de fichas para o Painel Admin."""
+    """Retorna o histórico de produtividade com cruzamento dos dados dos usuários."""
     client = conectar_turso()
     try:
         result = client.execute("""
