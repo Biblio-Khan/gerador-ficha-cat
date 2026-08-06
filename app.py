@@ -772,9 +772,10 @@ else:
                 st.info(f"Seu sistema está vinculado ao e-mail: **{email_usuario}**")
                 if st.button("Atualizar meu Saldo"):
                     with st.spinner("Puxando dados atualizados do Sheets..."):
-                        atualizar_saldo_usuario(st.session_state["usuario_atual"])
-                        st.success("Saldo checado com sucesso!")
-                        st.rerun()
+                        if "usuario_atual" in st.session_state:
+                            atualizar_saldo_usuario(st.session_state["usuario_atual"])
+                            st.success("Saldo checado com sucesso!")
+                            st.rerun()
 
         with col_f2:
             st.subheader("🛒 Tabela de Preços")
@@ -787,34 +788,34 @@ else:
             """)
             st.info("🔑 **PIX:** `bibliokhancontato@gmail.com`")
 
-        st.markdown("---")
-        st.subheader("📩 Envio de Comprovante")
+    st.markdown("---")
+    st.subheader("📩 Envio de Comprovante")
 
-        # Extract the current user's email safely
-        usuario = st.session_state.get("usuario_logado", {})
-        email_atual = usuario.get("email", "") if isinstance(usuario, dict) else ""
+    # Extrai o e-mail do usuário com segurança
+    usuario = st.session_state.get("usuario_logado", {})
+    email_atual = usuario.get("email", "") if isinstance(usuario, dict) else ""
 
-        st.markdown("### 💳 Solicitar Recarga de Créditos")
+    st.markdown("### 💳 Solicitar Recarga de Créditos")
 
-        with st.form("form_solicitar_recarga"):
-            email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=email_atual, disabled=True)
-    
-            pacote_escolhido = st.selectbox(
-                "Qual pacote de créditos você comprou?",
-                options=[
-                    "20 Fichas (R$ 55,00)",
-                    "30 Fichas (R$ 80,00)",
-                    "100 Fichas (R$ 240,00)",
-                    "300 Fichas (R$ 660,00)",
-                    "600 Fichas (R$ 1.200,00)"
+    with st.form("form_solicitar_recarga"):
+        email_cliente = st.text_input("E-mail de Cadastro no Sistema", value=email_atual, disabled=True)
+        
+        pacote_escolhido = st.selectbox(
+            "Qual pacote de créditos você comprou?",
+            options=[
+                "20 Fichas (R$ 55,00)",
+                "30 Fichas (R$ 80,00)",
+                "100 Fichas (R$ 240,00)",
+                "300 Fichas (R$ 660,00)",
+                "600 Fichas (R$ 1.200,00)"
             ]
         )
-    
+        
         comprovante = st.file_uploader(
             "Anexe a imagem ou PDF do comprovante do PIX", 
             type=["jpg", "png", "jpeg", "pdf"]
         )
-    
+        
         btn_enviar_comprovante = st.form_submit_button("Enviar Comprovante", use_container_width=True)
 
         if btn_enviar_comprovante:
