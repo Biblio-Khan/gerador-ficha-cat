@@ -758,9 +758,7 @@ else:
 
                             except Exception as e:
                                 st.error(f"❌ Erro ao processar requisição: {e}")
-
-               
-                
+              
 # Abaixo, fora de qualquer bloco 'if' ou 'try', começa o tab_financeiro
     with tab_financeiro:
         st.header("💳 Gestão Financeira e Saldo")
