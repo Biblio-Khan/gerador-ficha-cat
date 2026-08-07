@@ -535,7 +535,7 @@ else:
             else:
                 col_lote_2.info("O lote está vazio.")
         
-        st.markdown("---")
+            st.markdown("---")
         
             st.subheader("1. Metadados & Responsabilidade")
             classificacao = st.text_input("Número de Classificação (CDD ou CDU)", value="340.1")
