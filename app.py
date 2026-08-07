@@ -452,7 +452,7 @@ else:
         if st.session_state["creditos_ativos"] <= 0:
             st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
 
-        st.title("⚖️ Gerador de Fichas Catalográficas — NBR/AACR2")
+        st.title("Gerador de Fichas Catalográficas — NBR/AACR2")
         st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
 
         st.markdown("---")
@@ -579,7 +579,7 @@ else:
         with col_direita:
             st.subheader("3. Indexação por Assunto")
             st.markdown("##### 🏛️ Buscar no VCB do Senado Federal")
-            termo_busca = st.text_input("Digite um termo jurídico para pesquisar:")
+            termo_busca = st.text_input("Digite um termo para pesquisar:")
             
             if termo_busca:
                 resultados_vcb = buscar_vcb_senado(termo_busca)
