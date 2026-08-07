@@ -536,38 +536,6 @@ else:
                 col_lote_2.info("O lote está vazio.")
         
         st.markdown("---")
-        # --- BUSCA POR ISBN ---
-        col_esquerda, col_direita = st.columns(2)
-        
-        with col_esquerda:
-            st.subheader
-    
-        # --- BLOCO DE BUSCA POR ISBN (Subcolunas internas da esquerda) ---
-        st.markdown("📚 **Preenchimento Automático por ISBN**")
-        col_isbn1, col_isbn2 = st.columns([0.7, 0.3])
-    
-        with col_isbn1:
-            # Rótulo visível para garantir que o Streamlit reserve o espaço na tela
-            isbn_input = st.text_input("Número do ISBN", placeholder="Ex: 97885...", key="input_isbn_busca")
-        
-        with col_isbn2:
-            # Espaçador invisível para alinhar o botão na mesma altura da caixa de texto
-            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
-            btn_buscar = st.button("🔍 Buscar", use_container_width=True, key="btn_isbn_trigger")
-        
-        if btn_buscar and isbn_input:
-            with st.spinner("Buscando dados do livro..."):
-                livro = buscar_dados_isbn(isbn_input)
-                if livro:
-                    st.session_state["meu_campo_titulo"] = livro["titulo"]
-                    st.session_state["meu_campo_autor"] = livro["autor"]
-                    st.session_state["meu_campo_ano"] = livro["ano"]
-                    st.session_state["meu_campo_editora"] = livro["editora"]
-                    st.rerun()
-                else:
-                    st.error("ISBN não encontrado.")
-                
-        st.markdown("---")
         
             
 
