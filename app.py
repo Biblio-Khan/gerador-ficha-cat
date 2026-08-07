@@ -989,7 +989,7 @@ else:
                 if comprovante is not None:
                     with st.spinner("Enviando comprovante para o suporte... Por favor, aguarde."):
                         try:
-                            tg_token = st.secrets["TELEGRAM_BOT_TOKEN"]
+                            tg_token = st.secrets["TELEGRAM_TOKEN"]
                             tg_chat = st.secrets["TELEGRAM_CHAT_ID"]
     
                             fuso_brasilia = timezone(timedelta(hours=-3))
