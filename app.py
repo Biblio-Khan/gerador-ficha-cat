@@ -540,7 +540,7 @@ else:
         col_esquerda, col_direita = st.columns(2)
         
         with col_esquerda:
-            st.subheader("1. Dados da Obra / Autor")
+            st.subheader
     
         # --- BLOCO DE BUSCA POR ISBN (Subcolunas internas da esquerda) ---
         st.markdown("📚 **Preenchimento Automático por ISBN**")
