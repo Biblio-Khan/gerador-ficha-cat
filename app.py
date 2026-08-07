@@ -236,8 +236,8 @@ outro:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
     st.markdown("""
         <style>
-        área de texto {
-            família de fontes: 'Courier New', Courier, monoespaçada !importante;
+        textarea {
+            font-family : 'Courier New', Courier, monospace !important;
         }
         .stTabs [data-baseweb="tab-list"] { gap: 24px; }
         .stTabs [data-baseweb="tab"] {
