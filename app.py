@@ -537,11 +537,11 @@ else:
         
             st.markdown("---")
 
-            with col_esquerda:
-                
-            st.subheader("1. Metadados & Responsabilidade")
-            classificacao = st.text_input("Número de Classificação (CDD ou CDU)", value="340.1")
-            tipo_autor = st.radio("Tipo de Autoria Principal", ["Pessoa Física", "Entidade (Órgão/Instituição)"], horizontal=True)
+            col_esquerda, col_direita = st.columns(2)
+             with col_esquerda:   
+                st.subheader("1. Metadados & Responsabilidade")
+                classificacao = st.text_input("Número de Classificação (CDD ou CDU)", value="340.1")
+                tipo_autor = st.radio("Tipo de Autoria Principal", ["Pessoa Física", "Entidade (Órgão/Instituição)"], horizontal=True)
             
             autores_lista = []
             entidade_nome = ""
