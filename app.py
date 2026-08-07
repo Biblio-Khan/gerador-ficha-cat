@@ -234,24 +234,30 @@ se não st.session_state["logado"]:
 
 outro:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
-    st.markdown("""
+   st.markdown("""
         <style>
         textarea {
-            font-family : 'Courier New', Courier, monospace !important;
+            font-family: 'Courier New', Courier, monospace !important;
         }
-        .stTabs [data-baseweb="tab-list"] { gap: 24px; }
+        .stTabs [data-baseweb="tab-list"] { 
+            gap: 24px; 
+        }
         .stTabs [data-baseweb="tab"] {
-            altura: 50px;
-            espaço em branco: pré-quebra;
-            cor de fundo: #f0f2f6;
-            raio da borda: 5px 5px 0px 0px;
-            espaço: 1px;
-            preenchimento superior: 10px;
-            preenchimento-inferior: 10px;
+            height: 50px;
+            white-space: pre-wrap;
+            background-color: #f0f2f6;
+            border-radius: 5px 5px 0px 0px;
+            gap: 1px;
+            padding-top: 10px;
+            padding-bottom: 10px;
         }
-        .stTabs [aria-selected="true"] { background-color: #B19FFB !important; color: black !important; font-weight: bold; }
+        .stTabs [aria-selected="true"] { 
+            background-color: #B19FFB !important; 
+            color: black !important; 
+            font-weight: bold; 
+        }
         </style>
-        "", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
     se "lote_fichas" não estiver em st.session_state:
         st.session_state.lote_fichas = []
