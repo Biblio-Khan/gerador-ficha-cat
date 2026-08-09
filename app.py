@@ -582,6 +582,7 @@ else:
         st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
 
         st.markdown("---")
+        container_lote = st.container()
         with container_lote:
             col_lote_1, col_lote_2, col_lote_3, col_lote_4 = st.columns([2, 1, 1, 1])
             qtd_fichas = len(st.session_state.lote_fichas)
