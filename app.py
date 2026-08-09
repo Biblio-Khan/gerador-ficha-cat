@@ -152,6 +152,76 @@ def api_obter_produtividade_juridica(usuario):
     return filtro
     
     return df
+
+def formatar_nome_autor_abnt(nome_completo: str) -> str:
+    """Transforma 'João Silva' em 'SILVA, João'."""
+    partes = nome_completo.strip().split()
+    if not partes:
+        return ""
+    if len(partes) == 1:
+        return partes[0].upper()
+    
+    sobrenome = partes[-1].upper()
+    prenomes = " ".join(partes[:-1])
+    return f"{sobrenome}, {prenomes}"
+
+def gerar_citacao_abnt_nbr6023(
+    tipo_autor, autores_lista, entidade_nome, titulo,
+    tem_organizador, organizador_nome, abreviatura_org,
+    edicao, editora, cidade, ano, paginas_input,
+    grau_academico, instituicao, area_concentracao, url_acesso
+) -> str:
+    """
+    Gera a referência ABNT NBR 6023 utilizando exatamente as variáveis do formulário.
+    """
+    # 1. Formatação da Autoria
+    autoria_str = ""
+    if tipo_autor == "Pessoa Física":
+        autores_formatados = [formatar_nome_autor_abnt(a) for a in autores_lista if a.strip()]
+        if autores_formatados:
+            if len(autores_formatados) <= 3:
+                autoria_str = "; ".join(autores_formatados)
+            else:
+                autoria_str = f"{autores_formatados[0]} *et al.*"
+        elif tem_organizador and organizador_nome:
+            org_fmt = formatar_nome_autor_abnt(organizador_nome)
+            autoria_str = f"{org_fmt} ({abreviatura_org})"
+    else:
+        autoria_str = entidade_nome.strip().upper()
+
+    # Garantir ponto final na autoria se houver valor
+    if autoria_str and not autoria_str.endswith("."):
+        autoria_str += "."
+
+    # 2. Título (em Negrito)
+    titulo_bold = f"**{titulo.strip()}**." if titulo.strip() else ""
+
+    # 3. Tratamento para Livros / Obras Gerais
+    if grau_academico == "Livro / Código / Obra Geral":
+        edicao_str = f"{edicao.strip()} " if edicao.strip() else ""
+        editora_str = editora.strip() if editora.strip() else "s. n."
+        cidade_str = cidade.strip() if cidade.strip() else "s. l."
+        paginas_str = f"{paginas_input.strip()} p." if paginas_input.strip() else ""
+        
+        ref = f"{autoria_str} {titulo_bold} {edicao_str}{cidade_str}: {editora_str}, {ano}. {paginas_str}"
+
+    # 4. Tratamento para Trabalhos Acadêmicos (Tese, Dissertação, Monografia)
+    else:
+        inst_str = instituicao.strip() if instituicao.strip() else "Instituição não informada"
+        cidade_str = cidade.strip() if cidade.strip() else "s. l."
+        paginas_str = f"{paginas_input.strip()} f." if paginas_input.strip() else ""
+        area_str = f" em {area_concentracao.strip()}" if area_concentracao.strip() else ""
+        
+        ref = (
+            f"{autoria_str} {titulo_bold} {ano}. {paginas_str} "
+            f"{grau_academico}{area_str} – {inst_str}, {cidade_str}, {ano}."
+        )
+
+    # 5. Adiciona URL se a obra for digital
+    if url_acesso.strip():
+        ref += f" Disponível em: {url_acesso.strip()}."
+
+    return ref.strip()
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
