@@ -165,6 +165,30 @@ def formatar_nome_autor_abnt(nome_completo: str) -> str:
     prenomes = " ".join(partes[:-1])
     return f"{sobrenome}, {prenomes}"
 
+from datetime import datetime
+
+def formatar_nome_autor_abnt(nome_completo: str) -> str:
+    """Transforma 'João Pedro da Silva' em 'SILVA, João Pedro da'."""
+    partes = nome_completo.strip().split()
+    if not partes:
+        return ""
+    if len(partes) == 1:
+        return partes[0].upper()
+    
+    sobrenome = partes[-1].upper()
+    prenomes = " ".join(partes[:-1])
+    return f"{sobrenome}, {prenomes}"
+
+def obter_data_acesso_abnt() -> str:
+    """Retorna a data atual no formato ABNT NBR 6023 (Ex: 9 ago. 2026)."""
+    meses_abnt = {
+        1: "jan.", 2: "fev.", 3: "mar.", 4: "abr.",
+        5: "maio", 6: "jun.", 7: "jul.", 8: "ago.",
+        9: "set.", 10: "out.", 11: "nov.", 12: "dez."
+    }
+    hoje = datetime.now()
+    return f"{hoje.day} {meses_abnt[hoje.month]} {hoje.year}"
+
 def gerar_citacao_abnt_nbr6023(
     tipo_autor, autores_lista, entidade_nome, titulo,
     tem_organizador, organizador_nome, abreviatura_org,
@@ -172,7 +196,7 @@ def gerar_citacao_abnt_nbr6023(
     grau_academico, instituicao, area_concentracao, url_acesso
 ) -> str:
     """
-    Gera a referência ABNT NBR 6023 utilizando exatamente as variáveis do formulário.
+    Gera a referência ABNT NBR 6023 utilizando as variáveis do formulário.
     """
     # 1. Formatação da Autoria
     autoria_str = ""
@@ -189,7 +213,6 @@ def gerar_citacao_abnt_nbr6023(
     else:
         autoria_str = entidade_nome.strip().upper()
 
-    # Garantir ponto final na autoria se houver valor
     if autoria_str and not autoria_str.endswith("."):
         autoria_str += "."
 
@@ -217,11 +240,44 @@ def gerar_citacao_abnt_nbr6023(
             f"{grau_academico}{area_str} – {inst_str}, {cidade_str}, {ano}."
         )
 
-    # 5. Adiciona URL se a obra for digital
+    # 5. Adiciona URL e Data de Acesso
     if url_acesso.strip():
-        ref += f" Disponível em: {url_acesso.strip()}."
+        data_acesso = obter_data_acesso_abnt()
+        ref += f" Disponível em: {url_acesso.strip()}. Acesso em: {data_acesso}."
 
     return ref.strip()
+
+import io
+from docx import Document
+from docx.shared import Pt
+
+def gerar_docx_referencias_lote(lote_fichas: list) -> io.BytesIO:
+    """
+    Gera um arquivo Word (.docx) contendo todas as referências ABNT do lote,
+    convertendo a marcação de negrito (**texto**) para a formatação do Word.
+    """
+    doc = Document()
+    doc.add_heading("Referências Bibliográficas (ABNT NBR 6023)", level=1)
+    
+    for item in lote_fichas:
+        ref_texto = item.get("citacao_abnt", "").strip()
+        if not ref_texto:
+            continue
+            
+        p = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(12)  # Espaçamento entre referências
+        
+        # Converte a formatação **negrito** do markdown para estilo de texto real no Word
+        partes = ref_texto.split("**")
+        for idx, parte in enumerate(partes):
+            run = p.add_run(parte)
+            if idx % 2 != 0:  # Trecho que estava entre ** fica em negrito
+                run.bold = True
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
@@ -526,46 +582,50 @@ else:
         st.caption("Mesa técnica integrada via Web Service ao Vocabulário Controlado Básico (VCB) do Senado Federal.")
 
         st.markdown("---")
-        container_lote = st.container()
         with container_lote:
-            # Adicionei uma terceira coluna (col_lote_3) para o botão MARC
-            col_lote_1, col_lote_2, col_lote_3 = st.columns([2, 1, 1])
+            col_lote_1, col_lote_2, col_lote_3, col_lote_4 = st.columns([2, 1, 1, 1])
             qtd_fichas = len(st.session_state.lote_fichas)
             col_lote_1.subheader(f"📦 Lote: {qtd_fichas} Ficha(s)")
             
             if qtd_fichas > 0:
-                # 1. Botão Word (Mantido)
-                arquivo_word = gerar_docx_lote([f["texto_ficha"] for f in st.session_state.lote_fichas])
+                # === COLUNA 2: DOCUMENTOS EM WORD ===
+                # 1. Fichas Catalográficas (Word)
+                arquivo_word_fichas = gerar_docx_lote([f["texto_ficha"] for f in st.session_state.lote_fichas])
                 col_lote_2.download_button(
-                    label="📥 Word",
-                    data=arquivo_word,
+                    label="📄 Fichas (Word)",
+                    data=arquivo_word_fichas,
                     file_name="lote_fichas.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
                 
-                # 2. Botão MARC 21 (Novo)
-                # Como a ficha atual é apenas texto, passamos o texto para a função
-                # (A função tratará de criar um registro básico a partir do texto)
-                conteudo_marc = "\n\n".join([gerar_marc21_completo(f["dados_marc"]) for f in st.session_state.lote_fichas])
-
-                # Primeiro botão (MARC 21 original)
-                col_lote_3.download_button(
-                label="📥 MARC 21 (.mrc)",
-                data=conteudo_marc,
-                file_name="lote_juridico.mrc",
-                mime="text/plain"
-                )
-
-                # Segundo botão (TXT para copiar/colar)
-                col_lote_3.download_button(
-                label="📋 MARC 21 (.txt)",
-                data=conteudo_marc,
-                file_name="lote_juridico.txt",
-                mime="text/plain"
+                # 2. Referências ABNT (Word) - NOVO BOTÃO
+                arquivo_word_referencias = gerar_docx_referencias_lote(st.session_state.lote_fichas)
+                col_lote_2.download_button(
+                    label="🎁 Referências ABNT (Word)",
+                    data=arquivo_word_referencias,
+                    file_name="lote_referencias_abnt.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
                 
-                # 3. Botão Limpar (Mantido)
-                if col_lote_2.button("🗑️ Limpar"):
+                # === COLUNA 3: REGISTROS MARC 21 ===
+                conteudo_marc = "\n\n".join([gerar_marc21_completo(f["dados_marc"]) for f in st.session_state.lote_fichas])
+
+                col_lote_3.download_button(
+                    label="📥 MARC 21 (.mrc)",
+                    data=conteudo_marc,
+                    file_name="lote_juridico.mrc",
+                    mime="text/plain"
+                )
+
+                col_lote_3.download_button(
+                    label="📋 MARC 21 (.txt)",
+                    data=conteudo_marc,
+                    file_name="lote_juridico.txt",
+                    mime="text/plain"
+                )
+                
+                # === COLUNA 4: AÇÕES ===
+                if col_lote_4.button("🗑️ Limpar Lote"):
                     st.session_state.lote_fichas = []
                     st.rerun()
             else:
@@ -802,10 +862,19 @@ else:
                         
                                 import json
                                 resultado_json = json.loads(conteudo)
-                        
+
                                 if resultado_json.get("status") == "sucesso":
                                     ficha_completa = {
                                         "texto_ficha": txt_ficha,
+        
+                                        # === NOVA LINHA ADICIONADA (Chama a função criada para gerar a referência ABNT) ===
+                                        "citacao_abnt": gerar_citacao_abnt_nbr6023(
+                                            tipo_autor, autores_lista, entidade_nome, titulo,
+                                            tem_organizador, organizador_nome, abreviatura_org,
+                                            edicao, editora, cidade, ano, paginas_input,
+                                            grau_academico, instituicao, area_concentracao, url_acesso
+                                        ),
+        
                                         "dados_marc": {
                                             "entrada": entrada_principal,
                                             "titulo": titulo,
@@ -819,6 +888,7 @@ else:
                                             "dimensoes": dimensoes_input
                                         }
                                     }
+    
                                     st.session_state.lote_fichas.append(ficha_completa)
                                     st.session_state["creditos_ativos"] -= 1
                                     st.session_state.assuntos_selecionados = [] 
