@@ -737,7 +737,7 @@ else:
                         st.session_state.assuntos_selecionados.append(termo_limpo)
                         st.rerun()
 
-           if st.session_state.assuntos_selecionados:
+            if st.session_state.assuntos_selecionados:
                 st.write("**Assuntos Vinculados à Ficha:**")
         
                 assunto_para_remover = None
