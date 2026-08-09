@@ -382,6 +382,9 @@ else:
     if "assuntos_selecionados" not in st.session_state:
         st.session_state.assuntos_selecionados = []
 
+    if "form_id" not in st.session_state:
+    st.session_state.form_id = 0
+
     def buscar_vcb_senado(termo_busca):
         url_api = "https://adm.senado.leg.br/vcb/vocab/services.php"
         params = {"task": "search", "arg": termo_busca, "output": "json"}
@@ -637,80 +640,78 @@ else:
 
         with col_esquerda:
             st.subheader("1. Metadados & Responsabilidade")
-            classificacao = st.text_input("Número de Classificação (CDD ou CDU)", value="340.1")
-            tipo_autor = st.radio("Tipo de Autoria Principal", ["Pessoa Física", "Entidade (Órgão/Instituição)"], horizontal=True)
+            classificacao = st.text_input("Número de Classificação (CDD ou CDU)", value="340.1", key=f"classificacao_{fid}")
+            tipo_autor = st.radio("Tipo de Autoria Principal", ["Pessoa Física", "Entidade (Órgão/Instituição)"], horizontal=True, key=f"tipo_autor_{fid}")
             
             autores_lista = []
             entidade_nome = ""
             
             if tipo_autor == "Pessoa Física":
-                qtd_autores_input = st.number_input("Quantidade de autores principais (0 se houver apenas Organizador)", min_value=0, max_value=10, value=1)
+                qtd_autores_input = st.number_input("Quantidade de autores principais (0 se houver apenas Organizador)", min_value=0, max_value=10, value=1, key=f"qtd_autores_{fid}")
                 for i in range(int(qtd_autores_input)):
-                    autores_lista.append(st.text_input(f"Autor {i+1} (Nome Sobrenome)", key=f"autor_{i}"))
+                    autores_lista.append(st.text_input(f"Autor {i+1} (Nome Sobrenome)", key=f"autor_{fid}_{i}"))
             else:
-                entidade_nome = st.text_input("Nome da Entidade (Ex: Brasil. Supremo Tribunal Federal)")
+                entidade_nome = st.text_input("Nome da Entidade (Ex: Brasil. Supremo Tribunal Federal)", key=f"entidade_nome_{fid}")
                 
-            titulo = st.text_input("Título Principal")
+            titulo = st.text_input("Título Principal", key=f"titulo_{fid}")
             st.markdown("---")
             col_resp_1, col_resp_2 = st.columns(2)
             
             with col_resp_1:
-                tem_organizador = st.checkbox("Possui Organizador/Coordenador?")
+                tem_organizador = st.checkbox("Possui Organizador/Coordenador?", key=f"tem_organizador_{fid}")
                 organizador_nome = ""
                 tipo_org, abreviatura_org = "", ""
                 if tem_organizador:
-                    papel = st.selectbox("Função:", ["Organizador", "Coordenador", "Compilador"])
-                    organizador_nome = st.text_input("Nome do Responsável")
+                    papel = st.selectbox("Função:", ["Organizador", "Coordenador", "Compilador"], key=f"papel_{fid}")
+                    organizador_nome = st.text_input("Nome do Responsável", key=f"organizador_nome_{fid}")
                     if papel == "Organizador": tipo_org, abreviatura_org = "organizado", "org."
                     elif papel == "Coordenador": tipo_org, abreviatura_org = "coordenado", "coord."
                     else: tipo_org, abreviatura_org = "compilado", "comp."
                     
             with col_resp_2:
-                tem_tradutor = st.checkbox("A obra possui Tradutor?")
+                tem_tradutor = st.checkbox("A obra possui Tradutor?", key=f"tem_tradutor_{fid}")
                 tradutor_nome = ""
                 if tem_tradutor:
-                    tradutor_nome = st.text_input("Nome do Tradutor (Nome Sobrenome)", key="trad_nome")
-
+                    tradutor_nome = st.text_input("Nome do Tradutor (Nome Sobrenome)", key=f"trad_nome_{fid}")
+            
             st.markdown("---")
             st.subheader("2. Publicação & Descrição Física")
-            edicao = st.text_input("Edição e Volume (Ex: 2. ed., 3. ed. rev. e ampl.)", value="1. ed.")
-            editora = st.text_input("Editora")
-            cidade = st.text_input("Cidade de Publicação", value="Brasília")
-            ano = st.text_input("Ano de Publicação", value="2026")
-            paginas_input = st.text_input("Número de Páginas/Folhas", value="180")
-            dimensoes_input = st.text_input("Dimensões", value="30 cm")
+            edicao = st.text_input("Edição e Volume (Ex: 2. ed., 3. ed. rev. e ampl.)", value="1. ed.", key=f"edicao_{fid}")
+            editora = st.text_input("Editora", key=f"editora_{fid}")
+            cidade = st.text_input("Cidade de Publicação", value="Brasília", key=f"cidade_{fid}")
+            ano = st.text_input("Ano de Publicação", value="2026", key=f"ano_{fid}")
+            paginas_input = st.text_input("Número de Páginas/Folhas", value="180", key=f"paginas_{fid}")
+            dimensoes_input = st.text_input("Dimensões", value="30 cm", key=f"dimensoes_{fid}")
             
-            tem_colecao = st.checkbox("Esta obra faz parte de uma Coleção / Série?")
+            tem_colecao = st.checkbox("Esta obra faz parte de uma Coleção / Série?", key=f"tem_colecao_{fid}")
             colecao_nome = ""
             if tem_colecao:
-                colecao_nome = st.text_input("Nome da Coleção e Volume (Ex: Biblioteca jurídica, v. 12)")
+                colecao_nome = st.text_input("Nome da Coleção e Volume (Ex: Biblioteca jurídica, v. 12)", key=f"colecao_{fid}")
 
-            # === BLOCO CORRIGIDO: Tipo de Trabalho Acadêmico ===
             st.markdown("---")
             st.subheader("3. Tipo de Documento / Trabalho Acadêmico")
-            
+
             grau_academico = st.selectbox(
                 "Tipo de Obra:", 
-                ["Livro / Código / Obra Geral", "Tese (Doutorado)", "Dissertação (Mestrado)", "Monografia (Especialização)", "Monografia (Graduação)"]
+                ["Livro / Código / Obra Geral", "Tese (Doutorado)", "Dissertação (Mestrado)", "Monografia (Especialização)", "Monografia (Graduação)"],
+                key=f"grau_academico_{fid}"
             )
 
-            # Inicializa as variáveis vazias por padrão
             instituicao = ""
             area_concentracao = ""
 
-            # Se for selecionado qualquer trabalho acadêmico, mostra os campos adicionais
             if grau_academico != "Livro / Código / Obra Geral":
-                instituicao = st.text_input("Instituição / Universidade (Ex: Faculdade de Direito da USP):")
-                area_concentracao = st.text_input("Área de Concentração / Curso (Ex: Direito Civil):")
-                
-            isbn = st.text_input("ISBN (Ex: 978-65-0000-00-0)")
-            suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True)
-            url_acesso = st.text_input("URL de Acesso / DOI") if suporte == "Digital" else ""
+                instituicao = st.text_input("Instituição / Universidade (Ex: Faculdade de Direito da USP):", key=f"instituicao_{fid}")
+                area_concentracao = st.text_input("Área de Concentração / Curso (Ex: Direito Civil):", key=f"area_{fid}")
+        
+            isbn = st.text_input("ISBN (Ex: 978-65-0000-00-0)", key=f"isbn_{fid}")
+            suporte = st.radio("Suporte da Obra", ["Impresso", "Digital"], horizontal=True, key=f"suporte_{fid}")
+            url_acesso = st.text_input("URL de Acesso / DOI", key=f"url_acesso_{fid}") if suporte == "Digital" else ""
 
         with col_direita:
             st.subheader("3. Indexação por Assunto")
             st.markdown("##### 🏛️ Buscar no VCB do Senado Federal")
-            termo_busca = st.text_input("Digite um termo para pesquisar:")
+            termo_busca = st.text_input("Digite um termo para pesquisar:", key=f"termo_busca_{fid}")
             
             if termo_busca:
                 resultados_vcb = buscar_vcb_senado(termo_busca)
@@ -718,8 +719,8 @@ else:
                     st.success(f"{len(resultados_vcb)} conceitos localizados no Senado!")
                     mapeamento_opcoes = {item["termo"]: item for item in resultados_vcb}
                     lista_opcoes = sorted(list(mapeamento_opcoes.keys()))
-                    termo_selecionado = st.selectbox("Selecione o conceito oficial:", lista_opcoes)
-                    
+                    termo_selecionado = st.selectbox("Selecione o conceito oficial:", lista_opcoes, key=f"termo_sel_{fid}")
+            
                     if st.button("➕ Vincular Assunto do Senado"):
                         if termo_selecionado not in st.session_state.assuntos_selecionados:
                             st.session_state.assuntos_selecionados.append(termo_selecionado)
@@ -728,7 +729,7 @@ else:
                     st.warning("Nenhum termo correspondente retornado pela API do Senado.")
 
             st.markdown("##### ✍️ Adicionar Assunto Manualmente")
-            assunto_manual = st.text_input("Digite um assunto customizado:")
+            assunto_manual = st.text_input("Digite um assunto customizado:", key=f"assunto_manual_{fid}")
             if st.button("➕ Vincular Assunto Manual"):
                 if assunto_manual.strip():
                     termo_limpo = assunto_manual.strip()
@@ -736,18 +737,21 @@ else:
                         st.session_state.assuntos_selecionados.append(termo_limpo)
                         st.rerun()
 
-            if st.session_state.assuntos_selecionados:
+           if st.session_state.assuntos_selecionados:
                 st.write("**Assuntos Vinculados à Ficha:**")
-                
-                # Criamos um botão de exclusão individual para cada assunto
+        
+                assunto_para_remover = None
                 for idx, ass in enumerate(st.session_state.assuntos_selecionados):
                     col_assunto, col_excluir = st.columns([9, 1])
                     with col_assunto:
                         st.write(f"{idx+1}. {ass}")
                     with col_excluir:
                         if st.button("❌", key=f"remover_assunto_{idx}", help="Remover apenas este assunto"):
-                            st.session_state.assuntos_selecionados.pop(idx)
-                            st.rerun()
+                            assunto_para_remover = ass
+                    
+                if assunto_para_remover:
+                    st.session_state.assuntos_selecionados.remove(assunto_para_remover)
+                    st.rerun()
                             
                 # Mantemos o botão de limpar tudo, caso o usuário queira zerar a lista
                 if st.button("🗑️ Limpar Todos os Assuntos"):
@@ -831,26 +835,27 @@ else:
  
             if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
                 valido = True
-            if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
-                valido = False
-            if 'valido' not in locals():
-                valido = False
+                if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
+                    valido = False
+                    st.error("⚠️ Informe ao menos um autor principal ou marque a opção de Organizador.")
+                if not titulo.strip():
+                    valido = False
+                    st.error("⚠️ O Título Principal é obrigatório.")
     
-            if valido and titulo.strip():
-                with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
-                    try:
-                        # 1. Preparação
-                        url_script = st.secrets["URL_SCRIPT_GOOGLE"]
-                        lista_assuntos = st.session_state.get("assuntos_selecionados", [])
-                        assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
-                        titulo_livro = titulo if titulo else "Não Informado"
+                if valido:
+                    with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
+                        try:
+                            url_script = st.secrets["URL_SCRIPT_GOOGLE"]
+                            lista_assuntos = st.session_state.get("assuntos_selecionados", [])
+                            assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
+                            titulo_livro = titulo if titulo else "Não Informado"
                 
-                        payload = {
-                            "email": st.session_state["usuario_atual"],
-                            "acao": "descontar",
-                            "titulo": titulo_livro,
-                            "assunto": assuntos_texto
-                        }
+                            payload = {
+                                "email": st.session_state["usuario_atual"],
+                                "acao": "descontar",
+                                "titulo": titulo_livro,
+                                "assunto": assuntos_texto
+                            }
                 
                         # 2. Requisição
                         resposta_google = requests.post(url_script, json=payload, timeout=15)
@@ -892,6 +897,8 @@ else:
     
                                     st.session_state.lote_fichas.append(ficha_completa)
                                     st.session_state["creditos_ativos"] -= 1
+                                    st.session_state.form_id += 1
+                                    st.session_state.assuntos_selecionados = []
                                     st.session_state.assuntos_selecionados = [] 
                                     st.success("✅ Ficha guardada com sucesso!")
                                     st.rerun()
