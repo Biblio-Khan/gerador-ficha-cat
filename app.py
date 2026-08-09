@@ -857,61 +857,61 @@ else:
                                 "assunto": assuntos_texto
                             }
                 
-                        # 2. Requisição
-                        resposta_google = requests.post(url_script, json=payload, timeout=15)
+                            # 2. Requisição
+                            resposta_google = requests.post(url_script, json=payload, timeout=15)
                 
-                        if resposta_google.status_code == 200:
-                            try:
-                                conteudo = resposta_google.content.decode('utf-8-sig').strip()
-                                if "{" in conteudo:
-                                    conteudo = conteudo[conteudo.find("{"):]
+                            if resposta_google.status_code == 200:
+                                try:
+                                    conteudo = resposta_google.content.decode('utf-8-sig').strip()
+                                    if "{" in conteudo:
+                                        conteudo = conteudo[conteudo.find("{"):]
                         
-                                import json
-                                resultado_json = json.loads(conteudo)
+                                    import json
+                                    resultado_json = json.loads(conteudo)
 
-                                if resultado_json.get("status") == "sucesso":
-                                    ficha_completa = {
-                                        "texto_ficha": txt_ficha,
+                                    if resultado_json.get("status") == "sucesso":
+                                        ficha_completa = {
+                                            "texto_ficha": txt_ficha,
         
-                                        # === NOVA LINHA ADICIONADA (Chama a função criada para gerar a referência ABNT) ===
-                                        "citacao_abnt": gerar_citacao_abnt_nbr6023(
-                                            tipo_autor, autores_lista, entidade_nome, titulo,
-                                            tem_organizador, organizador_nome, abreviatura_org,
-                                            edicao, editora, cidade, ano, paginas_input,
-                                            grau_academico, instituicao, area_concentracao, url_acesso
-                                        ),
+                                            # === NOVA LINHA ADICIONADA (Chama a função criada para gerar a referência ABNT) ===
+                                            "citacao_abnt": gerar_citacao_abnt_nbr6023(
+                                                tipo_autor, autores_lista, entidade_nome, titulo,
+                                                tem_organizador, organizador_nome, abreviatura_org,
+                                                edicao, editora, cidade, ano, paginas_input,
+                                                grau_academico, instituicao, area_concentracao, url_acesso
+                                            ),
         
-                                        "dados_marc": {
-                                            "entrada": entrada_principal,
-                                            "titulo": titulo,
-                                            "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                            "tipo": grau_academico,
-                                            "instituicao": instituicao.strip(),
-                                            "area": area_concentracao.strip(),
-                                            "assuntos": st.session_state.assuntos_selecionados,
-                                            "ano": ano.strip(),
-                                            "paginas": paginas_input,
-                                            "dimensoes": dimensoes_input
+                                            "dados_marc": {
+                                                "entrada": entrada_principal,
+                                                "titulo": titulo,
+                                                "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                                "tipo": grau_academico,
+                                                "instituicao": instituicao.strip(),
+                                                "area": area_concentracao.strip(),
+                                                "assuntos": st.session_state.assuntos_selecionados,
+                                                "ano": ano.strip(),
+                                                "paginas": paginas_input,
+                                                "dimensoes": dimensoes_input
+                                            }
                                         }
-                                    }
     
-                                    st.session_state.lote_fichas.append(ficha_completa)
-                                    st.session_state["creditos_ativos"] -= 1
-                                    st.session_state.form_id += 1
-                                    st.session_state.assuntos_selecionados = []
-                                    st.session_state.assuntos_selecionados = [] 
-                                    st.success("✅ Ficha guardada com sucesso!")
-                                    st.rerun()
-                                else:
-                                    st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
+                                        st.session_state.lote_fichas.append(ficha_completa)
+                                        st.session_state["creditos_ativos"] -= 1
+                                        st.session_state.form_id += 1
+                                        st.session_state.assuntos_selecionados = []
+                                        st.session_state.assuntos_selecionados = [] 
+                                        st.success("✅ Ficha guardada com sucesso!")
+                                        st.rerun()
+                                    else:
+                                        st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
                             
-                            except Exception as e:
-                                st.error(f"❌ Falha ao processar resposta: {e}")
-                        else:
-                            st.error(f"❌ Falha de conexão. Status: {resposta_google.status_code}")
+                                except Exception as e:
+                                    st.error(f"❌ Falha ao processar resposta: {e}")
+                            else:
+                                st.error(f"❌ Falha de conexão. Status: {resposta_google.status_code}")
                     
-                    except Exception as e:
-                        st.error(f"❌ Erro ao processar requisição: {e}")    
+                        except Exception as e:
+                            st.error(f"❌ Erro ao processar requisição: {e}")    
                 
 # Abaixo, fora de qualquer bloco 'if' ou 'try', começa o tab_financeiro
     with tab_financeiro:
