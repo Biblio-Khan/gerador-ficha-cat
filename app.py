@@ -636,6 +636,7 @@ else:
                 col_lote_2.info("O lote está vazio.")
         
         st.markdown("---")
+        fid = st.session_state.form_id
         col_esquerda, col_direita = st.columns(2)
 
         with col_esquerda:
