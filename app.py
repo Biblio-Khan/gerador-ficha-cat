@@ -569,7 +569,7 @@ else:
     # SISTEMA DE ABAS (CATALOGAÇÃO & CRÉDITOS LIMITADOS ATÉ 300)
     # =========================================================================
     tab_gerador, tab_financeiro, tab_produtividade = st.tabs([
-    "⚖️ Gerar Ficha", 
+    "Gerar Ficha", 
     "💳 Compra e Gestão de Créditos",
     "📊 Painel de Produtividade"
 ])
@@ -602,7 +602,7 @@ else:
                 # 2. Referências ABNT (Word) - NOVO BOTÃO
                 arquivo_word_referencias = gerar_docx_referencias_lote(st.session_state.lote_fichas)
                 col_lote_2.download_button(
-                    label="🎁 Referências ABNT (Word)",
+                    label="Referências ABNT (Word)",
                     data=arquivo_word_referencias,
                     file_name="lote_referencias_abnt.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -619,7 +619,7 @@ else:
                 )
 
                 col_lote_3.download_button(
-                    label="📋 MARC 21 (.txt)",
+                    label="MARC 21 (.txt)",
                     data=conteudo_marc,
                     file_name="lote_juridico.txt",
                     mime="text/plain"
