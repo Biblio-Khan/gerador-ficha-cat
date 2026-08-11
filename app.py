@@ -129,6 +129,26 @@ def atualizar_saldo_usuario(token_usuario):
             
     except Exception as e:
         st.error(f"Erro ao processar os dados: {e}")
+
+import gspread
+from datetime import datetime
+
+def dar_creditos_automaticos(email_usuario):
+    try:
+        # Conecta na planilha usando os Secrets que já configuramos
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        gc = gspread.service_account_from_dict(creds_dict)
+        
+        # AQUI VOCÊ DEVE COLOCAR O NOME EXATO DA SUA PLANILHA E ABA
+        sheet = gc.open("créditos_fichajud").worksheet("Página1")
+        
+        # Adiciona a nova linha
+        sheet.append_row([email_usuario.lower().strip(), 4, datetime.now().strftime("%d/%m/%Y")])
+        return True
+    except Exception as e:
+        # Caso dê erro na planilha, não queremos impedir o usuário de logar, mas avisamos no log
+        print(f"Erro ao dar créditos automáticos: {e}")
+        return False
         
 def api_obter_produtividade_juridica(usuario):
     url_produtividade = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=54763437"
@@ -338,7 +358,7 @@ if not st.session_state["logado"]:
         """)
 
 # --- TELA DE CADASTRO (Abaixo do Login) ---
-if not st.session_state["logado"]:
+if not st.session_state.get("logado", False):
     with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
         with st.form("cadastro_form"):
             novo_email = st.text_input("Novo E-mail").strip()
@@ -348,9 +368,14 @@ if not st.session_state["logado"]:
             if botao_cadastrar:
                 if novo_email and nova_senha:
                     try:
-                        # Chama o Firebase para criar o usuário
+                        # 1. Cria o usuário no Firebase
                         auth.create_user(email=novo_email, password=nova_senha)
-                        st.success("✅ Conta criada com sucesso! Faça o login agora.")
+                        
+                        # 2. Concede os 4 créditos automaticamente na planilha
+                        dar_creditos_automaticos(novo_email)
+                        
+                        st.success("✅ Conta criada com sucesso! 4 créditos de boas-vindas liberados. Faça o login agora.")
+                        
                     except Exception as e:
                         st.error(f"❌ Erro ao criar conta: {e}")
                 else:
