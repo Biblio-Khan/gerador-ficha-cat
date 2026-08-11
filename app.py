@@ -322,14 +322,14 @@ def verificar_login_firebase(email, senha):
     return False
 
 
-# ==========================================
-# TELA DE LOGIN E CADASTRO (NÃO LOGADO)
-# ==========================================
+
 if not st.session_state.get("logado", False):
+    # ----------------------------------------------------
+    # TELA DE LOGIN / CADASTRO (0 espaços de recuo)
+    # ----------------------------------------------------
     st.markdown("# 🔒 Área do Cliente")
     st.markdown("### Faça o login para acessar o Assistente de Catalogação.")
 
-    # 1. Formulário de Login
     with st.form("login_form"):
         email_input = st.text_input("E-mail de Usuário").strip()
         senha_input = st.text_input("Senha de Acesso", type="password").strip()
@@ -345,15 +345,12 @@ if not st.session_state.get("logado", False):
 
     st.markdown("---")
 
-    # 2. Esqueceu a Senha
     with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
         st.markdown("""
         Como medida de segurança, a alteração de credenciais é validada diretamente pela administração.
-        
-        Para redefinir sua senha, entre em contato diretamente com o suporte técnico através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
+        Para redefinir sua senha, entre em contato diretamente com o suporte técnico.
         """)
 
-    # 3. Formulário de Cadastro
     with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
         with st.form("cadastro_form"):
             novo_email = st.text_input("Novo E-mail").strip()
@@ -375,72 +372,68 @@ if not st.session_state.get("logado", False):
                 else:
                     st.warning("⚠️ Preencha e-mail e senha.")
 
-    # ⛔ PARADA OBRIGATÓRIA: Se não estiver logado, o Streamlit para aqui e NÃO executa o restante do código
-    st.stop()
+else:
+    # ----------------------------------------------------
+    # ÁREA DO USUÁRIO LOGADO (4 espaços de recuo)
+    # ----------------------------------------------------
+    uid = st.session_state.get("user_uid")
+    saldo = atualizar_saldo_usuario(uid)
 
+    # 1. Barra Lateral (8 espaços de recuo apenas no bloco abaixo)
+    with st.sidebar:
+        st.markdown("### 👤 Perfil")
+        st.caption(f"**Usuário:** {st.session_state.get('usuario_atual')}")
+        st.metric(label="💳 Créditos Disponíveis", value=f"{saldo}")
+        st.divider()
+        
+        if st.button("Sair"):
+            st.session_state["logado"] = False
+            st.session_state["user_uid"] = ""
+            st.session_state["usuario_atual"] = ""
+            st.session_state["creditos_ativos"] = 0
+            st.rerun()
 
-# ==========================================
-# ÁREA DO USUÁRIO LOGADO (CÓDIGO PRINCIPAL)
-# ==========================================
+    # 2. Conteúdo Principal do App (Volta para 4 espaços - alinhado com o 'else:')
+    st.markdown("""
+        <style>
+        textarea {
+            font-family: 'Courier New', Courier, monospace !important;
+        }
+        .stTabs [data-baseweb="tab-list"] { gap: 24px; }
+        .stTabs [data-baseweb="tab"] { 
+            height: 50px; 
+            white-space: pre-wrap; 
+            background-color: #f0f2f6; 
+            border-radius: 5px 5px 0px 0px; 
+            gap: 1px; 
+            padding-top: 10px; 
+            padding-bottom: 10px; 
+        }
+        .stTabs [aria-selected="true"] { background-color: #B19FFB !important; color: black !important; font-weight: bold; }
+        </style>
+        """, unsafe_allow_html=True)
 
-# 1. Carrega dados do usuário e atualiza saldo
-uid = st.session_state.get("user_uid")
-saldo = atualizar_saldo_usuario(uid)
-
-# 2. Barra Lateral (Sidebar)
-with st.sidebar:
-    st.markdown("### 👤 Perfil")
-    st.caption(f"**Usuário:** {st.session_state.get('usuario_atual')}")
-    st.metric(label="💳 Créditos Disponíveis", value=f"{saldo}")
-    st.divider()
-    
-    if st.button("Sair"):
-        st.session_state["logado"] = False
-        st.session_state["user_uid"] = ""
-        st.session_state["usuario_atual"] = ""
-        st.session_state["creditos_ativos"] = 0
-        st.rerun()
-
-# --- CONTEÚDO DO APLICATIVO COMERCIAL ---
-st.markdown("""
-    <style>
-    textarea {
-        font-family: 'Courier New', Courier, monospace !important;
-    }
-    .stTabs [data-baseweb="tab-list"] { gap: 24px; }
-    .stTabs [data-baseweb="tab"] { 
-        height: 50px; 
-        white-space: pre-wrap; 
-        background-color: #f0f2f6; 
-        border-radius: 5px 5px 0px 0px; 
-        gap: 1px; 
-        padding-top: 10px; 
-        padding-bottom: 10px; 
-    }
-    .stTabs [aria-selected="true"] { background-color: #B19FFB !important; color: black !important; font-weight: bold; }
-    </style>
-    """, unsafe_allow_html=True)
-
-if "lote_fichas" not in st.session_state:
+    # TODO O SEU CÓDIGO DE 1000 LINHAS CONTINUA AQUI ABAIXO NORMALMENTE COM OS MESMOS 4 ESPAÇOS...
+    if "lote_fichas" not in st.session_state:
         st.session_state.lote_fichas = []
 
-if "assuntos_selecionados" not in st.session_state:
+    if "assuntos_selecionados" not in st.session_state:
         st.session_state.assuntos_selecionados = []
 
-if "form_id" not in st.session_state:
+    if "form_id" not in st.session_state:
         st.session_state.form_id = 0
 
     # --- NOVAS VARIÁVEIS ADICIONADAS AQUI 👇 ---
-if "logado" not in st.session_state:
+    if "logado" not in st.session_state:
         st.session_state["logado"] = False
 
-if "creditos_ativos" not in st.session_state:
+    if "creditos_ativos" not in st.session_state:
         st.session_state["creditos_ativos"] = 0
         
-if "usuario_atual" not in st.session_state:
+    if "usuario_atual" not in st.session_state:
         st.session_state["usuario_atual"] = ""
         
-if "user_uid" not in st.session_state:
+    if "user_uid" not in st.session_state:
         st.session_state["user_uid"] = ""
 
     def buscar_vcb_senado(termo_busca):
