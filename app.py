@@ -1008,7 +1008,7 @@ if st.session_state.get("usuario_atual"):
             uid_atual = st.session_state.get("user_uid", "")
             dados = api_obter_produtividade_juridica(uid_atual)
 
-        import panda as pd
+        import pandas as pd
         
         # Verifica se o objeto 'dados' é um DataFrame válido e não está vazio
         if isinstance(dados, pd.DataFrame) and not dados.empty:
