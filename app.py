@@ -13,7 +13,6 @@ from firebase_admin import auth
 from firebase_admin import credentials
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
-import gspread
 
 # =========================================================================
 # 1. CONFIGURAÇÕES TÉCNICAS DA PÁGINA & INICIALIZAÇÃO SEGURA DO FIREBASE
@@ -894,7 +893,6 @@ else:
                             st.rerun()
                         else:
                             st.error("❌ Erro ao descontar crédito no banco de dados.")
-        
                     except Exception as e:
                         st.error(f"❌ Erro ao processar requisição: {e}")   
                 
