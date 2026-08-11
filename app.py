@@ -401,9 +401,6 @@ with st.sidebar:
         st.session_state["creditos_ativos"] = 0
         st.rerun()
 
-# 3. Seu código normal do app vem abaixo AQUI (sem precisar recuar/indentar nada)
-
-else:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
     st.markdown("""
         <style>
