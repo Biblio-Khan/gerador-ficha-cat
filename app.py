@@ -58,50 +58,48 @@ def init_firebase():
 # =========================================================================
 # 🌟 RECARGA AUTOMÁTICA EM BACKEND
 # =========================================================================
-def atualizar_saldo_usuario(uid_usuario):
-    db = init_firebase()
-    email_atual = st.session_state.get("usuario_atual", "").strip().lower()
-    
+def atualizar_saldo_usuario(uid):
+    """
+    1. Atualiza/Sincroniza o saldo do usuário na memória do Streamlit.
+    2. Se o usuário ainda não existir no banco (Firestore), cria o registro automaticamente.
+    """
+    if not uid:
+        return 0
+
     try:
-        doc_encontrado = None
-        
-        # 1. Tenta buscar pelo campo 'uid' dentro dos documentos
-        if uid_usuario:
-            query_uid = db.collection("usuarios").where("uid", "==", uid_usuario).limit(1).get()
-            if query_uid:
-                doc_encontrado = query_uid[0]
+        db = init_firebase()
+        doc_ref = db.collection("usuarios").document(uid)
+        doc = doc_ref.get()
 
-        # 2. Se não achou por UID, busca pelo campo 'email'
-        if not doc_encontrado and email_atual:
-            query_email = db.collection("usuarios").where("email", "==", email_atual).limit(1).get()
-            if query_email:
-                doc_encontrado = query_email[0]
+        # -----------------------------------------------------------
+        # SITUAÇÃO 1: O usuário JÁ EXISTE no banco de dados
+        # -----------------------------------------------------------
+        if doc.exists:
+            dados = doc.to_dict()
+            # Pega o saldo atual do Firestore (mantém o valor real do usuário)
+            saldo = dados.get("creditos", 0)
 
-        # 3. Se encontrou o documento com ID automático:
-        if doc_encontrado:
-            dados = doc_encontrado.to_dict()
-            saldo = int(dados.get("creditos", 0))
+        # -----------------------------------------------------------
+        # SITUAÇÃO 2: O usuário NÃO EXISTE no banco de dados
+        # -----------------------------------------------------------
+        else:
+            saldo = 4  # Créditos iniciais de boas-vindas
+            email_usuario = st.session_state.get("usuario_atual", "").lower().strip()
             
-            # Atualiza o saldo no Streamlit
-            st.session_state["creditos_ativos"] = saldo
-            # Guarda o ID do documento para usar na hora de descontar
-            st.session_state["doc_id_usuario"] = doc_encontrado.id
-            return saldo
+            # Cadastra o usuário no Firestore no primeiro login
+            doc_ref.set({
+                "email": email_usuario,
+                "creditos": saldo
+            })
 
-        # 4. Se realmente não existe no banco, cria o primeiro acesso
-        novo_doc_ref = db.collection("usuarios").add({
-            "uid": uid_usuario,
-            "email": email_atual,
-            "creditos": 3
-        })
-        st.session_state["creditos_ativos"] = 3
-        st.session_state["doc_id_usuario"] = novo_doc_ref[1].id
-        return 3
+        # --- AÇÃO COMUM: Atualiza o saldo na memória da sessão do Streamlit ---
+        st.session_state["creditos_ativos"] = saldo
+        return saldo
 
     except Exception as e:
-        st.error(f"Erro ao carregar créditos do Firestore: {e}")
-        st.session_state["creditos_ativos"] = 0
-        return 0
+        st.error(f"❌ Erro ao sincronizar/consultar saldo: {e}")
+        # Em caso de falha de conexão, mantém o saldo que já estava na memória
+        return st.session_state.get("creditos_ativos", 0)
 
 def descontar_credito_usuario(uid_usuario):
     db = init_firebase()
