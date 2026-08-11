@@ -325,23 +325,51 @@ def verificar_login_firebase(email, senha):
 # =========================================================================
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
 # =========================================================================
-
 if not st.session_state.get("logado", False):
-  st.markdown("# 🔒 Área do Cliente")
-  st.markdown("### Faça o login para acessar o Assistente de Catalogação.")
+    st.markdown("# 🔒 Área do Cliente")
+    st.markdown("### Faça o login para acessar o Assistente de Catalogação.")
 
-  with st.form("login_form"):
-    email_input = st.text_input("E-mail de Usuário").strip()
-    senha_input = st.text_input("Senha de Acesso", type="password").strip()
-    botao_entrar = st.form_submit_button("Entrar no Sistema")
+    with st.form("login_form"):
+        email_input = st.text_input("E-mail de Usuário").strip()
+        senha_input = st.text_input("Senha de Acesso", type="password").strip()
+        botao_entrar = st.form_submit_button("Entrar no Sistema")
 
-    if botao_entrar:
-      if email_input and senha_input:
-        verificar_login_firebase(email_input, senha_input)
-        if st.session_state["logado"]:
-          st.rerun()
-      else:
-        st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
+        if botao_entrar:
+            if email_input and senha_input:
+                verificar_login_firebase(email_input, senha_input)
+                if st.session_state["logado"]:
+                    st.rerun()
+            else:
+                st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
+
+else:
+    # --- ÁREA DO USUÁRIO LOGADO ---
+    
+    # 1. Busca e atualiza o saldo no Firestore
+    uid = st.session_state.get("user_uid")
+    saldo = atualizar_saldo_usuario(uid)
+
+    # 2. Exibe os dados do usuário e os créditos na Barra Lateral
+    with st.sidebar:
+        st.markdown("### 👤 Perfil")
+        st.caption(f"**Usuário:** {st.session_state.get('usuario_atual')}")
+        
+        # Exibe o saldo de créditos
+        st.metric(label="💳 Créditos Disponíveis", value=f"{saldo}")
+        
+        st.divider()
+        
+        # Botão para Sair do Sistema
+        if st.button("Sair"):
+            st.session_state["logado"] = False
+            st.session_state["user_uid"] = ""
+            st.session_state["usuario_atual"] = ""
+            st.session_state["creditos_ativos"] = 0
+            st.rerun()
+
+    # 3. Conteúdo principal do seu app (Abas, Formulários, Fichas, etc.)
+    # Cole aqui o restante do seu código (com o tab_gerador, etc.)
+
 
   st.markdown("---")
   with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
