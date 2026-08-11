@@ -959,10 +959,13 @@ else:
     
     with col_f1:
         st.subheader("🔄 Sincronização")
-        st.info(f"Seu sistema está vinculado ao e-mail: **{st.session_state['usuario_atual']}**")
+        st.info(f"Seu sistema está vinculado ao e-mail: **{st.session_state.get('usuario_atual')}**")
+    
         if st.button("Atualizar meu Saldo"):
-            with st.spinner("Puxando dados atualizados do Sheets..."):
-                atualizar_saldo_usuario(st.session_state["usuario_atual"])
+            with st.spinner("Puxando dados atualizados do Firestore..."):
+                # Passa o UID em vez do e-mail para buscar a chave correta do documento
+                uid = st.session_state.get("user_uid")
+                atualizar_saldo_usuario(uid)
                 st.success("Saldo checado com sucesso!")
                 st.rerun()
 
