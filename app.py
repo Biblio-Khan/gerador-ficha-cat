@@ -45,134 +45,109 @@ if not firebase_admin._apps:
     except Exception as e:
         st.error(f"❌ Erro crítico nas credenciais do Firebase: {str(e)}")
 
+@st.cache_resource
+def init_firebase():
+  if not firebase_admin._apps:
+    if "firebase" in st.secrets:
+      key_dict = dict(st.secrets["firebase"])
+      creds = credentials.Certificate(key_dict)
+      firebase_admin.initialize_app(creds)
+    else:
+      creds = credentials.Certificate("credenciais.json")
+      firebase_admin.initialize_app(creds)
+  return firestore.client()
+
 # =========================================================================
 # 🌟 RECARGA AUTOMÁTICA EM BACKEND
 # =========================================================================
-import re
+def atualizar_saldo_usuario(uid_usuario):
+  db = init_firebase()
+  try:
+    doc_ref = db.collection("usuarios").document(uid_usuario)
+    doc = doc_ref.get()
 
-def carregar_e_filtrar_saldo(url_planilha, token_usuario):
-    url_tratada = tratar_url_google_sheets(url_planilha)
-    
-    # header=None: tratamos a primeira linha como dado, não como título
-    df = pd.read_csv(url_tratada, header=None)
-    
-    # Agora só temos duas colunas: 0 (token) e 1 (creditos)
-    df.columns = ['token', 'creditos']
-    
-    # Remove espaços em branco por segurança
-    df['token'] = df['token'].astype(str).str.strip()
-    
-    # Filtra o usuário pelo token
-    usuario = df[df['token'] == token_usuario.strip()]
-    
-    if not usuario.empty:
-        # Pega o valor da coluna créditos
-        valor = float(usuario['creditos'].iloc[0])
-        return int(valor)
+    if doc.exists:
+      dados = doc.to_dict()
+      saldo = int(dados.get("creditos", 0))
+      st.session_state["creditos_ativos"] = saldo
     else:
-        st.warning(f"Token '{token_usuario}' não encontrado!")
-        return 0
-        
-def carregar_creditos_planilha(url_planilha):
-    try:
-        url_tratada = tratar_url_google_sheets(url_planilha)
-        
-        # Lemos o CSV garantindo que ele entenda o cabeçalho
-        df = pd.read_csv(url_tratada)
-        
-        # Debug: veja quais colunas o pandas enxergou
-        # st.write("Colunas encontradas:", df.columns.tolist())
-        
-        # Limpeza forçada: converte a coluna de créditos para número
-        # Substitua 'CREDITOS' pelo nome exato da sua coluna de saldo
-        coluna_saldo = 'creditos' 
-        if coluna_saldo in df.columns:
-            df[coluna_saldo] = pd.to_numeric(df[coluna_saldo], errors='coerce').fillna(0)
-            
-        return df
-    except Exception as e:
-        st.error(f"Erro ao processar o CSV: {e}")
-        return None
+      # Primeiro acesso: cria o documento com 3 créditos iniciais
+      doc_ref.set(
+          {
+              "email": st.session_state.get("usuario_atual", ""),
+              "creditos": 3,
+          }
+      )
+      st.session_state["creditos_ativos"] = 3
+  except Exception as e:
+    st.error(f"Erro ao carregar créditos do Firestore: {e}")
+    st.session_state["creditos_ativos"] = 0
+
+def descontar_credito_usuario(uid_usuario):
+  db = init_firebase()
+  try:
+    doc_ref = db.collection("usuarios").document(uid_usuario)
+    doc = doc_ref.get()
+
+    if doc.exists:
+      dados = doc.to_dict()
+      saldo_atual = int(dados.get("creditos", 0))
+      if saldo_atual > 0:
+        novo_saldo = saldo_atual - 1
+        doc_ref.update({"creditos": novo_saldo})
+        return novo_saldo
+    return None
+  except Exception as e:
+    print(f"Erro ao descontar crédito: {e}")
+    return None
 
 
-import pandas as pd
-import streamlit as st
-
-def atualizar_saldo_usuario(token_usuario):
-    url_direta = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=0"
-    
-    try:
-        # header=0 diz ao pandas: "a primeira linha é o cabeçalho (títulos)"
-        df = pd.read_csv(url_direta, header=0)
-        
-        # Agora vamos renomear as colunas para garantir que o Python ache elas
-        # (ajuste os nomes abaixo se a sua planilha tiver nomes diferentes na primeira linha)
-        df.columns = ['token', 'creditos']
-        
-        # Remove espaços em branco dos nomes das colunas por segurança
-        df.columns = df.columns.str.strip()
-        
-        # Filtra o token
-        token_buscado = str(token_usuario).strip()
-        df['token'] = df['token'].astype(str).str.strip()
-        
-        usuario = df[df['token'] == token_buscado]
-        
-        if not usuario.empty:
-            # Pega o valor e converte para float (o erro de string sumiu porque pulamos a linha de títulos)
-            saldo = int(float(usuario['creditos'].iloc[0]))
-            st.session_state["creditos_ativos"] = saldo
-            st.success(f"✅ Sincronizado: {saldo:.0f} créditos")
-        else:
-            st.session_state["creditos_ativos"] = 0
-            st.error("❌ Token não encontrado na planilha.")
-            
-    except Exception as e:
-        st.error(f"Erro ao processar os dados: {e}")
-
-import gspread
-from datetime import datetime
-
-def dar_creditos_automaticos(email_usuario):
-    try:
-        # Conecta na planilha usando os Secrets que já configuramos
-        creds_dict = dict(st.secrets["gcp_service_account"])
-        gc = gspread.service_account_from_dict(creds_dict)
-        
-        # AQUI VOCÊ DEVE COLOCAR O NOME EXATO DA SUA PLANILHA E ABA
-        sheet = gc.open("créditos_fichajud").worksheet("Página1")
-        
-        # Adiciona a nova linha
-        sheet.append_row([email_usuario.lower().strip(), 4, datetime.now().strftime("%d/%m/%Y")])
-        return True
-    except Exception as e:
-        # Caso dê erro na planilha, não queremos impedir o usuário de logar, mas avisamos no log
-        print(f"Erro ao dar créditos automáticos: {e}")
-        return False
-        
-def api_obter_produtividade_juridica(usuario):
-    url_produtividade = "https://docs.google.com/spreadsheets/d/1epaFSWFhnd2Q_ZjGq32wdL3LeWpEqmFn1JFRBCh0j_U/export?format=csv&gid=54763437"
-    
-    # 1. Carrega a planilha
-    df = pd.read_csv(url_produtividade, header=0)
-    
-    # 2. Renomeia APENAS as colunas que você sabe que existem, 
-    # mantendo as demais intactas (evita o ValueError)
-    # Supondo que as 4 primeiras colunas são as que você listou:
-    df = df.rename(columns={
-        df.columns[0]: 'data',
-        df.columns[1]: 'email',
-        df.columns[2]: 'titulo',
-        df.columns[3]: 'assunto'
+def salvar_historico_firestore(
+    uid_usuario, email_usuario, titulo_livro, assuntos_lista
+):
+  db = init_firebase()
+  try:
+    db.collection("historico").add({
+        "uid": uid_usuario,
+        "email": email_usuario,
+        "titulo": titulo_livro,
+        "assuntos": assuntos_lista,
+        "data": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
     })
-    
-    # 3. Agora o filtro funcionará normalmente
-    df['email'] = df['email'].astype(str).str.strip().str.lower()
-    filtro = df[df['email'] == usuario.strip().lower()]
-    
-    return filtro
-    
+    return True
+  except Exception as e:
+    print(f"Erro ao salvar histórico: {e}")
+    return False
+
+
+def api_obter_produtividade_juridica(uid_usuario):
+  db = init_firebase()
+  try:
+    docs = db.collection("historico").where("uid", "==", uid_usuario).stream()
+
+    lista_dados = []
+    for doc in docs:
+      dados = doc.to_dict()
+      assuntos = dados.get("assuntos", [])
+      if isinstance(assuntos, list):
+        assuntos_str = ", ".join(assuntos)
+      else:
+        assuntos_str = str(assuntos)
+
+      lista_dados.append({
+          "data": dados.get("data", ""),
+          "email": dados.get("email", ""),
+          "titulo": dados.get("titulo", ""),
+          "assunto": assuntos_str,
+      })
+
+    df = pd.DataFrame(lista_dados)
+    if df.empty:
+      df = pd.DataFrame(columns=["data", "email", "titulo", "assunto"])
     return df
+  except Exception as e:
+    st.error(f"Erro ao carregar produtividade: {e}")
+    return pd.DataFrame(columns=["data", "email", "titulo", "assunto"])
 
 def formatar_nome_autor_abnt(nome_completo: str) -> str:
     """Transforma 'João Silva' em 'SILVA, João'."""
@@ -302,56 +277,45 @@ def gerar_docx_referencias_lote(lote_fichas: list) -> io.BytesIO:
 # =========================================================================
 # 2. SISTEMA DE AUTENTICAÇÃO E CONTROLE DE SESSÃO COMERCIAL
 # =========================================================================
-
 def verificar_login_firebase(email, senha):
-    try:
-        user = auth.get_user_by_email(email)
-        st.session_state["logado"] = True
-        st.session_state["usuario_atual"] = user.email
-        atualizar_saldo_usuario(user.email)
-        return True
-    except Exception as e:
-        st.error("❌ Acesso negado: E-mail não cadastrado ou credenciais inválidas.")
-        return False
+  try:
+    # Nota: No ambiente de produção do Firebase Auth, a validação de senha é feita via Client SDK,
+    # mas mantendo sua estrutura atual com o Admin SDK por e-mail:
+    user = auth.get_user_by_email(email)
+    st.session_state["logado"] = True
+    st.session_state["usuario_atual"] = user.email
+    st.session_state["user_uid"] = user.uid
+    atualizar_saldo_usuario(user.uid)
+    return True
+  except Exception as e:
+    st.error("❌ Acesso negado: E-mail não cadastrado ou credenciais inválidas.")
+    return False
 
-if "logado" not in st.session_state:
-    st.session_state["logado"] = False
-
-if "creditos_ativos" not in st.session_state:
-    st.session_state["creditos_ativos"] = 0
-
-# Exibe o saldo na barra lateral caso o usuário esteja logado
-if st.session_state["logado"]:
-    with st.sidebar:
-        if st.session_state["creditos_ativos"] > 0:
-            st.success(f"💳 Saldo: {st.session_state['creditos_ativos']} fichas")
-        else:
-            st.error("💳 Sem créditos ativos")
 
 # =========================================================================
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
 # =========================================================================
 
 if not st.session_state["logado"]:
-    st.markdown("# 🔒 Área do Cliente")
-    st.markdown("### Faça o login para acessar o Assistente de Catalogação.")
-    
-    with st.form("login_form"):
-        email_input = st.text_input("E-mail de Usuário").strip()
-        senha_input = st.text_input("Senha de Acesso", type="password").strip()
-        botao_entrar = st.form_submit_button("Entrar no Sistema")
-        
-        if botao_entrar:
-            if email_input and senha_input:
-                verificar_login_firebase(email_input, senha_input)
-                if st.session_state["logado"]:
-                    st.rerun()
-            else:
-                st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
+  st.markdown("# 🔒 Área do Cliente")
+  st.markdown("### Faça o login para acessar o Assistente de Catalogação.")
 
-    st.markdown("---")
-    with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
-        st.markdown("""
+  with st.form("login_form"):
+    email_input = st.text_input("E-mail de Usuário").strip()
+    senha_input = st.text_input("Senha de Acesso", type="password").strip()
+    botao_entrar = st.form_submit_button("Entrar no Sistema")
+
+    if botao_entrar:
+      if email_input and senha_input:
+        verificar_login_firebase(email_input, senha_input)
+        if st.session_state["logado"]:
+          st.rerun()
+      else:
+        st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
+
+  st.markdown("---")
+  with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
+    st.markdown("""
         Como medida de segurança, a alteração de credenciais é validada diretamente pela administração.
         
         Para redefinir sua senha, entre em contato diretamente com o suporte técnico através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
@@ -359,27 +323,36 @@ if not st.session_state["logado"]:
 
 # --- TELA DE CADASTRO (Abaixo do Login) ---
 if not st.session_state.get("logado", False):
-    with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
-        with st.form("cadastro_form"):
-            novo_email = st.text_input("Novo E-mail").strip()
-            nova_senha = st.text_input("Escolha uma senha", type="password")
-            botao_cadastrar = st.form_submit_button("Criar Conta")
-            
-            if botao_cadastrar:
-                if novo_email and nova_senha:
-                    try:
-                        # 1. Cria o usuário no Firebase
-                        auth.create_user(email=novo_email, password=nova_senha)
-                        
-                        # 2. Concede os 4 créditos automaticamente na planilha
-                        dar_creditos_automaticos(novo_email)
-                        
-                        st.success("✅ Conta criada com sucesso! 4 créditos de boas-vindas liberados. Faça o login agora.")
-                        
-                    except Exception as e:
-                        st.error(f"❌ Erro ao criar conta: {e}")
-                else:
-                    st.warning("⚠️ Preencha e-mail e senha.")
+  with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
+    with st.form("cadastro_form"):
+      novo_email = st.text_input("Novo E-mail").strip()
+      nova_senha = st.text_input("Escolha uma senha", type="password")
+      botao_cadastrar = st.form_submit_button("Criar Conta")
+
+      if botao_cadastrar:
+        if novo_email and nova_senha:
+          try:
+            # 1. Cria o usuário no Firebase Auth
+            user_criado = auth.create_user(email=novo_email, password=nova_senha)
+
+            # 2. Concede os créditos iniciais diretamente no Firestore
+            db = init_firebase()
+            db.collection("usuarios").document(user_criado.uid).set({
+                "email": novo_email.lower().strip(),
+                "creditos": (
+                    4
+                ),  # Definido com 4 créditos de boas-vindas conforme seu código
+            })
+
+            st.success(
+                "✅ Conta criada com sucesso! 4 créditos de boas-vindas"
+                " liberados. Faça o login agora."
+            )
+
+          except Exception as e:
+            st.error(f"❌ Erro ao criar conta: {e}")
+        else:
+          st.warning("⚠️ Preencha e-mail e senha.")
 
 else:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
@@ -872,73 +845,58 @@ else:
                 if valido:
                     with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
                         try:
-                            url_script = st.secrets["URL_SCRIPT_GOOGLE"]
-                            lista_assuntos = st.session_state.get("assuntos_selecionados", [])
-                            assuntos_texto = ", ".join(lista_assuntos) if lista_assuntos else "Não informado"
+                            uid = st.session_state["user_uid"]
+                            email_usuario = st.session_state["usuario_atual"]
                             titulo_livro = titulo if titulo else "Não Informado"
-                
-                            payload = {
-                                "email": st.session_state["usuario_atual"],
-                                "acao": "descontar",
-                                "titulo": titulo_livro,
-                                "assunto": assuntos_texto
-                            }
-                
-                            # 2. Requisição
-                            resposta_google = requests.post(url_script, json=payload, timeout=15)
-                
-                            if resposta_google.status_code == 200:
-                                try:
-                                    conteudo = resposta_google.content.decode('utf-8-sig').strip()
-                                    if "{" in conteudo:
-                                        conteudo = conteudo[conteudo.find("{"):]
-                        
-                                    import json
-                                    resultado_json = json.loads(conteudo)
+                            lista_assuntos = st.session_state.get("assuntos_selecionados", [])
 
-                                    if resultado_json.get("status") == "sucesso":
-                                        ficha_completa = {
-                                            "texto_ficha": txt_ficha,
-        
-                                            # === NOVA LINHA ADICIONADA (Chama a função criada para gerar a referência ABNT) ===
-                                            "citacao_abnt": gerar_citacao_abnt_nbr6023(
-                                                tipo_autor, autores_lista, entidade_nome, titulo,
-                                                tem_organizador, organizador_nome, abreviatura_org,
-                                                edicao, editora, cidade, ano, paginas_input,
-                                                grau_academico, instituicao, area_concentracao, url_acesso
-                                            ),
-        
-                                            "dados_marc": {
-                                                "entrada": entrada_principal,
-                                                "titulo": titulo,
-                                                "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                                "tipo": grau_academico,
-                                                "instituicao": instituicao.strip(),
-                                                "area": area_concentracao.strip(),
-                                                "assuntos": st.session_state.assuntos_selecionados,
-                                                "ano": ano.strip(),
-                                                "paginas": paginas_input,
-                                                "dimensoes": dimensoes_input
-                                            }
-                                        }
-    
-                                        st.session_state.lote_fichas.append(ficha_completa)
-                                        st.session_state["creditos_ativos"] -= 1
-                                        st.session_state.form_id += 1
-                                        st.session_state.assuntos_selecionados = []
-                                        st.session_state.assuntos_selecionados = [] 
-                                        st.success("✅ Ficha guardada com sucesso!")
-                                        st.rerun()
-                                    else:
-                                        st.error(f"❌ Erro na planilha: {resultado_json.get('mensagem', 'Erro desconhecido')}")
+                            # 1. Desconta o crédito no Firestore
+                            novo_saldo = descontar_credito_usuario(uid)
+
+                            if novo_saldo is not None:
+                                # 2. Salva o histórico na coleção 'historico' do Firestore
+                                salvar_historico_firestore(
+                                    uid_usuario=uid,
+                                    email_usuario=email_usuario,
+                                    titulo_livro=titulo_livro,
+                                    assuntos_lista=lista_assuntos
+                                 )
+
+                                # 3. Monta a ficha para o lote local
+                                ficha_completa = {
+                                "texto_ficha": txt_ficha,
+                                "citacao_abnt": gerar_citacao_abnt_nbr6023(
+                                    tipo_autor, autores_lista, entidade_nome, titulo,
+                                    tem_organizador, organizador_nome, abreviatura_org,
+                                    edicao, editora, cidade, ano, paginas_input,
+                                    grau_academico, instituicao, area_concentracao, url_acesso
+                                ),
+                                "dados_marc": {
+                                    "entrada": entrada_principal,
+                                    "titulo": titulo,
+                                    "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                    "tipo": grau_academico,
+                                    "instituicao": instituicao.strip(),
+                                    "area": area_concentracao.strip(),
+                                    "assuntos": lista_assuntos,
+                                    "ano": ano.strip(),
+                                    "paginas": paginas_input,
+                                    "dimensoes": dimensoes_input
+                                }
+                            }
+
+                            st.session_state.lote_fichas.append(ficha_completa)
+                            st.session_state["creditos_ativos"] = novo_saldo
+                            st.session_state.form_id += 1
+                            st.session_state.assuntos_selecionados = []
                             
-                                except Exception as e:
-                                    st.error(f"❌ Falha ao processar resposta: {e}")
-                            else:
-                                st.error(f"❌ Falha de conexão. Status: {resposta_google.status_code}")
-                    
-                        except Exception as e:
-                            st.error(f"❌ Erro ao processar requisição: {e}")    
+                            st.success(f"✅ Ficha guardada com sucesso! Créditos restantes: {novo_saldo}")
+                            st.rerun()
+                        else:
+                            st.error("❌ Erro ao descontar crédito no banco de dados.")
+        
+                    except Exception as e:
+                        st.error(f"❌ Erro ao processar requisição: {e}")    
                 
 # Abaixo, fora de qualquer bloco 'if' ou 'try', começa o tab_financeiro
     with tab_financeiro:
@@ -1034,18 +992,17 @@ if st.session_state.get("usuario_atual"):
         st.subheader(f"Análise de Obras Processadas por {st.session_state.get('usuario_atual', 'Usuário')}")
 
         with st.spinner("Carregando dados de produtividade..."):
-            dados = api_obter_produtividade_juridica(st.session_state.get("usuario_atual", ""))
+            # Usando o user_uid para buscar corretamente no Firestore
+            uid_atual = st.session_state.get("user_uid", "")
+            dados = api_obter_produtividade_juridica(uid_atual)
 
-        # Verifica se o objeto 'dados' é um DataFrame válido e não está vazio
-        import pandas as pd
+        import panda as pd
         
+        # Verifica se o objeto 'dados' é um DataFrame válido e não está vazio
         if isinstance(dados, pd.DataFrame) and not dados.empty:
             st.write(f"Total de registros encontrados: {len(dados)}")
-            st.dataframe(dados) # Aqui os dados aparecerão
-        else:
-            st.info("Você ainda não possui registros de fichas geradas.")
-
-            # 1. Converte os dados recebidos da API para um DataFrame do Pandas
+            
+            # 1. Converte os dados recebidos para um DataFrame do Pandas
             df = pd.DataFrame(dados)
 
             # 2. Coleta todos os assuntos, quebra pelas vírgulas e limpa os espaços
@@ -1121,3 +1078,5 @@ if st.session_state.get("usuario_atual"):
                 use_container_width=True,
                 hide_index=True
             )
+        else:
+            st.info("Você ainda não possui registros de fichas geradas.")
