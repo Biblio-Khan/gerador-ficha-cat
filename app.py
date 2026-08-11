@@ -589,12 +589,12 @@ else:
 ])
 
     with tab_gerador:
-       if st.session_state.get("creditos_ativos", 0) <= 0:
+        if st.session_state.get("creditos_ativos", 0) <= 0:
             st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
 
         st.title("Assistente de Catalogação — BiblioKhan")
         st.caption("Ficha Catalográfica, MARC21 e Referências ABNT.")
-
+        
         st.markdown("---")
         container_lote = st.container()
         with container_lote:
