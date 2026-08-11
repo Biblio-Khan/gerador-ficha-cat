@@ -401,25 +401,25 @@ with st.sidebar:
         st.session_state["creditos_ativos"] = 0
         st.rerun()
 
-    # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
-    st.markdown("""
-        <style>
-        textarea {
-            font-family: 'Courier New', Courier, monospace !important;
-        }
-        .stTabs [data-baseweb="tab-list"] { gap: 24px; }
-        .stTabs [data-baseweb="tab"] { 
-            height: 50px; 
-            white-space: pre-wrap; 
-            background-color: #f0f2f6; 
-            border-radius: 5px 5px 0px 0px; 
-            gap: 1px; 
-            padding-top: 10px; 
-            padding-bottom: 10px; 
-        }
-        .stTabs [aria-selected="true"] { background-color: #B19FFB !important; color: black !important; font-weight: bold; }
-        </style>
-        """, unsafe_allow_html=True)
+# --- CONTEÚDO DO APLICATIVO COMERCIAL ---
+st.markdown("""
+    <style>
+    textarea {
+        font-family: 'Courier New', Courier, monospace !important;
+    }
+    .stTabs [data-baseweb="tab-list"] { gap: 24px; }
+    .stTabs [data-baseweb="tab"] { 
+        height: 50px; 
+        white-space: pre-wrap; 
+        background-color: #f0f2f6; 
+        border-radius: 5px 5px 0px 0px; 
+        gap: 1px; 
+        padding-top: 10px; 
+        padding-bottom: 10px; 
+    }
+    .stTabs [aria-selected="true"] { background-color: #B19FFB !important; color: black !important; font-weight: bold; }
+    </style>
+    """, unsafe_allow_html=True)
 
     if "lote_fichas" not in st.session_state:
         st.session_state.lote_fichas = []
