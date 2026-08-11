@@ -329,6 +329,7 @@ if not st.session_state.get("logado", False):
     st.markdown("# 🔒 Área do Cliente")
     st.markdown("### Faça o login para acessar o Assistente de Catalogação.")
 
+    # --- 1. FORMULÁRIO DE LOGIN ---
     with st.form("login_form"):
         email_input = st.text_input("E-mail de Usuário").strip()
         senha_input = st.text_input("Senha de Acesso", type="password").strip()
@@ -337,10 +338,47 @@ if not st.session_state.get("logado", False):
         if botao_entrar:
             if email_input and senha_input:
                 verificar_login_firebase(email_input, senha_input)
-                if st.session_state["logado"]:
+                if st.session_state.get("logado"):
                     st.rerun()
             else:
                 st.warning("⚠️ Por favor, preencha o e-mail e a senha.")
+
+    st.markdown("---")
+
+    # --- 2. ESQUECEU A SENHA ---
+    with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
+        st.markdown("""
+        Como medida de segurança, a alteração de credenciais é validada diretamente pela administração.
+        
+        Para redefinir sua senha, entre em contato diretamente com o suporte técnico através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
+        """)
+
+    # --- 3. TELA DE CADASTRO ---
+    with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
+        with st.form("cadastro_form"):
+            novo_email = st.text_input("Novo E-mail").strip()
+            nova_senha = st.text_input("Escolha uma senha", type="password")
+            botao_cadastrar = st.form_submit_button("Criar Conta")
+
+            if botao_cadastrar:
+                if novo_email and nova_senha:
+                    try:
+                        # 1. Cria o usuário no Firebase Auth
+                        user_criado = auth.create_user(email=novo_email, password=nova_senha)
+
+                        # 2. Concede os créditos iniciais diretamente no Firestore usando o UID como chave
+                        db = init_firebase()
+                        db.collection("usuarios").document(user_criado.uid).set({
+                            "email": novo_email.lower().strip(),
+                            "creditos": 4,
+                        })
+
+                        st.success("✅ Conta criada com sucesso! 4 créditos de boas-vindas liberados. Faça o login agora.")
+
+                    except Exception as e:
+                        st.error(f"❌ Erro ao criar conta: {e}")
+                else:
+                    st.warning("⚠️ Preencha e-mail e senha.")
 
 else:
     # --- ÁREA DO USUÁRIO LOGADO ---
@@ -367,50 +405,8 @@ else:
             st.session_state["creditos_ativos"] = 0
             st.rerun()
 
-    # 3. Conteúdo principal do seu app (Abas, Formulários, Fichas, etc.)
-    # Cole aqui o restante do seu código (com o tab_gerador, etc.)
-
-
-  st.markdown("---")
-  with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
-    st.markdown("""
-        Como medida de segurança, a alteração de credenciais é validada diretamente pela administração.
-        
-        Para redefinir sua senha, entre em contato diretamente com o suporte técnico através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
-        """)
-
-# --- TELA DE CADASTRO (Abaixo do Login) ---
-if not st.session_state.get("logado", False):
-  with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
-    with st.form("cadastro_form"):
-      novo_email = st.text_input("Novo E-mail").strip()
-      nova_senha = st.text_input("Escolha uma senha", type="password")
-      botao_cadastrar = st.form_submit_button("Criar Conta")
-
-      if botao_cadastrar:
-        if novo_email and nova_senha:
-          try:
-            # 1. Cria o usuário no Firebase Auth
-            user_criado = auth.create_user(email=novo_email, password=nova_senha)
-
-            # 2. Concede os créditos iniciais diretamente no Firestore
-            db = init_firebase()
-            db.collection("usuarios").document(user_criado.uid).set({
-                "email": novo_email.lower().strip(),
-                "creditos": (
-                    4
-                ),  # Definido com 4 créditos de boas-vindas conforme seu código
-            })
-
-            st.success(
-                "✅ Conta criada com sucesso! 4 créditos de boas-vindas"
-                " liberados. Faça o login agora."
-            )
-
-          except Exception as e:
-            st.error(f"❌ Erro ao criar conta: {e}")
-        else:
-          st.warning("⚠️ Preencha e-mail e senha.")
+    # --- COLE ABAIXO O CONTEÚDO PRINCIPAL (GERADOR DE FICHAS, ABAS, ETC.) ---
+    # Lembre-se de manter 4 espaços de recuo para tudo o que for renderizado dentro da área logada
 
 else:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
