@@ -101,34 +101,45 @@ def atualizar_saldo_usuario(uid):
         # Em caso de falha de conexão, mantém o saldo que já estava na memória
         return st.session_state.get("creditos_ativos", 0)
 
-def descontar_credito_usuario(uid_usuario):
-    db = init_firebase()
-    doc_id = st.session_state.get("doc_id_usuario")
-    
-    # Se ainda não tiver o ID do documento na sessão, busca primeiro
-    if not doc_id:
-        atualizar_saldo_usuario(uid_usuario)
-        doc_id = st.session_state.get("doc_id_usuario")
-        
-    if not doc_id:
-        return None
-        
-    try:
-        doc_ref = db.collection("usuarios").document(doc_id)
-        doc = doc_ref.get()
-        
-        if doc.exists:
-            saldo_atual = int(doc.to_dict().get("creditos", 0))
-            if saldo_atual > 0:
-                novo_saldo = saldo_atual - 1
-                doc_ref.update({"creditos": novo_saldo})
-                st.session_state["creditos_ativos"] = novo_saldo
-                return novo_saldo
-        return None
-    except Exception as e:
-        st.error(f"Erro ao descontar crédito: {e}")
+def descontar_credito_usuario(uid):
+    """
+    Verifica o saldo, desconta 1 crédito no Firestore e atualiza o session_state.
+    Retorna o novo saldo em caso de sucesso, ou None se falhar.
+    """
+    if not uid:
+        st.error("❌ Erro: UID do usuário não foi localizado no sistema.")
         return None
 
+    try:
+        db = init_firebase()
+        doc_ref = db.collection("usuarios").document(uid)
+        doc = doc_ref.get()
+
+        # 1. Se o documento não existir, cria com saldo zerado para não quebrar o app
+        if not doc.exists:
+            st.error("❌ Usuário não encontrado no banco de dados.")
+            return None
+
+        dados = doc.to_dict()
+        saldo_atual = dados.get("creditos", 0)
+
+        # 2. Bloqueia a execução se o saldo for menor ou igual a 0
+        if saldo_atual <= 0:
+            st.warning("⚠️ Você não possui créditos suficientes.")
+            return None
+
+        # 3. Abate 1 crédito e salva no Firestore
+        novo_saldo = saldo_atual - 1
+        doc_ref.update({"creditos": novo_saldo})
+
+        # 4. Sincroniza com a memória do Streamlit
+        st.session_state["creditos_ativos"] = novo_saldo
+        return novo_saldo
+
+    except Exception as e:
+        # Exibe o erro real retornado pelo banco de dados no terminal/tela
+        st.error(f"❌ Erro ao atualizar banco: {e}")
+        return None
 
 def salvar_historico_firestore(
     uid_usuario, email_usuario, titulo_livro, assuntos_lista
