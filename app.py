@@ -421,26 +421,26 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-    if "lote_fichas" not in st.session_state:
+if "lote_fichas" not in st.session_state:
         st.session_state.lote_fichas = []
 
-    if "assuntos_selecionados" not in st.session_state:
+if "assuntos_selecionados" not in st.session_state:
         st.session_state.assuntos_selecionados = []
 
-    if "form_id" not in st.session_state:
+if "form_id" not in st.session_state:
         st.session_state.form_id = 0
 
     # --- NOVAS VARIÁVEIS ADICIONADAS AQUI 👇 ---
-    if "logado" not in st.session_state:
+if "logado" not in st.session_state:
         st.session_state["logado"] = False
 
-    if "creditos_ativos" not in st.session_state:
+if "creditos_ativos" not in st.session_state:
         st.session_state["creditos_ativos"] = 0
         
-    if "usuario_atual" not in st.session_state:
+if "usuario_atual" not in st.session_state:
         st.session_state["usuario_atual"] = ""
         
-    if "user_uid" not in st.session_state:
+if "user_uid" not in st.session_state:
         st.session_state["user_uid"] = ""
 
     def buscar_vcb_senado(termo_busca):
