@@ -832,71 +832,71 @@ else:
             st.text_area("Visualização Normativa (Fonte Monoespaçada)", value=txt_ficha, height=240)
     
  
-             if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
-                    valido = True
-                    if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
-                        valido = False
-                        st.error("⚠️ Informe ao menos um autor principal ou marque a opção de Organizador.")
-                    if not titulo.strip():
-                        valido = False
-                        st.error("⚠️ O Título Principal é obrigatório.")
+            if st.button("💾 CONCLUIR FICHA E ENVIAR AO LOTE", disabled=st.session_state["creditos_ativos"] <= 0):
+                valido = True
+                if tipo_autor == "Pessoa Física" and not any(a.strip() for a in autores_lista) and not tem_organizador:
+                    valido = False
+                    st.error("⚠️ Informe ao menos um autor principal ou marque a opção de Organizador.")
+                if not titulo.strip():
+                    valido = False
+                    st.error("⚠️ O Título Principal é obrigatório.")
     
-                    if valido:
-                        with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
-                            try:
-                                uid = st.session_state["user_uid"]
-                                email_usuario = st.session_state["usuario_atual"]
-                                titulo_livro = titulo if titulo else "Não Informado"
-                                lista_assuntos = st.session_state.get("assuntos_selecionados", [])
+                if valido:
+                    with st.spinner("Gravando ficha e atualizando saldo na nuvem..."):
+                        try:
+                            uid = st.session_state["user_uid"]
+                            email_usuario = st.session_state["usuario_atual"]
+                            titulo_livro = titulo if titulo else "Não Informado"
+                            lista_assuntos = st.session_state.get("assuntos_selecionados", [])
 
-                                # 1. Desconta o crédito no Firestore
-                                novo_saldo = descontar_credito_usuario(uid)
+                            # 1. Desconta o crédito no Firestore
+                            novo_saldo = descontar_credito_usuario(uid)
                 
-                                if novo_saldo is not None:
-                                    # 2. Salva o histórico na coleção 'historico' do Firestore
-                                    salvar_historico_firestore(
-                                        uid_usuario=uid,
-                                        email_usuario=email_usuario,
-                                        titulo_livro=titulo_livro,
-                                        assuntos_lista=lista_assuntos
-                                    )
+                            if novo_saldo is not None:
+                                # 2. Salva o histórico na coleção 'historico' do Firestore
+                                salvar_historico_firestore(
+                                    uid_usuario=uid,
+                                    email_usuario=email_usuario,
+                                    titulo_livro=titulo_livro,
+                                    assuntos_lista=lista_assuntos
+                                )
 
-                                    # 3. Monta a ficha para o lote local
-                                    ficha_completa = {
-                                        "texto_ficha": txt_ficha,
-                                        "citacao_abnt": gerar_citacao_abnt_nbr6023(
-                                            tipo_autor, autores_lista, entidade_nome, titulo,
-                                            tem_organizador, organizador_nome, abreviatura_org,
-                                            edicao, editora, cidade, ano, paginas_input,
-                                            grau_academico, instituicao, area_concentracao, url_acesso
+                                # 3. Monta a ficha para o lote local
+                                ficha_completa = {
+                                    "texto_ficha": txt_ficha,
+                                    "citacao_abnt": gerar_citacao_abnt_nbr6023(
+                                        tipo_autor, autores_lista, entidade_nome, titulo,
+                                        tem_organizador, organizador_nome, abreviatura_org,
+                                        edicao, editora, cidade, ano, paginas_input,
+                                        grau_academico, instituicao, area_concentracao, url_acesso
 
-                                        ),
-                                        "dados_marc": {
-                                            "entrada": entrada_principal,
-                                            "titulo": titulo,
-                                            "local_editora": f"{cidade.strip()} : {editora.strip()}",
-                                            "tipo": grau_academico,
-                                            "instituicao": instituicao.strip(),
-                                            "area": area_concentracao.strip(),
-                                            "assuntos": lista_assuntos,
-                                            "ano": ano.strip(),
-                                            "paginas": paginas_input,
-                                            "dimensoes": dimensoes_input
-                                        }
+                                    ),
+                                    "dados_marc": {
+                                        "entrada": entrada_principal,
+                                        "titulo": titulo,
+                                        "local_editora": f"{cidade.strip()} : {editora.strip()}",
+                                        "tipo": grau_academico,
+                                        "instituicao": instituicao.strip(),
+                                        "area": area_concentracao.strip(),
+                                        "assuntos": lista_assuntos,
+                                        "ano": ano.strip(),
+                                        "paginas": paginas_input,
+                                        "dimensoes": dimensoes_input
                                     }
+                                }
 
-                                    st.session_state.lote_fichas.append(ficha_completa)
-                                    st.session_state["creditos_ativos"] = novo_saldo
-                                    st.session_state.form_id += 1
-                                    st.session_state.assuntos_selecionados = []
+                                st.session_state.lote_fichas.append(ficha_completa)
+                                st.session_state["creditos_ativos"] = novo_saldo
+                                st.session_state.form_id += 1
+                                st.session_state.assuntos_selecionados = []
                                     
-                                    st.success(f"✅ Ficha guardada com sucesso! Créditos restantes: {novo_saldo}")
-                                    st.rerun()
-                                else:
-                                    st.error("❌ Erro ao descontar crédito no banco de dados.")
+                                st.success(f"✅ Ficha guardada com sucesso! Créditos restantes: {novo_saldo}")
+                                st.rerun()
+                            else:
+                                st.error("❌ Erro ao descontar crédito no banco de dados.")
                 
-                            except Exception as e:
-                                st.error(f"❌ Erro ao processar requisição: {e}")  
+                        except Exception as e:
+                            st.error(f"❌ Erro ao processar requisição: {e}")  
                 
 # Abaixo, fora de qualquer bloco 'if' ou 'try', começa o tab_financeiro
     with tab_financeiro:
