@@ -295,7 +295,7 @@ def verificar_login_firebase(email, senha):
 # 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
 # =========================================================================
 
-if not st.session_state["logado"]:
+if not st.session_state.get("logado", False):
   st.markdown("# 🔒 Área do Cliente")
   st.markdown("### Faça o login para acessar o Assistente de Catalogação.")
 
