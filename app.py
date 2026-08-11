@@ -59,27 +59,46 @@ def init_firebase():
 # 🌟 RECARGA AUTOMÁTICA EM BACKEND
 # =========================================================================
 def atualizar_saldo_usuario(uid_usuario):
-  db = init_firebase()
-  try:
-    doc_ref = db.collection("usuarios").document(uid_usuario)
-    doc = doc_ref.get()
+    db = init_firebase()
+    
+    # Proteção caso o UID venha vazio
+    if not uid_usuario:
+        st.session_state["creditos_ativos"] = 0
+        return 0
 
-    if doc.exists:
-      dados = doc.to_dict()
-      saldo = int(dados.get("creditos", 0))
-      st.session_state["creditos_ativos"] = saldo
-    else:
-      # Primeiro acesso: cria o documento com 3 créditos iniciais
-      doc_ref.set(
-          {
-              "email": st.session_state.get("usuario_atual", ""),
-              "creditos": 3,
-          }
-      )
-      st.session_state["creditos_ativos"] = 3
-  except Exception as e:
-    st.error(f"Erro ao carregar créditos do Firestore: {e}")
-    st.session_state["creditos_ativos"] = 0
+    try:
+        # 1. Tenta buscar direto pelo UID do usuário
+        doc_ref = db.collection("usuarios").document(uid_usuario)
+        doc = doc_ref.get()
+
+        if doc.exists:
+            dados = doc.to_dict()
+            saldo = int(dados.get("creditos", 0))
+            st.session_state["creditos_ativos"] = saldo
+            return saldo
+
+        # 2. Fallback: Se não achou por UID, busca pelo E-mail na coleção
+        email_atual = st.session_state.get("usuario_atual", "").strip().lower()
+        if email_atual:
+            query = db.collection("usuarios").where("email", "==", email_atual).limit(1).stream()
+            for user_doc in query:
+                dados = user_doc.to_dict()
+                saldo = int(dados.get("creditos", 0))
+                st.session_state["creditos_ativos"] = saldo
+                return saldo
+
+        # 3. Se realmente não existir em lugar nenhum, cria o primeiro acesso com 3 créditos
+        doc_ref.set({
+            "email": email_atual,
+            "creditos": 3,
+        })
+        st.session_state["creditos_ativos"] = 3
+        return 3
+
+    except Exception as e:
+        st.error(f"Erro ao carregar créditos do Firestore: {e}")
+        st.session_state["creditos_ativos"] = 0
+        return 0
 
 def descontar_credito_usuario(uid_usuario):
   db = init_firebase()
