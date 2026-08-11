@@ -9,8 +9,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from docx.enum.table import WD_TABLE_ALIGNMENT
 import firebase_admin
-from firebase_admin import auth
-from firebase_admin import credentials
+from firebase_admin import auth, credentials, firestore
 from google.oauth2 import service_account
 from datetime import datetime, timezone, timedelta
 
