@@ -383,6 +383,19 @@ else:
     if "form_id" not in st.session_state:
         st.session_state.form_id = 0
 
+    # --- NOVAS VARIÁVEIS ADICIONADAS AQUI 👇 ---
+    if "logado" not in st.session_state:
+        st.session_state["logado"] = False
+
+    if "creditos_ativos" not in st.session_state:
+        st.session_state["creditos_ativos"] = 0
+        
+    if "usuario_atual" not in st.session_state:
+        st.session_state["usuario_atual"] = ""
+        
+    if "user_uid" not in st.session_state:
+        st.session_state["user_uid"] = ""
+
     def buscar_vcb_senado(termo_busca):
         url_api = "https://adm.senado.leg.br/vcb/vocab/services.php"
         params = {"task": "search", "arg": termo_busca, "output": "json"}
@@ -576,7 +589,7 @@ else:
 ])
 
     with tab_gerador:
-        if st.session_state["creditos_ativos"] <= 0:
+       if st.session_state.get("creditos_ativos", 0) <= 0:
             st.warning("🔒 O painel de salvamento está bloqueado. Adquira créditos ou aguarde a restauração para continuar.")
 
         st.title("Assistente de Catalogação — BiblioKhan")
