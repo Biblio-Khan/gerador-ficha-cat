@@ -60,39 +60,42 @@ def init_firebase():
 # =========================================================================
 def atualizar_saldo_usuario(uid_usuario):
     db = init_firebase()
+    email_atual = st.session_state.get("usuario_atual", "").strip().lower()
     
-    # Proteção caso o UID venha vazio
-    if not uid_usuario:
-        st.session_state["creditos_ativos"] = 0
-        return 0
-
     try:
-        # 1. Tenta buscar direto pelo UID do usuário
-        doc_ref = db.collection("usuarios").document(uid_usuario)
-        doc = doc_ref.get()
+        doc_encontrado = None
+        
+        # 1. Tenta buscar pelo campo 'uid' dentro dos documentos
+        if uid_usuario:
+            query_uid = db.collection("usuarios").where("uid", "==", uid_usuario).limit(1).get()
+            if query_uid:
+                doc_encontrado = query_uid[0]
 
-        if doc.exists:
-            dados = doc.to_dict()
+        # 2. Se não achou por UID, busca pelo campo 'email'
+        if not doc_encontrado and email_atual:
+            query_email = db.collection("usuarios").where("email", "==", email_atual).limit(1).get()
+            if query_email:
+                doc_encontrado = query_email[0]
+
+        # 3. Se encontrou o documento com ID automático:
+        if doc_encontrado:
+            dados = doc_encontrado.to_dict()
             saldo = int(dados.get("creditos", 0))
+            
+            # Atualiza o saldo no Streamlit
             st.session_state["creditos_ativos"] = saldo
+            # Guarda o ID do documento para usar na hora de descontar
+            st.session_state["doc_id_usuario"] = doc_encontrado.id
             return saldo
 
-        # 2. Fallback: Se não achou por UID, busca pelo E-mail na coleção
-        email_atual = st.session_state.get("usuario_atual", "").strip().lower()
-        if email_atual:
-            query = db.collection("usuarios").where("email", "==", email_atual).limit(1).stream()
-            for user_doc in query:
-                dados = user_doc.to_dict()
-                saldo = int(dados.get("creditos", 0))
-                st.session_state["creditos_ativos"] = saldo
-                return saldo
-
-        # 3. Se realmente não existir em lugar nenhum, cria o primeiro acesso com 3 créditos
-        doc_ref.set({
+        # 4. Se realmente não existe no banco, cria o primeiro acesso
+        novo_doc_ref = db.collection("usuarios").add({
+            "uid": uid_usuario,
             "email": email_atual,
-            "creditos": 3,
+            "creditos": 3
         })
         st.session_state["creditos_ativos"] = 3
+        st.session_state["doc_id_usuario"] = novo_doc_ref[1].id
         return 3
 
     except Exception as e:
@@ -101,22 +104,32 @@ def atualizar_saldo_usuario(uid_usuario):
         return 0
 
 def descontar_credito_usuario(uid_usuario):
-  db = init_firebase()
-  try:
-    doc_ref = db.collection("usuarios").document(uid_usuario)
-    doc = doc_ref.get()
-
-    if doc.exists:
-      dados = doc.to_dict()
-      saldo_atual = int(dados.get("creditos", 0))
-      if saldo_atual > 0:
-        novo_saldo = saldo_atual - 1
-        doc_ref.update({"creditos": novo_saldo})
-        return novo_saldo
-    return None
-  except Exception as e:
-    print(f"Erro ao descontar crédito: {e}")
-    return None
+    db = init_firebase()
+    doc_id = st.session_state.get("doc_id_usuario")
+    
+    # Se ainda não tiver o ID do documento na sessão, busca primeiro
+    if not doc_id:
+        atualizar_saldo_usuario(uid_usuario)
+        doc_id = st.session_state.get("doc_id_usuario")
+        
+    if not doc_id:
+        return None
+        
+    try:
+        doc_ref = db.collection("usuarios").document(doc_id)
+        doc = doc_ref.get()
+        
+        if doc.exists:
+            saldo_atual = int(doc.to_dict().get("creditos", 0))
+            if saldo_atual > 0:
+                novo_saldo = saldo_atual - 1
+                doc_ref.update({"creditos": novo_saldo})
+                st.session_state["creditos_ativos"] = novo_saldo
+                return novo_saldo
+        return None
+    except Exception as e:
+        st.error(f"Erro ao descontar crédito: {e}")
+        return None
 
 
 def salvar_historico_firestore(
