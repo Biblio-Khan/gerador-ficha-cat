@@ -322,14 +322,14 @@ def verificar_login_firebase(email, senha):
     return False
 
 
-# =========================================================================
-# 3. INTERFACE DE LOGIN OU FLUXO DO APLICATIVO PROTEGIDO
-# =========================================================================
+# ==========================================
+# TELA DE LOGIN E CADASTRO (NÃO LOGADO)
+# ==========================================
 if not st.session_state.get("logado", False):
     st.markdown("# 🔒 Área do Cliente")
     st.markdown("### Faça o login para acessar o Assistente de Catalogação.")
 
-    # --- 1. FORMULÁRIO DE LOGIN ---
+    # 1. Formulário de Login
     with st.form("login_form"):
         email_input = st.text_input("E-mail de Usuário").strip()
         senha_input = st.text_input("Senha de Acesso", type="password").strip()
@@ -345,7 +345,7 @@ if not st.session_state.get("logado", False):
 
     st.markdown("---")
 
-    # --- 2. ESQUECEU A SENHA ---
+    # 2. Esqueceu a Senha
     with st.expander("🔑 Esqueceu sua senha ou quer trocar a senha provisória?"):
         st.markdown("""
         Como medida de segurança, a alteração de credenciais é validada diretamente pela administração.
@@ -353,7 +353,7 @@ if not st.session_state.get("logado", False):
         Para redefinir sua senha, entre em contato diretamente com o suporte técnico através do e-mail informado na lateral do sistema ou pelo canal de atendimento onde adquiriu o produto. Um link oficial de redefinição será enviado para o seu e-mail cadastrado.
         """)
 
-    # --- 3. TELA DE CADASTRO ---
+    # 3. Formulário de Cadastro
     with st.expander("📝 Ainda não tem conta? Clique aqui para se cadastrar"):
         with st.form("cadastro_form"):
             novo_email = st.text_input("Novo E-mail").strip()
@@ -363,50 +363,45 @@ if not st.session_state.get("logado", False):
             if botao_cadastrar:
                 if novo_email and nova_senha:
                     try:
-                        # 1. Cria o usuário no Firebase Auth
                         user_criado = auth.create_user(email=novo_email, password=nova_senha)
-
-                        # 2. Concede os créditos iniciais diretamente no Firestore usando o UID como chave
                         db = init_firebase()
                         db.collection("usuarios").document(user_criado.uid).set({
                             "email": novo_email.lower().strip(),
                             "creditos": 4,
                         })
-
-                        st.success("✅ Conta criada com sucesso! 4 créditos de boas-vindas liberados. Faça o login agora.")
-
+                        st.success("✅ Conta criada com sucesso! 4 créditos liberados. Faça o login acima.")
                     except Exception as e:
                         st.error(f"❌ Erro ao criar conta: {e}")
                 else:
                     st.warning("⚠️ Preencha e-mail e senha.")
 
-else:
-    # --- ÁREA DO USUÁRIO LOGADO ---
+    # ⛔ PARADA OBRIGATÓRIA: Se não estiver logado, o Streamlit para aqui e NÃO executa o restante do código
+    st.stop()
+
+
+# ==========================================
+# ÁREA DO USUÁRIO LOGADO (CÓDIGO PRINCIPAL)
+# ==========================================
+
+# 1. Carrega dados do usuário e atualiza saldo
+uid = st.session_state.get("user_uid")
+saldo = atualizar_saldo_usuario(uid)
+
+# 2. Barra Lateral (Sidebar)
+with st.sidebar:
+    st.markdown("### 👤 Perfil")
+    st.caption(f"**Usuário:** {st.session_state.get('usuario_atual')}")
+    st.metric(label="💳 Créditos Disponíveis", value=f"{saldo}")
+    st.divider()
     
-    # 1. Busca e atualiza o saldo no Firestore
-    uid = st.session_state.get("user_uid")
-    saldo = atualizar_saldo_usuario(uid)
+    if st.button("Sair"):
+        st.session_state["logado"] = False
+        st.session_state["user_uid"] = ""
+        st.session_state["usuario_atual"] = ""
+        st.session_state["creditos_ativos"] = 0
+        st.rerun()
 
-    # 2. Exibe os dados do usuário e os créditos na Barra Lateral
-    with st.sidebar:
-        st.markdown("### 👤 Perfil")
-        st.caption(f"**Usuário:** {st.session_state.get('usuario_atual')}")
-        
-        # Exibe o saldo de créditos
-        st.metric(label="💳 Créditos Disponíveis", value=f"{saldo}")
-        
-        st.divider()
-        
-        # Botão para Sair do Sistema
-        if st.button("Sair"):
-            st.session_state["logado"] = False
-            st.session_state["user_uid"] = ""
-            st.session_state["usuario_atual"] = ""
-            st.session_state["creditos_ativos"] = 0
-            st.rerun()
-
-    # --- COLE ABAIXO O CONTEÚDO PRINCIPAL (GERADOR DE FICHAS, ABAS, ETC.) ---
-    # Lembre-se de manter 4 espaços de recuo para tudo o que for renderizado dentro da área logada
+# 3. Seu código normal do app vem abaixo AQUI (sem precisar recuar/indentar nada)
 
 else:
     # --- CONTEÚDO DO APLICATIVO COMERCIAL ---
