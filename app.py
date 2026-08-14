@@ -981,11 +981,11 @@ else:
         with col_f2:
             st.subheader("🛒 Tabela de Preços")
             st.markdown("""
-            * **10 Fichas** — R$ 20,00 
-            * **30 Fichas** — R$ 54,00 
-            * **50 Fichas** — R$ 85,00 
-            * **100 Fichas** — R$ 160,00 
-            * **300 Fichas** — R$ 450,00 
+            * **10 Créditos** — R$ 20,00 
+            * **30 Créditos** — R$ 54,00 
+            * **50 Créditos** — R$ 85,00 
+            * **100 Créditos** — R$ 160,00 
+            * **300 Créditos** — R$ 450,00 
             """)
             st.info("🔑 **PIX:** `bibliokhancontato@gmail.com`")
 
@@ -998,11 +998,11 @@ else:
             pacote_escolhido = st.selectbox(
                 "Qual pacote de créditos você comprou?",
                 options=[
-                    "10 Fichas (R$ 20,00)",
-                    "30 Fichas (R$ 54,00)",
-                    "50 Fichas (R$ 85,00)",
-                    "100 Fichas (R$ 160,00)",
-                    "300 Fichas (R$ 450,00)"
+                    "10 Créditos (R$ 20,00)",
+                    "30 Créditos (R$ 54,00)",
+                    "50 Créditos (R$ 85,00)",
+                    "100 Créditos (R$ 160,00)",
+                    "300 Créditos (R$ 450,00)"
                 ]
             )
             
